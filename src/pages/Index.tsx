@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Plus, Heart, Receipt, Brain, Baby, Bell } from 'lucide-react';
+import { Plus, Heart, Receipt, Brain, Baby, Bell, Calendar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import FamilyNotes from '@/components/FamilyNotes';
@@ -8,6 +8,8 @@ import Appreciations from '@/components/Appreciations';
 import BillsTracker from '@/components/BillsTracker';
 import MentalLoad from '@/components/MentalLoad';
 import NannyMode from '@/components/NannyMode';
+import WeeklySync from '@/components/WeeklySync';
+import ChildrenDashboard from '@/components/ChildrenDashboard';
 
 const Index = () => {
   const [activeSection, setActiveSection] = React.useState('dashboard');
@@ -32,10 +34,10 @@ const Index = () => {
       section: 'mental-load'
     },
     { 
-      icon: Baby, 
-      label: 'Nanny Mode', 
+      icon: Calendar, 
+      label: 'Weekly Sync', 
       color: 'bg-blue-100 text-blue-600 hover:bg-blue-200',
-      section: 'nanny'
+      section: 'weekly-sync'
     },
   ];
 
@@ -51,6 +53,10 @@ const Index = () => {
         return <MentalLoad />;
       case 'nanny':
         return <NannyMode />;
+      case 'weekly-sync':
+        return <WeeklySync />;
+      case 'kids':
+        return <ChildrenDashboard />;
       default:
         return (
           <div className="space-y-6">
@@ -109,23 +115,23 @@ const Index = () => {
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Receipt className="text-green-500" size={20} />
-                    Upcoming Bills
+                    <Calendar className="text-blue-500" size={20} />
+                    Weekly Sync
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm font-medium">Electric Bill</span>
-                      <span className="text-sm text-gray-600">Due in 3 days</span>
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-gray-700">3 wins shared this week</p>
+                      <p className="text-xs text-gray-500 mt-1">2 goals in progress</p>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="w-full text-green-600 hover:bg-green-50"
-                      onClick={() => setActiveSection('bills')}
+                      className="w-full text-blue-600 hover:bg-blue-50"
+                      onClick={() => setActiveSection('weekly-sync')}
                     >
-                      Manage Bills
+                      View Sync
                     </Button>
                   </div>
                 </CardContent>
@@ -134,23 +140,23 @@ const Index = () => {
               <Card className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Brain className="text-purple-500" size={20} />
-                    Mental Load
+                    <Users className="text-purple-500" size={20} />
+                    Kids Dashboard
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     <div className="p-3 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-gray-700">5 items shared this week</p>
-                      <p className="text-xs text-gray-500 mt-1">Great teamwork! 🎉</p>
+                      <p className="text-sm text-gray-700">Emma: 15 points earned</p>
+                      <p className="text-xs text-gray-500 mt-1">Jack: 14 points earned</p>
                     </div>
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       className="w-full text-purple-600 hover:bg-purple-50"
-                      onClick={() => setActiveSection('mental-load')}
+                      onClick={() => setActiveSection('kids')}
                     >
-                      View Tasks
+                      View Dashboard
                     </Button>
                   </div>
                 </CardContent>
@@ -181,6 +187,8 @@ const Index = () => {
                   { key: 'appreciations', label: 'Appreciations' },
                   { key: 'bills', label: 'Bills' },
                   { key: 'mental-load', label: 'Mental Load' },
+                  { key: 'weekly-sync', label: 'Weekly Sync' },
+                  { key: 'kids', label: 'Kids Dashboard' },
                   { key: 'nanny', label: 'Nanny Mode' },
                 ].map((item) => (
                   <button
