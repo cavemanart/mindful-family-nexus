@@ -1,0 +1,384 @@
+
+import React, { useState } from 'react';
+import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+
+interface Bill {
+  id: string;
+  name: string;
+  amount: number;
+  dueDate: Date;
+  category: string;
+  isPaid: boolean;
+  assignedTo: string;
+}
+
+const BillsTracker = () => {
+  const [bills, setBills] = useState<Bill[]>([
+    {
+      id: '1',
+      name: 'Electric Bill',
+      amount: 145.50,
+      dueDate: new Date('2024-01-18'),
+      category: 'Utilities',
+      isPaid: false,
+      assignedTo: 'Dad',
+    },
+    {
+      id: '2',
+      name: 'Internet',
+      amount: 79.99,
+      dueDate: new Date('2024-01-20'),
+      category: 'Utilities',
+      isPaid: true,
+      assignedTo: 'Mom',
+    },
+    {
+      id: '3',
+      name: 'Car Insurance',
+      amount: 234.00,
+      dueDate: new Date('2024-01-25'),
+      category: 'Insurance',
+      isPaid: false,
+      assignedTo: 'Dad',
+    },
+    {
+      id: '4',
+      name: 'Mortgage',
+      amount: 1850.00,
+      dueDate: new Date('2024-01-30'),
+      category: 'Housing',
+      isPaid: false,
+      assignedTo: 'Mom',
+    },
+  ]);
+
+  const [isAddingBill, setIsAddingBill] = useState(false);
+  const [newBill, setNewBill] = useState({
+    name: '',
+    amount: '',
+    dueDate: '',
+    category: '',
+    assignedTo: '',
+  });
+
+  const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
+  const categories = ['Utilities', 'Insurance', 'Housing', 'Healthcare', 'Transportation', 'Entertainment', 'Other'];
+
+  const addBill = () => {
+    if (newBill.name.trim() && newBill.amount && newBill.dueDate && newBill.category && newBill.assignedTo) {
+      const bill: Bill = {
+        id: Date.now().toString(),
+        name: newBill.name,
+        amount: parseFloat(newBill.amount),
+        dueDate: new Date(newBill.dueDate),
+        category: newBill.category,
+        isPaid: false,
+        assignedTo: newBill.assignedTo,
+      };
+      setBills([...bills, bill]);
+      setNewBill({ name: '', amount: '', dueDate: '', category: '', assignedTo: '' });
+      setIsAddingBill(false);
+    }
+  };
+
+  const togglePaid = (id: string) => {
+    setBills(bills.map(bill =>
+      bill.id === id ? { ...bill, isPaid: !bill.isPaid } : bill
+    ));
+  };
+
+  const getDaysUntilDue = (dueDate: Date) => {
+    const today = new Date();
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const sortedBills = [...bills].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+  const upcomingBills = sortedBills.filter(bill => !bill.isPaid);
+  const paidBills = sortedBills.filter(bill => bill.isPaid);
+
+  const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
+  const paidAmount = paidBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const progressPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: string } = {
+      'Utilities': 'bg-blue-100 text-blue-800',
+      'Insurance': 'bg-green-100 text-green-800',
+      'Housing': 'bg-purple-100 text-purple-800',
+      'Healthcare': 'bg-red-100 text-red-800',
+      'Transportation': 'bg-yellow-100 text-yellow-800',
+      'Entertainment': 'bg-pink-100 text-pink-800',
+      'Other': 'bg-gray-100 text-gray-800',
+    };
+    return colors[category] || colors['Other'];
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Receipt className="text-green-500" size={28} />
+            Bills Tracker
+          </h2>
+          <p className="text-gray-600 mt-1">Keep track of family expenses and due dates</p>
+        </div>
+        <Button 
+          onClick={() => setIsAddingBill(true)} 
+          className="bg-green-600 hover:bg-green-700"
+        >
+          <Plus size={16} className="mr-2" />
+          Add Bill
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Bills</p>
+                <p className="text-2xl font-bold text-gray-900">${totalAmount.toFixed(2)}</p>
+              </div>
+              <DollarSign className="text-gray-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Paid</p>
+                <p className="text-2xl font-bold text-green-600">${paidAmount.toFixed(2)}</p>
+              </div>
+              <CheckCircle className="text-green-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Remaining</p>
+                <p className="text-2xl font-bold text-red-600">${(totalAmount - paidAmount).toFixed(2)}</p>
+              </div>
+              <AlertCircle className="text-red-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress Bar */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-gray-700">Payment Progress</span>
+              <span className="text-gray-600">{progressPercentage.toFixed(1)}%</span>
+            </div>
+            <Progress value={progressPercentage} className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {isAddingBill && (
+        <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50">
+          <CardHeader>
+            <CardTitle className="text-green-800">Add New Bill</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Bill Name</label>
+                <Input
+                  placeholder="e.g., Electric Bill"
+                  value={newBill.name}
+                  onChange={(e) => setNewBill({ ...newBill, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Amount</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={newBill.amount}
+                  onChange={(e) => setNewBill({ ...newBill, amount: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Due Date</label>
+                <Input
+                  type="date"
+                  value={newBill.dueDate}
+                  onChange={(e) => setNewBill({ ...newBill, dueDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
+                <Select value={newBill.category} onValueChange={(value) => 
+                  setNewBill({ ...newBill, category: value })
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Assigned To</label>
+                <Select value={newBill.assignedTo} onValueChange={(value) => 
+                  setNewBill({ ...newBill, assignedTo: value })
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Who's responsible?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {familyMembers.map((member) => (
+                      <SelectItem key={member} value={member}>{member}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={addBill} className="bg-green-600 hover:bg-green-700">
+                <Receipt size={16} className="mr-2" />
+                Add Bill
+              </Button>
+              <Button variant="outline" onClick={() => setIsAddingBill(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upcoming Bills */}
+      {upcomingBills.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Upcoming Bills</h3>
+          <div className="space-y-3">
+            {upcomingBills.map((bill) => {
+              const daysUntilDue = getDaysUntilDue(bill.dueDate);
+              const isOverdue = daysUntilDue < 0;
+              const isDueSoon = daysUntilDue <= 3 && daysUntilDue >= 0;
+
+              return (
+                <Card 
+                  key={bill.id} 
+                  className={`hover:shadow-md transition-shadow ${
+                    isOverdue ? 'border-red-300 bg-red-50' : 
+                    isDueSoon ? 'border-yellow-300 bg-yellow-50' : 
+                    'border-gray-200'
+                  }`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{bill.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className={getCategoryColor(bill.category)} variant="secondary">
+                              {bill.category}
+                            </Badge>
+                            <span className="text-sm text-gray-600">Assigned to {bill.assignedTo}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-gray-900">${bill.amount.toFixed(2)}</p>
+                        <p className={`text-sm ${
+                          isOverdue ? 'text-red-600 font-semibold' :
+                          isDueSoon ? 'text-yellow-600 font-semibold' :
+                          'text-gray-600'
+                        }`}>
+                          {isOverdue ? `Overdue by ${Math.abs(daysUntilDue)} days` :
+                           daysUntilDue === 0 ? 'Due today' :
+                           `Due in ${daysUntilDue} days`}
+                        </p>
+                        <Button
+                          onClick={() => togglePaid(bill.id)}
+                          size="sm"
+                          className="mt-2 bg-green-600 hover:bg-green-700"
+                        >
+                          Mark as Paid
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Paid Bills */}
+      {paidBills.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Paid Bills</h3>
+          <div className="space-y-3">
+            {paidBills.map((bill) => (
+              <Card key={bill.id} className="bg-green-50 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <CheckCircle className="text-green-600" size={20} />
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{bill.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getCategoryColor(bill.category)} variant="secondary">
+                            {bill.category}
+                          </Badge>
+                          <span className="text-sm text-gray-600">Paid by {bill.assignedTo}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-green-600">${bill.amount.toFixed(2)}</p>
+                      <p className="text-sm text-green-600">Paid</p>
+                      <Button
+                        onClick={() => togglePaid(bill.id)}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 border-green-600 text-green-600 hover:bg-green-100"
+                      >
+                        Mark as Unpaid
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {bills.length === 0 && (
+        <div className="text-center py-12">
+          <Receipt size={48} className="text-green-300 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">No bills tracked yet!</p>
+          <p className="text-gray-400 text-sm mt-2">Add your first bill to start tracking family expenses.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BillsTracker;
