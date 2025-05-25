@@ -1,14 +1,25 @@
 
 import React from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, LogOut, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { Household } from '@/hooks/useHouseholds';
 
 interface NavigationProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
+  selectedHousehold?: Household;
+  onHouseholdChange?: () => void;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ activeSection, setActiveSection }) => {
+const Navigation: React.FC<NavigationProps> = ({ 
+  activeSection, 
+  setActiveSection, 
+  selectedHousehold,
+  onHouseholdChange 
+}) => {
+  const { signOut } = useAuth();
+
   const navigationItems = [
     { key: 'dashboard', label: 'Dashboard' },
     { key: 'notes', label: 'Notes' },
@@ -31,6 +42,12 @@ const Navigation: React.FC<NavigationProps> = ({ activeSection, setActiveSection
             >
               Family Hub
             </h1>
+            {selectedHousehold && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Users size={16} />
+                <span>{selectedHousehold.name}</span>
+              </div>
+            )}
             <div className="hidden md:flex space-x-6">
               {navigationItems.map((item) => (
                 <button
@@ -47,9 +64,19 @@ const Navigation: React.FC<NavigationProps> = ({ activeSection, setActiveSection
               ))}
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="text-gray-600">
-            <Bell size={20} />
-          </Button>
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <Bell size={20} />
+            </Button>
+            {onHouseholdChange && (
+              <Button variant="outline" size="sm" onClick={onHouseholdChange}>
+                Switch Household
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-gray-600">
+              <LogOut size={20} />
+            </Button>
+          </div>
         </div>
       </div>
     </nav>
