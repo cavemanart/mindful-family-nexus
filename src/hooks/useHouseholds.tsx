@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -34,9 +33,14 @@ export const useHouseholds = () => {
   const { toast } = useToast();
 
   const fetchHouseholds = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     try {
+      console.log('Fetching households for user:', user.id);
+      
       const { data, error } = await supabase
         .from('household_members')
         .select(`
@@ -53,13 +57,24 @@ export const useHouseholds = () => {
         `)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching households:', error);
+        throw error;
+      }
+
+      console.log('Raw household data:', data);
 
       const householdsData = data?.map(item => ({
-        ...item.households,
+        id: item.households?.id || '',
+        name: item.households?.name || '',
+        description: item.households?.description || '',
+        invite_code: item.households?.invite_code || '',
+        created_by: item.households?.created_by || '',
+        created_at: item.households?.created_at || '',
         role: item.role
-      })) || [];
+      })).filter(household => household.id) || [];
 
+      console.log('Processed households:', householdsData);
       setHouseholds(householdsData);
     } catch (error) {
       console.error('Error fetching households:', error);
@@ -193,6 +208,8 @@ export const useHouseholds = () => {
   useEffect(() => {
     if (user) {
       fetchHouseholds();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
