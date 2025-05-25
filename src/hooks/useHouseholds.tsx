@@ -19,14 +19,19 @@ export const useHouseholds = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // TEMP: Store userId for UI display/debugging
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   // Fetch all households for the current user
   const fetchHouseholds = async () => {
     if (!user) {
       setLoading(false);
       setHouseholds([]);
+      setCurrentUserId(null);
       return;
     }
     setLoading(true);
+    setCurrentUserId(user.id); // Save for UI display
     try {
       const { data, error } = await supabase
         .from('household_members')
@@ -84,8 +89,12 @@ export const useHouseholds = () => {
       return null;
     }
 
-    // Debug: Log the user ID being used for created_by
-    console.log("User ID for household creation:", user.id);
+    // Show the user ID in a toast for debugging (remove when done)
+    toast({
+      title: "Debug: User ID",
+      description: user.id,
+      variant: "default"
+    });
 
     const { data, error } = await supabase
       .from('households')
@@ -124,6 +133,7 @@ export const useHouseholds = () => {
     households,
     loading,
     fetchHouseholds,
-    createHousehold
+    createHousehold,
+    currentUserId // Expose for UI debugging
   };
 };
