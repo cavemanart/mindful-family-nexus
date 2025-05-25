@@ -16,22 +16,21 @@ export interface Household {
 export const useHouseholds = () => {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // TEMP: Store userId for UI display/debugging
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  // This flag is true only when the user is authenticated and user.id is present
+  const canCreateHousehold = !!user?.id && !creating;
 
   // Fetch all households for the current user
   const fetchHouseholds = async () => {
-    if (!user) {
+    if (!user?.id) {
       setLoading(false);
       setHouseholds([]);
-      setCurrentUserId(null);
       return;
     }
     setLoading(true);
-    setCurrentUserId(user.id); // Save for UI display
     try {
       const { data, error } = await supabase
         .from('household_members')
@@ -80,7 +79,7 @@ export const useHouseholds = () => {
     name,
     description
   }: { name: string; description: string }) => {
-    if (!user) {
+    if (!user?.id) {
       toast({
         title: "Not authenticated",
         description: "You must be logged in to create a household.",
@@ -89,12 +88,14 @@ export const useHouseholds = () => {
       return null;
     }
 
-    // Show the user ID in a toast for debugging (remove when done)
-    toast({
-      title: "Debug: User ID",
-      description: user.id,
-      variant: "default"
-    });
+    setCreating(true);
+
+    // Optionally show the user ID in a toast for debugging (remove when done)
+    // toast({
+    //   title: "Debug: User ID",
+    //   description: user.id,
+    //   variant: "default"
+    // });
 
     const { data, error } = await supabase
       .from('households')
@@ -102,11 +103,13 @@ export const useHouseholds = () => {
         {
           name,
           description,
-          created_by: user.id // This must be the Supabase Auth user UUID
+          created_by: user.id // Must be the Supabase Auth user UUID
         }
       ])
       .select()
       .single();
+
+    setCreating(false);
 
     if (error) {
       toast({
@@ -134,6 +137,6 @@ export const useHouseholds = () => {
     loading,
     fetchHouseholds,
     createHousehold,
-    currentUserId // Expose for UI debugging
+    canCreateHousehold
   };
 };
