@@ -13,19 +13,6 @@ export interface Household {
   role?: string;
 }
 
-export interface HouseholdMember {
-  id: string;
-  household_id: string;
-  user_id: string;
-  role: string;
-  joined_at: string;
-  profiles: {
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-}
-
 export const useHouseholds = () => {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,14 +24,11 @@ export const useHouseholds = () => {
       setLoading(false);
       return;
     }
-
+    setLoading(true);
     try {
-      console.log('Fetching households for user:', user.id);
-      
       const { data, error } = await supabase
         .from('household_members')
         .select(`
-          household_id,
           role,
           households (
             id,
@@ -58,166 +42,80 @@ export const useHouseholds = () => {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error fetching households:', error);
-        throw error;
+        toast({
+          title: "Failed to fetch households",
+          description: error.message,
+          variant: "destructive"
+        });
+        setHouseholds([]);
+      } else {
+        const formatted = (data ?? []).map((hm: any) => ({
+          ...hm.households,
+          role: hm.role
+        }));
+        setHouseholds(formatted);
       }
-
-      console.log('Raw household data:', data);
-
-      const householdsData = data?.map(item => ({
-        id: item.households?.id || '',
-        name: item.households?.name || '',
-        description: item.households?.description || '',
-        invite_code: item.households?.invite_code || '',
-        created_by: item.households?.created_by || '',
-        created_at: item.households?.created_at || '',
-        role: item.role
-      })).filter(household => household.id) || [];
-
-      console.log('Processed households:', householdsData);
-      setHouseholds(householdsData);
-    } catch (error) {
-      console.error('Error fetching households:', error);
+    } catch (err: any) {
       toast({
-        title: 'Error',
-        description: 'Failed to fetch households',
-        variant: 'destructive',
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
       });
+      setHouseholds([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const createHousehold = async (name: string, description: string = '') => {
-    if (!user) return null;
+  const createHousehold = async ({
+    name,
+    description
+  }: { name: string; description: string }) => {
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "You must be logged in to create a household.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    try {
-      // Generate a temporary invite code - the trigger will replace it with a unique one
-      const tempInviteCode = 'TEMP' + Math.random().toString(36).substr(2, 4).toUpperCase();
-      
-      // Create household
-      const { data: household, error: householdError } = await supabase
-        .from('households')
-        .insert({
+    const { data, error } = await supabase
+      .from('households')
+      .insert([
+        {
           name,
           description,
-          created_by: user.id,
-          invite_code: tempInviteCode
-        })
-        .select()
-        .single();
+          created_by: user.id
+        }
+      ])
+      .select()
+      .single();
 
-      if (householdError) throw householdError;
-
-      // Add creator as owner
-      const { error: memberError } = await supabase
-        .from('household_members')
-        .insert({
-          household_id: household.id,
-          user_id: user.id,
-          role: 'owner'
-        });
-
-      if (memberError) throw memberError;
-
-      await fetchHouseholds();
-      
+    if (error) {
       toast({
-        title: 'Success',
-        description: 'Household created successfully!',
-      });
-
-      return household;
-    } catch (error) {
-      console.error('Error creating household:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create household',
-        variant: 'destructive',
+        title: "Failed to create household",
+        description: error.message,
+        variant: "destructive"
       });
       return null;
     }
-  };
 
-  const joinHousehold = async (inviteCode: string) => {
-    if (!user) return false;
+    // Optionally refresh the list
+    fetchHouseholds();
 
-    try {
-      // Find household by invite code
-      const { data: household, error: householdError } = await supabase
-        .from('households')
-        .select('id')
-        .eq('invite_code', inviteCode)
-        .single();
-
-      if (householdError || !household) {
-        toast({
-          title: 'Error',
-          description: 'Invalid invite code',
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      // Check if user is already a member
-      const { data: existingMember } = await supabase
-        .from('household_members')
-        .select('id')
-        .eq('household_id', household.id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (existingMember) {
-        toast({
-          title: 'Info',
-          description: 'You are already a member of this household',
-        });
-        return false;
-      }
-
-      // Add user to household
-      const { error: memberError } = await supabase
-        .from('household_members')
-        .insert({
-          household_id: household.id,
-          user_id: user.id,
-          role: 'member'
-        });
-
-      if (memberError) throw memberError;
-
-      await fetchHouseholds();
-      
-      toast({
-        title: 'Success',
-        description: 'Successfully joined household!',
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error joining household:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to join household',
-        variant: 'destructive',
-      });
-      return false;
-    }
+    return data;
   };
 
   useEffect(() => {
-    if (user) {
-      fetchHouseholds();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    fetchHouseholds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   return {
     households,
     loading,
-    createHousehold,
-    joinHousehold,
-    refetch: fetchHouseholds
+    fetchHouseholds,
+    createHousehold
   };
 };
