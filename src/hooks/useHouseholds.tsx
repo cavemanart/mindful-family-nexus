@@ -77,13 +77,17 @@ export const useHouseholds = () => {
     if (!user) return null;
 
     try {
+      // Generate a temporary invite code - the trigger will replace it with a unique one
+      const tempInviteCode = 'TEMP' + Math.random().toString(36).substr(2, 4).toUpperCase();
+      
       // Create household
       const { data: household, error: householdError } = await supabase
         .from('households')
         .insert({
           name,
           description,
-          created_by: user.id
+          created_by: user.id,
+          invite_code: tempInviteCode
         })
         .select()
         .single();
