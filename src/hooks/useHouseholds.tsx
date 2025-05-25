@@ -19,9 +19,11 @@ export const useHouseholds = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Fetch all households for the current user
   const fetchHouseholds = async () => {
     if (!user) {
       setLoading(false);
+      setHouseholds([]);
       return;
     }
     setLoading(true);
@@ -49,6 +51,7 @@ export const useHouseholds = () => {
         });
         setHouseholds([]);
       } else {
+        // Flatten the data for easier use in UI
         const formatted = (data ?? []).map((hm: any) => ({
           ...hm.households,
           role: hm.role
@@ -67,6 +70,7 @@ export const useHouseholds = () => {
     }
   };
 
+  // Create a new household for the current user
   const createHousehold = async ({
     name,
     description
@@ -77,8 +81,11 @@ export const useHouseholds = () => {
         description: "You must be logged in to create a household.",
         variant: "destructive"
       });
-      return;
+      return null;
     }
+
+    // Debug: Log the user ID being used for created_by
+    console.log("User ID for household creation:", user.id);
 
     const { data, error } = await supabase
       .from('households')
@@ -86,7 +93,7 @@ export const useHouseholds = () => {
         {
           name,
           description,
-          created_by: user.id
+          created_by: user.id // This must be the Supabase Auth user UUID
         }
       ])
       .select()
@@ -101,12 +108,13 @@ export const useHouseholds = () => {
       return null;
     }
 
-    // Optionally refresh the list
-    fetchHouseholds();
+    // Optionally refresh the list after creation
+    await fetchHouseholds();
 
     return data;
   };
 
+  // Fetch households when user logs in or changes
   useEffect(() => {
     fetchHouseholds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
