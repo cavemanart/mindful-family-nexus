@@ -1,5 +1,7 @@
-
-import React from 'react';
+import React, { useState } from 'react';
+import HouseholdSelector from '@/components/HouseholdSelector';
+import { useAuth } from '@/hooks/useAuth';
+import { useHouseholds, Household } from '@/hooks/useHouseholds';
 import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
 
@@ -8,6 +10,39 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
+  const { user } = useAuth();
+  const { households, loading: householdsLoading } = useHouseholds();
+  const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
+
+  // Show loading spinner while fetching households
+  if (householdsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in, prompt to log in
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to continue</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Always require explicit household selection
+  if (!selectedHousehold) {
+    return <HouseholdSelector onHouseholdSelect={setSelectedHousehold} />;
+  }
+
+  // Main dashboard content, only shown after household is selected
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -18,6 +53,12 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         <p className="text-gray-600 text-lg">
           Your central hub for everything that matters
         </p>
+        <button
+          className="mt-4 underline text-blue-600 hover:text-blue-800 text-sm"
+          onClick={() => setSelectedHousehold(null)}
+        >
+          Switch Household
+        </button>
       </div>
 
       {/* Quick Actions */}
