@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -80,7 +79,7 @@ export const useHouseholds = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data: householdData, error: householdError } = await supabase
         .from('households')
         .insert([
           {
@@ -93,16 +92,36 @@ export const useHouseholds = () => {
         .select()
         .single();
 
-      if (error) {
+      if (householdError) {
         toast({
           title: "Failed to create household",
-          description: error.message,
+          description: householdError.message,
           variant: "destructive"
         });
         return null;
       }
 
-      // Optionally refresh the list
+      // Add the creator as the owner of the household
+      const { error: memberError } = await supabase
+        .from('household_members')
+        .insert([
+          {
+            household_id: householdData.id,
+            user_id: user.id,
+            role: 'owner'
+          }
+        ]);
+
+      if (memberError) {
+        toast({
+          title: "Failed to add user to household",
+          description: memberError.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Refresh the list
       fetchHouseholds();
 
       toast({
@@ -110,7 +129,8 @@ export const useHouseholds = () => {
         description: "Household created successfully!",
       });
 
-      return data;
+      // Return the household data with the role
+      return { ...householdData, role: 'owner' };
     } catch (err: any) {
       toast({
         title: "Error",

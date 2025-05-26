@@ -27,6 +27,8 @@ const HouseholdSelector: React.FC<HouseholdSelectorProps> = ({ onHouseholdSelect
       setShowCreateDialog(false);
       setHouseholdName('');
       setHouseholdDescription('');
+      // Automatically select the newly created household
+      onHouseholdSelect(household);
     }
   };
 
