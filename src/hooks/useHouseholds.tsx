@@ -11,6 +11,7 @@ export interface Household {
   created_by: string;
   created_at: string;
   role?: string;
+  user_id?: string; // Add this if you want to type it
 }
 
 export const useHouseholds = () => {
@@ -86,7 +87,8 @@ export const useHouseholds = () => {
         {
           name,
           description,
-          created_by: user.id
+          created_by: user.id,
+          user_id: user.id // <-- This line fixes the RLS/NOT NULL error
         }
       ])
       .select()
