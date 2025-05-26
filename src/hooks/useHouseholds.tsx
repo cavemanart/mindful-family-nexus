@@ -16,18 +16,12 @@ export interface Household {
 export const useHouseholds = () => {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // This flag is true only when the user is authenticated and user.id is present
-  const canCreateHousehold = !!user?.id && !creating;
-
-  // Fetch all households for the current user
   const fetchHouseholds = async () => {
-    if (!user?.id) {
+    if (!user) {
       setLoading(false);
-      setHouseholds([]);
       return;
     }
     setLoading(true);
@@ -55,7 +49,6 @@ export const useHouseholds = () => {
         });
         setHouseholds([]);
       } else {
-        // Flatten the data for easier use in UI
         const formatted = (data ?? []).map((hm: any) => ({
           ...hm.households,
           role: hm.role
@@ -74,28 +67,18 @@ export const useHouseholds = () => {
     }
   };
 
-  // Create a new household for the current user
   const createHousehold = async ({
     name,
     description
   }: { name: string; description: string }) => {
-    if (!user?.id) {
+    if (!user) {
       toast({
         title: "Not authenticated",
         description: "You must be logged in to create a household.",
         variant: "destructive"
       });
-      return null;
+      return;
     }
-
-    setCreating(true);
-
-    // Optionally show the user ID in a toast for debugging (remove when done)
-    // toast({
-    //   title: "Debug: User ID",
-    //   description: user.id,
-    //   variant: "default"
-    // });
 
     const { data, error } = await supabase
       .from('households')
@@ -103,13 +86,11 @@ export const useHouseholds = () => {
         {
           name,
           description,
-          created_by: user.id // Must be the Supabase Auth user UUID
+          created_by: user.id
         }
       ])
       .select()
       .single();
-
-    setCreating(false);
 
     if (error) {
       toast({
@@ -120,13 +101,12 @@ export const useHouseholds = () => {
       return null;
     }
 
-    // Optionally refresh the list after creation
-    await fetchHouseholds();
+    // Optionally refresh the list
+    fetchHouseholds();
 
     return data;
   };
 
-  // Fetch households when user logs in or changes
   useEffect(() => {
     fetchHouseholds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,7 +116,6 @@ export const useHouseholds = () => {
     households,
     loading,
     fetchHouseholds,
-    createHousehold,
-    canCreateHousehold
+    createHousehold
   };
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
@@ -12,7 +13,6 @@ import WeeklySync from '@/components/WeeklySync';
 import ChildrenDashboard from '@/components/ChildrenDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
 import Auth from './Auth';
-import CreateHouseholdForm from '@/components/CreateHouseholdForm'; // <-- Import the form
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -34,16 +34,8 @@ const Index = () => {
     return <Auth />;
   }
 
-  // Show household selector and creation form if no household is selected
   if (!selectedHousehold) {
-    return (
-      <div>
-        <HouseholdSelector onHouseholdSelect={setSelectedHousehold} />
-        <div className="my-8">
-          <CreateHouseholdForm />
-        </div>
-      </div>
-    );
+    return <HouseholdSelector onHouseholdSelect={setSelectedHousehold} />;
   }
 
   const renderContent = () => {
