@@ -1,9 +1,12 @@
-
-import React, { useState } from 'react';
-import { Star, Gift, CheckCircle, Clock, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, CheckCircle, Clock, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import HouseholdSelector from '@/components/HouseholdSelector';
+import { useAuth } from '@/hooks/useAuth';
+import { useHouseholds, Household } from '@/hooks/useHouseholds';
+// If you want to add appreciations, you can import your Appreciations component here
 
 interface Chore {
   id: string;
@@ -23,7 +26,20 @@ interface Note {
   isSpecial: boolean;
 }
 
-const ChildrenDashboard = () => {
+const Dashboard = () => {
+  // Household onboarding state
+  const { user } = useAuth();
+  const { households, loading: householdsLoading } = useHouseholds();
+  const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
+
+  // Set the first household as selected if available and none is selected
+  useEffect(() => {
+    if (households.length > 0 && !selectedHousehold) {
+      setSelectedHousehold(households[0]);
+    }
+  }, [households, selectedHousehold]);
+
+  // Demo data for chores/notes (replace with your DB logic as needed)
   const [selectedChild, setSelectedChild] = useState('Emma');
   const [chores, setChores] = useState<Chore[]>([
     {
@@ -89,14 +105,12 @@ const ChildrenDashboard = () => {
   ]);
 
   const children = ['Emma', 'Jack'];
-  
   const childChores = chores.filter(chore => chore.assignedTo === selectedChild);
   const childNotes = notes.filter(note => 
     note.message.toLowerCase().includes(selectedChild.toLowerCase()) || 
     selectedChild === 'Emma' && ['1', '3'].includes(note.id) ||
     selectedChild === 'Jack' && ['2'].includes(note.id)
   );
-
   const completedChores = childChores.filter(chore => chore.completed);
   const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
 
@@ -115,13 +129,56 @@ const ChildrenDashboard = () => {
 
   const reward = getRewardLevel(totalPoints);
 
+  // Loading state
+  if (householdsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user, show loading or login prompt
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to continue</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no households or no selected household, show household selector
+  if (households.length === 0 || !selectedHousehold) {
+    return <HouseholdSelector onHouseholdSelect={setSelectedHousehold} />;
+  }
+
+  // Main dashboard content
   return (
     <div className="space-y-6">
-      {/* Child Selector */}
-      <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          Kid's Dashboard 🎈
+      {/* Household Info & Change Button */}
+      <div className="flex flex-col items-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+          {selectedHousehold.name}
         </h2>
+        <p className="text-gray-600 mb-4">
+          {selectedHousehold.description || 'Welcome to your family dashboard'}
+        </p>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setSelectedHousehold(null)}
+        >
+          Change Household
+        </Button>
+      </div>
+
+      {/* Child Selector */}
+      <div className="text-center">
         <div className="flex justify-center gap-2">
           {children.map((child) => (
             <Button
@@ -283,4 +340,4 @@ const ChildrenDashboard = () => {
   );
 };
 
-export default ChildrenDashboard;
+export default Dashboard;
