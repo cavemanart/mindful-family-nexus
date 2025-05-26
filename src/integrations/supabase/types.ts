@@ -105,27 +105,30 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
-          invite_code: string
+          invite_code: string | null
           name: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           id?: string
-          invite_code: string
+          invite_code?: string | null
           name: string
           updated_at?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
           id?: string
-          invite_code?: string
+          invite_code?: string | null
           name?: string
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -167,14 +170,39 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          email: string | null
+          fullname: string | null
+          id: string
+        }
+        Insert: {
+          email?: string | null
+          fullname?: string | null
+          id: string
+        }
+        Update: {
+          email?: string | null
+          fullname?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       generate_invite_code: {
-        Args: { length?: number }
+        Args:
+          | Record<PropertyKey, never>
+          | { length?: number }
+          | { p_household_id: string; p_invited_email: string }
         Returns: string
+      }
+      is_user_member_of_household: {
+        Args: { hh_id: string } | { user_id: string; household_id: string }
+        Returns: boolean
       }
     }
     Enums: {

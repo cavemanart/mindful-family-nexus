@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -11,7 +12,7 @@ export interface Household {
   created_by: string;
   created_at: string;
   role?: string;
-  user_id?: string; // Add this if you want to type it
+  user_id?: string;
 }
 
 export const useHouseholds = () => {
@@ -68,45 +69,122 @@ export const useHouseholds = () => {
     }
   };
 
-  const createHousehold = async ({
-    name,
-    description
-  }: { name: string; description: string }) => {
+  const createHousehold = async (name: string, description: string) => {
     if (!user) {
       toast({
         title: "Not authenticated",
         description: "You must be logged in to create a household.",
         variant: "destructive"
       });
-      return;
+      return null;
     }
 
-    const { data, error } = await supabase
-      .from('households')
-      .insert([
-        {
-          name,
-          description,
-          created_by: user.id,
-          user_id: user.id // <-- This line fixes the RLS/NOT NULL error
-        }
-      ])
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('households')
+        .insert([
+          {
+            name,
+            description,
+            created_by: user.id,
+            user_id: user.id
+          }
+        ])
+        .select()
+        .single();
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Failed to create household",
+          description: error.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Optionally refresh the list
+      fetchHouseholds();
+
       toast({
-        title: "Failed to create household",
-        description: error.message,
+        title: "Success",
+        description: "Household created successfully!",
+      });
+
+      return data;
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
         variant: "destructive"
       });
       return null;
     }
+  };
 
-    // Optionally refresh the list
-    fetchHouseholds();
+  const joinHousehold = async (inviteCode: string) => {
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "You must be logged in to join a household.",
+        variant: "destructive"
+      });
+      return false;
+    }
 
-    return data;
+    try {
+      // First, find the household with this invite code
+      const { data: household, error: findError } = await supabase
+        .from('households')
+        .select('id')
+        .eq('invite_code', inviteCode)
+        .single();
+
+      if (findError || !household) {
+        toast({
+          title: "Invalid invite code",
+          description: "No household found with this invite code.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Add user to household_members
+      const { error: joinError } = await supabase
+        .from('household_members')
+        .insert([
+          {
+            household_id: household.id,
+            user_id: user.id,
+            role: 'member'
+          }
+        ]);
+
+      if (joinError) {
+        toast({
+          title: "Failed to join household",
+          description: joinError.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Refresh households
+      fetchHouseholds();
+
+      toast({
+        title: "Success",
+        description: "Successfully joined household!",
+      });
+
+      return true;
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
+      });
+      return false;
+    }
   };
 
   useEffect(() => {
@@ -118,6 +196,7 @@ export const useHouseholds = () => {
     households,
     loading,
     fetchHouseholds,
-    createHousehold
+    createHousehold,
+    joinHousehold
   };
 };
