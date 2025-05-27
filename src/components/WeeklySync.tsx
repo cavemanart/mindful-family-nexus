@@ -1,104 +1,56 @@
 
 import React, { useState } from 'react';
-import { Calendar, Trophy, Target, Plus, Check, Star } from 'lucide-react';
+import { Calendar, Trophy, Target, Plus, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useWeeklyData } from '@/hooks/useWeeklyData';
 
-interface WeeklyWin {
-  id: string;
-  title: string;
-  description: string;
-  addedBy: string;
-  date: Date;
+interface WeeklySyncProps {
+  selectedHousehold: { id: string } | null;
 }
 
-interface WeeklyGoal {
-  id: string;
-  title: string;
-  description: string;
-  assignedTo: string;
-  completed: boolean;
-  date: Date;
-}
-
-const WeeklySync = () => {
-  const [wins, setWins] = useState<WeeklyWin[]>([
-    {
-      id: '1',
-      title: 'Family Game Night Success!',
-      description: 'We had an amazing family game night and everyone participated',
-      addedBy: 'Mom',
-      date: new Date('2024-01-15'),
-    },
-    {
-      id: '2',
-      title: 'Kids Helped with Chores',
-      description: 'Emma and Jack both completed their weekly chores without reminders',
-      addedBy: 'Dad',
-      date: new Date('2024-01-14'),
-    },
-  ]);
-
-  const [goals, setGoals] = useState<WeeklyGoal[]>([
-    {
-      id: '1',
-      title: 'Organize family photos',
-      description: 'Sort through and organize photos from last month',
-      assignedTo: 'Mom',
-      completed: false,
-      date: new Date(),
-    },
-    {
-      id: '2',
-      title: 'Plan weekend trip',
-      description: 'Research and book weekend getaway for the family',
-      assignedTo: 'Dad',
-      completed: true,
-      date: new Date(),
-    },
-  ]);
-
+const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
+  const { wins, goals, loading, addWin, addGoal, toggleGoal } = useWeeklyData(selectedHousehold?.id || null);
+  
   const [isAddingWin, setIsAddingWin] = useState(false);
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   
-  const [newWin, setNewWin] = useState({ title: '', description: '', addedBy: '' });
-  const [newGoal, setNewGoal] = useState({ title: '', description: '', assignedTo: '' });
+  const [newWin, setNewWin] = useState({ title: '', description: '', added_by: '' });
+  const [newGoal, setNewGoal] = useState({ title: '', description: '', assigned_to: '' });
 
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
 
-  const addWin = () => {
-    if (newWin.title.trim() && newWin.addedBy) {
-      setWins([{
-        id: Date.now().toString(),
-        ...newWin,
-        date: new Date(),
-      }, ...wins]);
-      setNewWin({ title: '', description: '', addedBy: '' });
-      setIsAddingWin(false);
+  const handleAddWin = async () => {
+    if (newWin.title.trim() && newWin.added_by) {
+      const success = await addWin(newWin);
+      if (success) {
+        setNewWin({ title: '', description: '', added_by: '' });
+        setIsAddingWin(false);
+      }
     }
   };
 
-  const addGoal = () => {
-    if (newGoal.title.trim() && newGoal.assignedTo) {
-      setGoals([{
-        id: Date.now().toString(),
-        ...newGoal,
-        completed: false,
-        date: new Date(),
-      }, ...goals]);
-      setNewGoal({ title: '', description: '', assignedTo: '' });
-      setIsAddingGoal(false);
+  const handleAddGoal = async () => {
+    if (newGoal.title.trim() && newGoal.assigned_to) {
+      const success = await addGoal({ ...newGoal, completed: false });
+      if (success) {
+        setNewGoal({ title: '', description: '', assigned_to: '' });
+        setIsAddingGoal(false);
+      }
     }
   };
 
-  const toggleGoal = (id: string) => {
-    setGoals(goals.map(goal =>
-      goal.id === id ? { ...goal, completed: !goal.completed } : goal
-    ));
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="animate-spin" size={24} />
+        <span className="ml-2">Loading weekly data...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -142,8 +94,8 @@ const WeeklySync = () => {
               />
               <select
                 className="w-full p-2 border rounded-md"
-                value={newWin.addedBy}
-                onChange={(e) => setNewWin({ ...newWin, addedBy: e.target.value })}
+                value={newWin.added_by}
+                onChange={(e) => setNewWin({ ...newWin, added_by: e.target.value })}
               >
                 <option value="">Who's sharing this win?</option>
                 {familyMembers.map(member => (
@@ -151,7 +103,7 @@ const WeeklySync = () => {
                 ))}
               </select>
               <div className="flex gap-2">
-                <Button onClick={addWin} className="bg-yellow-600 hover:bg-yellow-700">
+                <Button onClick={handleAddWin} className="bg-yellow-600 hover:bg-yellow-700">
                   <Trophy size={16} className="mr-2" />
                   Add Win
                 </Button>
@@ -174,11 +126,11 @@ const WeeklySync = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800">{win.title}</h4>
-                      <p className="text-sm text-gray-600">by {win.addedBy}</p>
+                      <p className="text-sm text-gray-600">by {win.added_by}</p>
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {win.date.toLocaleDateString()}
+                    {new Date(win.created_at).toLocaleDateString()}
                   </Badge>
                 </div>
                 <p className="text-gray-700">{win.description}</p>
@@ -220,8 +172,8 @@ const WeeklySync = () => {
               />
               <select
                 className="w-full p-2 border rounded-md"
-                value={newGoal.assignedTo}
-                onChange={(e) => setNewGoal({ ...newGoal, assignedTo: e.target.value })}
+                value={newGoal.assigned_to}
+                onChange={(e) => setNewGoal({ ...newGoal, assigned_to: e.target.value })}
               >
                 <option value="">Assign to...</option>
                 {familyMembers.map(member => (
@@ -229,7 +181,7 @@ const WeeklySync = () => {
                 ))}
               </select>
               <div className="flex gap-2">
-                <Button onClick={addGoal} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handleAddGoal} className="bg-blue-600 hover:bg-blue-700">
                   <Target size={16} className="mr-2" />
                   Add Goal
                 </Button>
@@ -259,7 +211,7 @@ const WeeklySync = () => {
                       <h4 className={`font-semibold ${goal.completed ? 'text-green-800 line-through' : 'text-gray-800'}`}>
                         {goal.title}
                       </h4>
-                      <p className="text-sm text-gray-600 mb-2">Assigned to {goal.assignedTo}</p>
+                      <p className="text-sm text-gray-600 mb-2">Assigned to {goal.assigned_to}</p>
                       <p className={`text-sm ${goal.completed ? 'text-green-700' : 'text-gray-700'}`}>
                         {goal.description}
                       </p>

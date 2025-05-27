@@ -1,109 +1,33 @@
 
 import React, { useState } from 'react';
-import { Star, Gift, CheckCircle, Clock, Heart } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useChores } from '@/hooks/useChores';
+import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 
-interface Chore {
-  id: string;
-  title: string;
-  description: string;
-  points: number;
-  completed: boolean;
-  dueDate: Date;
-  assignedTo: string;
+interface ChildrenDashboardProps {
+  selectedHousehold: { id: string } | null;
 }
 
-interface Note {
-  id: string;
-  message: string;
-  from: string;
-  createdAt: Date;
-  isSpecial: boolean;
-}
-
-const ChildrenDashboard = () => {
+const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
+  const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold?.id || null);
+  const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold?.id || null);
+  
   const [selectedChild, setSelectedChild] = useState('Emma');
-  const [chores, setChores] = useState<Chore[]>([
-    {
-      id: '1',
-      title: 'Clean Your Room',
-      description: 'Make bed, organize toys, put clothes in hamper',
-      points: 10,
-      completed: false,
-      dueDate: new Date('2024-01-20'),
-      assignedTo: 'Emma',
-    },
-    {
-      id: '2',
-      title: 'Feed the Dog',
-      description: 'Give Buddy his morning and evening meals',
-      points: 5,
-      completed: true,
-      dueDate: new Date('2024-01-18'),
-      assignedTo: 'Emma',
-    },
-    {
-      id: '3',
-      title: 'Take Out Trash',
-      description: 'Empty trash cans and take bags to the curb',
-      points: 8,
-      completed: false,
-      dueDate: new Date('2024-01-19'),
-      assignedTo: 'Jack',
-    },
-    {
-      id: '4',
-      title: 'Help with Dishes',
-      description: 'Load dishwasher after dinner',
-      points: 6,
-      completed: true,
-      dueDate: new Date('2024-01-18'),
-      assignedTo: 'Jack',
-    },
-  ]);
-
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      message: 'Great job on your math test! We\'re so proud of you! 🎉',
-      from: 'Mom',
-      createdAt: new Date('2024-01-15'),
-      isSpecial: true,
-    },
-    {
-      id: '2',
-      message: 'Don\'t forget to practice piano today',
-      from: 'Dad',
-      createdAt: new Date('2024-01-16'),
-      isSpecial: false,
-    },
-    {
-      id: '3',
-      message: 'Thank you for helping your sister with homework ❤️',
-      from: 'Mom',
-      createdAt: new Date('2024-01-14'),
-      isSpecial: true,
-    },
-  ]);
-
   const children = ['Emma', 'Jack'];
   
-  const childChores = chores.filter(chore => chore.assignedTo === selectedChild);
-  const childNotes = notes.filter(note => 
-    note.message.toLowerCase().includes(selectedChild.toLowerCase()) || 
-    selectedChild === 'Emma' && ['1', '3'].includes(note.id) ||
-    selectedChild === 'Jack' && ['2'].includes(note.id)
+  const childChores = chores.filter(chore => chore.assigned_to === selectedChild);
+  const childMessages = messages.filter(message => 
+    message.to_member === selectedChild || message.to_member === null
   );
 
   const completedChores = childChores.filter(chore => chore.completed);
   const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
 
-  const completeChore = (choreId: string) => {
-    setChores(chores.map(chore =>
-      chore.id === choreId ? { ...chore, completed: true } : chore
-    ));
+  const handleCompleteChore = async (choreId: string) => {
+    await toggleChore(choreId);
   };
 
   const getRewardLevel = (points: number) => {
@@ -114,6 +38,15 @@ const ChildrenDashboard = () => {
   };
 
   const reward = getRewardLevel(totalPoints);
+
+  if (choresLoading || messagesLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="animate-spin" size={24} />
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -197,7 +130,7 @@ const ChildrenDashboard = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => completeChore(chore.id)}
+                        onClick={() => handleCompleteChore(chore.id)}
                         className="text-blue-600 hover:bg-blue-100 mt-1"
                       >
                         <CheckCircle size={20} />
@@ -218,7 +151,7 @@ const ChildrenDashboard = () => {
                       <div className="flex items-center gap-4 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
-                          Due: {chore.dueDate.toLocaleDateString()}
+                          Due: {new Date(chore.due_date).toLocaleDateString()}
                         </span>
                         <span className="flex items-center gap-1">
                           <Star size={12} className="text-yellow-500" />
@@ -237,7 +170,7 @@ const ChildrenDashboard = () => {
         </div>
       </div>
 
-      {/* Notes Section */}
+      {/* Messages Section */}
       <div className="space-y-4">
         <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Heart className="text-pink-500" size={24} />
@@ -245,11 +178,11 @@ const ChildrenDashboard = () => {
         </h3>
 
         <div className="grid gap-4">
-          {childNotes.map((note) => (
+          {childMessages.map((message) => (
             <Card 
-              key={note.id} 
+              key={message.id} 
               className={`${
-                note.isSpecial 
+                message.is_special 
                   ? 'bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200' 
                   : 'bg-gray-50 border-gray-200'
               }`}
@@ -258,22 +191,22 @@ const ChildrenDashboard = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      note.isSpecial ? 'bg-pink-100' : 'bg-gray-100'
+                      message.is_special ? 'bg-pink-100' : 'bg-gray-100'
                     }`}>
-                      {note.isSpecial ? '💝' : '📝'}
+                      {message.is_special ? '💝' : '📝'}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-800">From {note.from}</p>
+                      <p className="font-semibold text-gray-800">From {message.from_member}</p>
                       <p className="text-xs text-gray-500">
-                        {note.createdAt.toLocaleDateString()}
+                        {new Date(message.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  {note.isSpecial && (
+                  {message.is_special && (
                     <Badge className="bg-pink-100 text-pink-600">Special</Badge>
                   )}
                 </div>
-                <p className="text-gray-800">{note.message}</p>
+                <p className="text-gray-800">{message.message}</p>
               </CardContent>
             </Card>
           ))}
