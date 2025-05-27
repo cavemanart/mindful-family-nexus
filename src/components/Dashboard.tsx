@@ -19,8 +19,8 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -31,7 +31,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Please log in to continue</p>
+          <p className="text-muted-foreground">Please log in to continue</p>
         </div>
       </div>
     );
@@ -39,18 +39,18 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
 
   // Main dashboard content
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:ml-36">
       {/* Welcome Header */}
-      <div className="text-center py-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">
-          Welcome Home, Family! 🏠
+      <div className="text-center py-6 md:py-8 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border">
+        <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
+          Welcome Home! 🏠
         </h1>
-        <p className="text-gray-600 text-lg">
-          Your central hub for everything that matters
+        <p className="text-muted-foreground text-base md:text-lg">
+          Your family's digital headquarters
         </p>
         {selectedHousehold && (
-          <p className="text-gray-500 text-sm mt-2">
-            Current household: {selectedHousehold.name}
+          <p className="text-muted-foreground text-sm mt-2">
+            {selectedHousehold.name}
           </p>
         )}
       </div>
