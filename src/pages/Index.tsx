@@ -189,7 +189,7 @@ const Index = () => {
 
             {/* Dashboard Content */}
             <div className="mt-8">
-              {activeTab === 'dashboard' && <Dashboard selectedHousehold={selectedHousehold} />}
+              {activeTab === 'dashboard' && <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />}
               {activeTab === 'appreciations' && <Appreciations selectedHousehold={selectedHousehold} />}
               {activeTab === 'bills' && <BillsTracker selectedHousehold={selectedHousehold} />}
               {activeTab === 'notes' && <FamilyNotes selectedHousehold={selectedHousehold} />}

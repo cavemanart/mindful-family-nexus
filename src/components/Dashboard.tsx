@@ -1,15 +1,16 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useHouseholds } from '@/hooks/useHouseholds';
+import { useHouseholds, Household } from '@/hooks/useHouseholds';
 import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
 
 interface DashboardProps {
   setActiveSection: (section: string) => void;
+  selectedHousehold?: Household | null;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold }) => {
   const { user } = useAuth();
   const { loading: householdsLoading } = useHouseholds();
 
@@ -47,6 +48,11 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         <p className="text-gray-600 text-lg">
           Your central hub for everything that matters
         </p>
+        {selectedHousehold && (
+          <p className="text-gray-500 text-sm mt-2">
+            Current household: {selectedHousehold.name}
+          </p>
+        )}
       </div>
 
       {/* Quick Actions */}
