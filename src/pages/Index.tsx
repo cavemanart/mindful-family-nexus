@@ -77,19 +77,19 @@ const Index = () => {
   const renderContent = () => {
     switch (activeSection) {
       case 'notes':
-        return <FamilyNotes />;
+        return <FamilyNotes selectedHousehold={selectedHousehold} />;
       case 'appreciations':
-        return <Appreciations />;
+        return <Appreciations selectedHousehold={selectedHousehold} />;
       case 'bills':
-        return <BillsTracker />;
+        return <BillsTracker selectedHousehold={selectedHousehold} />;
       case 'mental-load':
         return <MentalLoad />;
       case 'nanny':
         return <NannyMode />;
       case 'weekly-sync':
-        return <WeeklySync />;
+        return <WeeklySync selectedHousehold={selectedHousehold} />;
       case 'kids':
-        return <ChildrenDashboard />;
+        return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
       default:
         return <Dashboard setActiveSection={setActiveSection} />;
     }

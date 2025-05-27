@@ -6,39 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useFamilyNotes } from '@/hooks/useFamilyNotes';
+import { Household } from '@/hooks/useHouseholds';
 
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  isPinned: boolean;
-  color: string;
-  createdAt: Date;
+interface FamilyNotesProps {
+  selectedHousehold: Household;
 }
 
-const FamilyNotes = () => {
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      title: 'Soccer Practice',
-      content: 'Emma has soccer practice on Saturday at 9 AM. Don\'t forget the water bottle and shin guards!',
-      author: 'Mom',
-      isPinned: true,
-      color: 'bg-yellow-100 border-yellow-300',
-      createdAt: new Date('2024-01-15'),
-    },
-    {
-      id: '2',
-      title: 'Grocery List',
-      content: 'Milk, bread, apples, chicken, pasta sauce, cheese',
-      author: 'Dad',
-      isPinned: false,
-      color: 'bg-green-100 border-green-300',
-      createdAt: new Date('2024-01-14'),
-    },
-  ]);
-
+const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
+  const { notes, loading, addNote, updateNote, deleteNote } = useFamilyNotes(selectedHousehold?.id);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [newNote, setNewNote] = useState({ title: '', content: '' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,31 +27,29 @@ const FamilyNotes = () => {
     'bg-purple-100 border-purple-300',
   ];
 
-  const addNote = () => {
+  const handleAddNote = async () => {
     if (newNote.title.trim() && newNote.content.trim()) {
-      const note: Note = {
-        id: Date.now().toString(),
+      const success = await addNote({
         title: newNote.title,
         content: newNote.content,
         author: 'You',
-        isPinned: false,
+        is_pinned: false,
         color: colors[Math.floor(Math.random() * colors.length)],
-        createdAt: new Date(),
-      };
-      setNotes([note, ...notes]);
-      setNewNote({ title: '', content: '' });
-      setIsAddingNote(false);
+      });
+      
+      if (success) {
+        setNewNote({ title: '', content: '' });
+        setIsAddingNote(false);
+      }
     }
   };
 
-  const togglePin = (id: string) => {
-    setNotes(notes.map(note => 
-      note.id === id ? { ...note, isPinned: !note.isPinned } : note
-    ));
+  const handleTogglePin = async (id: string, currentPinStatus: boolean) => {
+    await updateNote(id, { is_pinned: !currentPinStatus });
   };
 
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter(note => note.id !== id));
+  const handleDeleteNote = async (id: string) => {
+    await deleteNote(id);
   };
 
   const filteredNotes = notes.filter(note =>
@@ -83,8 +57,16 @@ const FamilyNotes = () => {
     note.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const pinnedNotes = filteredNotes.filter(note => note.isPinned);
-  const regularNotes = filteredNotes.filter(note => !note.isPinned);
+  const pinnedNotes = filteredNotes.filter(note => note.is_pinned);
+  const regularNotes = filteredNotes.filter(note => !note.is_pinned);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -125,7 +107,7 @@ const FamilyNotes = () => {
               rows={3}
             />
             <div className="flex gap-2">
-              <Button onClick={addNote} className="bg-green-600 hover:bg-green-700">
+              <Button onClick={handleAddNote} className="bg-green-600 hover:bg-green-700">
                 Save Note
               </Button>
               <Button variant="outline" onClick={() => setIsAddingNote(false)}>
@@ -152,7 +134,7 @@ const FamilyNotes = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => togglePin(note.id)}
+                        onClick={() => handleTogglePin(note.id, note.is_pinned)}
                         className="text-yellow-600 hover:bg-yellow-200 p-1"
                       >
                         <Pin size={14} />
@@ -160,7 +142,7 @@ const FamilyNotes = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteNote(note.id)}
+                        onClick={() => handleDeleteNote(note.id)}
                         className="text-red-500 hover:bg-red-100 p-1"
                       >
                         <Trash2 size={14} />
@@ -175,7 +157,7 @@ const FamilyNotes = () => {
                       by {note.author}
                     </Badge>
                     <span className="text-xs text-gray-500">
-                      {note.createdAt.toLocaleDateString()}
+                      {new Date(note.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </CardContent>
@@ -198,7 +180,7 @@ const FamilyNotes = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => togglePin(note.id)}
+                        onClick={() => handleTogglePin(note.id, note.is_pinned)}
                         className="text-gray-500 hover:bg-gray-200 p-1"
                       >
                         <Pin size={14} />
@@ -206,7 +188,7 @@ const FamilyNotes = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteNote(note.id)}
+                        onClick={() => handleDeleteNote(note.id)}
                         className="text-red-500 hover:bg-red-100 p-1"
                       >
                         <Trash2 size={14} />
@@ -221,7 +203,7 @@ const FamilyNotes = () => {
                       by {note.author}
                     </Badge>
                     <span className="text-xs text-gray-500">
-                      {note.createdAt.toLocaleDateString()}
+                      {new Date(note.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </CardContent>

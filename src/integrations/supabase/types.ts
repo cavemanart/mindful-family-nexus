@@ -9,6 +9,220 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appreciations: {
+        Row: {
+          created_at: string
+          from_member: string
+          household_id: string
+          id: string
+          message: string
+          reactions: number
+          to_member: string
+        }
+        Insert: {
+          created_at?: string
+          from_member: string
+          household_id: string
+          id?: string
+          message: string
+          reactions?: number
+          to_member: string
+        }
+        Update: {
+          created_at?: string
+          from_member?: string
+          household_id?: string
+          id?: string
+          message?: string
+          reactions?: number
+          to_member?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appreciations_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bills: {
+        Row: {
+          amount: number
+          assigned_to: string
+          category: string
+          created_at: string
+          due_date: string
+          household_id: string
+          id: string
+          is_paid: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          assigned_to: string
+          category: string
+          created_at?: string
+          due_date: string
+          household_id: string
+          id?: string
+          is_paid?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assigned_to?: string
+          category?: string
+          created_at?: string
+          due_date?: string
+          household_id?: string
+          id?: string
+          is_paid?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chores: {
+        Row: {
+          assigned_to: string
+          completed: boolean
+          created_at: string
+          description: string
+          due_date: string
+          household_id: string
+          id: string
+          points: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          completed?: boolean
+          created_at?: string
+          description: string
+          due_date: string
+          household_id: string
+          id?: string
+          points?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          completed?: boolean
+          created_at?: string
+          description?: string
+          due_date?: string
+          household_id?: string
+          id?: string
+          points?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chores_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_messages: {
+        Row: {
+          created_at: string
+          from_member: string
+          household_id: string
+          id: string
+          is_special: boolean
+          message: string
+          to_member: string | null
+        }
+        Insert: {
+          created_at?: string
+          from_member: string
+          household_id: string
+          id?: string
+          is_special?: boolean
+          message: string
+          to_member?: string | null
+        }
+        Update: {
+          created_at?: string
+          from_member?: string
+          household_id?: string
+          id?: string
+          is_special?: boolean
+          message?: string
+          to_member?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_messages_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_notes: {
+        Row: {
+          author: string
+          color: string
+          content: string
+          created_at: string
+          household_id: string
+          id: string
+          is_pinned: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          color?: string
+          content: string
+          created_at?: string
+          household_id: string
+          id?: string
+          is_pinned?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          color?: string
+          content?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          is_pinned?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_notes_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_invitations: {
         Row: {
           accepted_at: string | null
@@ -187,6 +401,82 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      weekly_goals: {
+        Row: {
+          assigned_to: string
+          completed: boolean
+          created_at: string
+          description: string
+          household_id: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to: string
+          completed?: boolean
+          created_at?: string
+          description: string
+          household_id: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string
+          completed?: boolean
+          created_at?: string
+          description?: string
+          household_id?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_goals_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_wins: {
+        Row: {
+          added_by: string
+          created_at: string
+          description: string
+          household_id: string
+          id: string
+          title: string
+        }
+        Insert: {
+          added_by: string
+          created_at?: string
+          description: string
+          household_id: string
+          id?: string
+          title: string
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          description?: string
+          household_id?: string
+          id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_wins_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

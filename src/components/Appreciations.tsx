@@ -3,79 +3,45 @@ import React, { useState } from 'react';
 import { Heart, Plus, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { useAppreciations } from '@/hooks/useAppreciations';
+import { Household } from '@/hooks/useHouseholds';
 
-interface Appreciation {
-  id: string;
-  message: string;
-  from: string;
-  to: string;
-  createdAt: Date;
-  reactions: number;
+interface AppreciationsProps {
+  selectedHousehold: Household;
 }
 
-const Appreciations = () => {
-  const [appreciations, setAppreciations] = useState<Appreciation[]>([
-    {
-      id: '1',
-      message: 'Thank you for making breakfast this morning! The pancakes were amazing! ❤️',
-      from: 'Emma',
-      to: 'Mom',
-      createdAt: new Date('2024-01-15'),
-      reactions: 3,
-    },
-    {
-      id: '2',
-      message: 'I really appreciate you helping me with my homework yesterday. You\'re the best dad!',
-      from: 'Jack',
-      to: 'Dad',
-      createdAt: new Date('2024-01-14'),
-      reactions: 5,
-    },
-    {
-      id: '3',
-      message: 'Thanks for taking care of the kids while I was sick. You\'re amazing! 💕',
-      from: 'Mom',
-      to: 'Dad',
-      createdAt: new Date('2024-01-13'),
-      reactions: 2,
-    },
-  ]);
-
+const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
+  const { appreciations, loading, addAppreciation, addReaction } = useAppreciations(selectedHousehold?.id);
   const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
   const [newAppreciation, setNewAppreciation] = useState({
     message: '',
-    from: '',
-    to: '',
+    from_member: '',
+    to_member: '',
   });
 
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
 
-  const addAppreciation = () => {
-    if (newAppreciation.message.trim() && newAppreciation.from && newAppreciation.to) {
-      const appreciation: Appreciation = {
-        id: Date.now().toString(),
+  const handleAddAppreciation = async () => {
+    if (newAppreciation.message.trim() && newAppreciation.from_member && newAppreciation.to_member) {
+      const success = await addAppreciation({
         message: newAppreciation.message,
-        from: newAppreciation.from,
-        to: newAppreciation.to,
-        createdAt: new Date(),
+        from_member: newAppreciation.from_member,
+        to_member: newAppreciation.to_member,
         reactions: 0,
-      };
-      setAppreciations([appreciation, ...appreciations]);
-      setNewAppreciation({ message: '', from: '', to: '' });
-      setIsAddingAppreciation(false);
+      });
+      
+      if (success) {
+        setNewAppreciation({ message: '', from_member: '', to_member: '' });
+        setIsAddingAppreciation(false);
+      }
     }
   };
 
-  const addReaction = (id: string) => {
-    setAppreciations(appreciations.map(appreciation =>
-      appreciation.id === id 
-        ? { ...appreciation, reactions: appreciation.reactions + 1 }
-        : appreciation
-    ));
+  const handleAddReaction = async (id: string) => {
+    await addReaction(id);
   };
 
   const getRandomColor = () => {
@@ -89,6 +55,14 @@ const Appreciations = () => {
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -118,8 +92,8 @@ const Appreciations = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">From</label>
-                <Select value={newAppreciation.from} onValueChange={(value) => 
-                  setNewAppreciation({ ...newAppreciation, from: value })
+                <Select value={newAppreciation.from_member} onValueChange={(value) => 
+                  setNewAppreciation({ ...newAppreciation, from_member: value })
                 }>
                   <SelectTrigger>
                     <SelectValue placeholder="Select who's giving appreciation" />
@@ -133,14 +107,14 @@ const Appreciations = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">To</label>
-                <Select value={newAppreciation.to} onValueChange={(value) => 
-                  setNewAppreciation({ ...newAppreciation, to: value })
+                <Select value={newAppreciation.to_member} onValueChange={(value) => 
+                  setNewAppreciation({ ...newAppreciation, to_member: value })
                 }>
                   <SelectTrigger>
                     <SelectValue placeholder="Select who's receiving appreciation" />
                   </SelectTrigger>
                   <SelectContent>
-                    {familyMembers.filter(member => member !== newAppreciation.from).map((member) => (
+                    {familyMembers.filter(member => member !== newAppreciation.from_member).map((member) => (
                       <SelectItem key={member} value={member}>{member}</SelectItem>
                     ))}
                   </SelectContent>
@@ -158,7 +132,7 @@ const Appreciations = () => {
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={addAppreciation} className="bg-pink-600 hover:bg-pink-700">
+              <Button onClick={handleAddAppreciation} className="bg-pink-600 hover:bg-pink-700">
                 <Heart size={16} className="mr-2" />
                 Share Appreciation
               </Button>
@@ -183,12 +157,12 @@ const Appreciations = () => {
                     <User size={20} className="text-gray-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">{appreciation.from}</p>
-                    <p className="text-sm text-gray-600">to {appreciation.to}</p>
+                    <p className="font-semibold text-gray-800">{appreciation.from_member}</p>
+                    <p className="text-sm text-gray-600">to {appreciation.to_member}</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  {appreciation.createdAt.toLocaleDateString()}
+                  {new Date(appreciation.created_at).toLocaleDateString()}
                 </Badge>
               </div>
               
@@ -198,7 +172,7 @@ const Appreciations = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => addReaction(appreciation.id)}
+                  onClick={() => handleAddReaction(appreciation.id)}
                   className="text-pink-600 hover:bg-white/50 transition-colors"
                 >
                   <Heart size={16} className="mr-2" />
@@ -206,7 +180,7 @@ const Appreciations = () => {
                 </Button>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-600">
-                    {appreciation.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(appreciation.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               </div>

@@ -7,102 +7,59 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { useBills } from '@/hooks/useBills';
+import { Household } from '@/hooks/useHouseholds';
 
-interface Bill {
-  id: string;
-  name: string;
-  amount: number;
-  dueDate: Date;
-  category: string;
-  isPaid: boolean;
-  assignedTo: string;
+interface BillsTrackerProps {
+  selectedHousehold: Household;
 }
 
-const BillsTracker = () => {
-  const [bills, setBills] = useState<Bill[]>([
-    {
-      id: '1',
-      name: 'Electric Bill',
-      amount: 145.50,
-      dueDate: new Date('2024-01-18'),
-      category: 'Utilities',
-      isPaid: false,
-      assignedTo: 'Dad',
-    },
-    {
-      id: '2',
-      name: 'Internet',
-      amount: 79.99,
-      dueDate: new Date('2024-01-20'),
-      category: 'Utilities',
-      isPaid: true,
-      assignedTo: 'Mom',
-    },
-    {
-      id: '3',
-      name: 'Car Insurance',
-      amount: 234.00,
-      dueDate: new Date('2024-01-25'),
-      category: 'Insurance',
-      isPaid: false,
-      assignedTo: 'Dad',
-    },
-    {
-      id: '4',
-      name: 'Mortgage',
-      amount: 1850.00,
-      dueDate: new Date('2024-01-30'),
-      category: 'Housing',
-      isPaid: false,
-      assignedTo: 'Mom',
-    },
-  ]);
-
+const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
+  const { bills, loading, addBill, togglePaid } = useBills(selectedHousehold?.id);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [newBill, setNewBill] = useState({
     name: '',
     amount: '',
-    dueDate: '',
+    due_date: '',
     category: '',
-    assignedTo: '',
+    assigned_to: '',
   });
 
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
   const categories = ['Utilities', 'Insurance', 'Housing', 'Healthcare', 'Transportation', 'Entertainment', 'Other'];
 
-  const addBill = () => {
-    if (newBill.name.trim() && newBill.amount && newBill.dueDate && newBill.category && newBill.assignedTo) {
-      const bill: Bill = {
-        id: Date.now().toString(),
+  const handleAddBill = async () => {
+    if (newBill.name.trim() && newBill.amount && newBill.due_date && newBill.category && newBill.assigned_to) {
+      const success = await addBill({
         name: newBill.name,
         amount: parseFloat(newBill.amount),
-        dueDate: new Date(newBill.dueDate),
+        due_date: newBill.due_date,
         category: newBill.category,
-        isPaid: false,
-        assignedTo: newBill.assignedTo,
-      };
-      setBills([...bills, bill]);
-      setNewBill({ name: '', amount: '', dueDate: '', category: '', assignedTo: '' });
-      setIsAddingBill(false);
+        is_paid: false,
+        assigned_to: newBill.assigned_to,
+      });
+      
+      if (success) {
+        setNewBill({ name: '', amount: '', due_date: '', category: '', assigned_to: '' });
+        setIsAddingBill(false);
+      }
     }
   };
 
-  const togglePaid = (id: string) => {
-    setBills(bills.map(bill =>
-      bill.id === id ? { ...bill, isPaid: !bill.isPaid } : bill
-    ));
+  const handleTogglePaid = async (id: string) => {
+    await togglePaid(id);
   };
 
-  const getDaysUntilDue = (dueDate: Date) => {
+  const getDaysUntilDue = (dueDate: string) => {
     const today = new Date();
-    const diffTime = dueDate.getTime() - today.getTime();
+    const due = new Date(dueDate);
+    const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
 
-  const sortedBills = [...bills].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-  const upcomingBills = sortedBills.filter(bill => !bill.isPaid);
-  const paidBills = sortedBills.filter(bill => bill.isPaid);
+  const upcomingBills = bills.filter(bill => !bill.is_paid);
+  const paidBills = bills.filter(bill => bill.is_paid);
 
   const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
   const paidAmount = paidBills.reduce((sum, bill) => sum + bill.amount, 0);
@@ -120,6 +77,14 @@ const BillsTracker = () => {
     };
     return colors[category] || colors['Other'];
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -221,8 +186,8 @@ const BillsTracker = () => {
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Due Date</label>
                 <Input
                   type="date"
-                  value={newBill.dueDate}
-                  onChange={(e) => setNewBill({ ...newBill, dueDate: e.target.value })}
+                  value={newBill.due_date}
+                  onChange={(e) => setNewBill({ ...newBill, due_date: e.target.value })}
                 />
               </div>
               <div>
@@ -242,8 +207,8 @@ const BillsTracker = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Assigned To</label>
-                <Select value={newBill.assignedTo} onValueChange={(value) => 
-                  setNewBill({ ...newBill, assignedTo: value })
+                <Select value={newBill.assigned_to} onValueChange={(value) => 
+                  setNewBill({ ...newBill, assigned_to: value })
                 }>
                   <SelectTrigger>
                     <SelectValue placeholder="Who's responsible?" />
@@ -257,7 +222,7 @@ const BillsTracker = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={addBill} className="bg-green-600 hover:bg-green-700">
+              <Button onClick={handleAddBill} className="bg-green-600 hover:bg-green-700">
                 <Receipt size={16} className="mr-2" />
                 Add Bill
               </Button>
@@ -275,7 +240,7 @@ const BillsTracker = () => {
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Upcoming Bills</h3>
           <div className="space-y-3">
             {upcomingBills.map((bill) => {
-              const daysUntilDue = getDaysUntilDue(bill.dueDate);
+              const daysUntilDue = getDaysUntilDue(bill.due_date);
               const isOverdue = daysUntilDue < 0;
               const isDueSoon = daysUntilDue <= 3 && daysUntilDue >= 0;
 
@@ -297,7 +262,7 @@ const BillsTracker = () => {
                             <Badge className={getCategoryColor(bill.category)} variant="secondary">
                               {bill.category}
                             </Badge>
-                            <span className="text-sm text-gray-600">Assigned to {bill.assignedTo}</span>
+                            <span className="text-sm text-gray-600">Assigned to {bill.assigned_to}</span>
                           </div>
                         </div>
                       </div>
@@ -313,7 +278,7 @@ const BillsTracker = () => {
                            `Due in ${daysUntilDue} days`}
                         </p>
                         <Button
-                          onClick={() => togglePaid(bill.id)}
+                          onClick={() => handleTogglePaid(bill.id)}
                           size="sm"
                           className="mt-2 bg-green-600 hover:bg-green-700"
                         >
@@ -346,7 +311,7 @@ const BillsTracker = () => {
                           <Badge className={getCategoryColor(bill.category)} variant="secondary">
                             {bill.category}
                           </Badge>
-                          <span className="text-sm text-gray-600">Paid by {bill.assignedTo}</span>
+                          <span className="text-sm text-gray-600">Paid by {bill.assigned_to}</span>
                         </div>
                       </div>
                     </div>
@@ -354,7 +319,7 @@ const BillsTracker = () => {
                       <p className="text-lg font-bold text-green-600">${bill.amount.toFixed(2)}</p>
                       <p className="text-sm text-green-600">Paid</p>
                       <Button
-                        onClick={() => togglePaid(bill.id)}
+                        onClick={() => handleTogglePaid(bill.id)}
                         variant="outline"
                         size="sm"
                         className="mt-2 border-green-600 text-green-600 hover:bg-green-100"
