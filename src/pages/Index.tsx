@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Household } from '@/hooks/useHouseholds';
+import { Household, useHouseholds } from '@/hooks/useHouseholds';
 import Navigation from '@/components/Navigation';
 import Dashboard from '@/components/Dashboard';
 import FamilyNotes from '@/components/FamilyNotes';
@@ -18,8 +18,44 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const { user, loading } = useAuth();
+  const { households, loading: householdsLoading } = useHouseholds();
 
-  if (loading) {
+  // Auto-select household logic
+  useEffect(() => {
+    if (households && households.length > 0 && !selectedHousehold) {
+      // Try to get the last selected household from localStorage
+      const lastSelectedId = localStorage.getItem('lastSelectedHouseholdId');
+      
+      if (lastSelectedId) {
+        const lastHousehold = households.find(h => h.id === lastSelectedId);
+        if (lastHousehold) {
+          setSelectedHousehold(lastHousehold);
+          return;
+        }
+      }
+      
+      // If no last selection or household not found, auto-select the first one
+      setSelectedHousehold(households[0]);
+    }
+  }, [households, selectedHousehold]);
+
+  // Save selected household to localStorage
+  useEffect(() => {
+    if (selectedHousehold) {
+      localStorage.setItem('lastSelectedHouseholdId', selectedHousehold.id);
+    }
+  }, [selectedHousehold]);
+
+  const handleHouseholdSelect = (household: Household) => {
+    setSelectedHousehold(household);
+  };
+
+  const handleHouseholdChange = () => {
+    setSelectedHousehold(null);
+    localStorage.removeItem('lastSelectedHouseholdId');
+  };
+
+  if (loading || householdsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -35,7 +71,7 @@ const Index = () => {
   }
 
   if (!selectedHousehold) {
-    return <HouseholdSelector onHouseholdSelect={setSelectedHousehold} />;
+    return <HouseholdSelector onHouseholdSelect={handleHouseholdSelect} />;
   }
 
   const renderContent = () => {
@@ -65,7 +101,7 @@ const Index = () => {
         activeSection={activeSection} 
         setActiveSection={setActiveSection}
         selectedHousehold={selectedHousehold}
-        onHouseholdChange={() => setSelectedHousehold(null)}
+        onHouseholdChange={handleHouseholdChange}
       />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

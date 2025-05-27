@@ -193,12 +193,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_profile_and_household: {
+        Args: {
+          p_email: string
+          p_first_name?: string
+          p_last_name?: string
+          p_household_name?: string
+        }
+        Returns: undefined
+      }
       generate_invite_code: {
         Args:
           | Record<PropertyKey, never>
           | { length?: number }
           | { p_household_id: string; p_invited_email: string }
         Returns: string
+      }
+      is_household_member: {
+        Args: { household_id: string }
+        Returns: boolean
+      }
+      is_household_owner: {
+        Args: { household_id: string }
+        Returns: boolean
+      }
+      is_household_owner_or_admin: {
+        Args: { household_id: string }
+        Returns: boolean
       }
       is_user_member_of_household: {
         Args: { hh_id: string } | { user_id: string; household_id: string }

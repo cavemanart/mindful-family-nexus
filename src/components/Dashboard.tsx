@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import HouseholdSelector from '@/components/HouseholdSelector';
+
+import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useHouseholds, Household } from '@/hooks/useHouseholds';
+import { useHouseholds } from '@/hooks/useHouseholds';
 import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
 
@@ -11,8 +11,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
   const { user } = useAuth();
-  const { households, loading: householdsLoading } = useHouseholds();
-  const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
+  const { loading: householdsLoading } = useHouseholds();
 
   // Show loading spinner while fetching households
   if (householdsLoading) {
@@ -37,12 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
     );
   }
 
-  // Always require explicit household selection
-  if (!selectedHousehold) {
-    return <HouseholdSelector onHouseholdSelect={setSelectedHousehold} />;
-  }
-
-  // Main dashboard content, only shown after household is selected
+  // Main dashboard content
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
@@ -53,12 +47,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection }) => {
         <p className="text-gray-600 text-lg">
           Your central hub for everything that matters
         </p>
-        <button
-          className="mt-4 underline text-blue-600 hover:text-blue-800 text-sm"
-          onClick={() => setSelectedHousehold(null)}
-        >
-          Switch Household
-        </button>
       </div>
 
       {/* Quick Actions */}
