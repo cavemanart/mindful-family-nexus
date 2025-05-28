@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import HomePage from "./components/HomePage";
 import NannyAccess from "./pages/NannyAccess";
 import Profile from "./pages/Profile";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => {
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <PWAInstallPrompt />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

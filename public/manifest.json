@@ -1,0 +1,66 @@
+
+{
+  "name": "Hublie - Your Family's Digital Home",
+  "short_name": "Hublie",
+  "description": "Keep your family organized with shared notes, bills tracking, chores management, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "productivity"],
+  "screenshots": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/placeholder.svg",
+      "sizes": "750x1334",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Access your family dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/placeholder.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Nanny Access",
+      "short_name": "Nanny",
+      "description": "Quick access for caregivers",
+      "url": "/nanny",
+      "icons": [
+        {
+          "src": "/placeholder.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

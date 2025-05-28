@@ -8,6 +8,26 @@
     <meta name="description" content="Keep your family organized with shared notes, bills tracking, chores management, and more." />
     <meta name="author" content="Hublie" />
 
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Hublie" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#3b82f6" />
+    <meta name="theme-color" content="#3b82f6" />
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/placeholder.svg" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/placeholder.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/placeholder.svg" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/placeholder.svg" />
+
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
+
     <meta property="og:title" content="Hublie - Your Family's Digital Home" />
     <meta property="og:description" content="Keep your family organized with shared notes, bills tracking, chores management, and more." />
     <meta property="og:type" content="website" />
@@ -27,5 +47,20 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
