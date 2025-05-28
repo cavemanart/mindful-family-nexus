@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -80,6 +79,13 @@ const Index = () => {
     navigate('/');
   };
 
+  const handleHouseholdLeft = () => {
+    // Clear selected household and show selector again
+    setSelectedHousehold(null);
+    setShowHouseholdSelector(true);
+    localStorage.removeItem('selectedHouseholdId');
+  };
+
   // Show loading spinner while checking auth or households
   if (authLoading || (user && householdsLoading)) {
     return (
@@ -112,6 +118,7 @@ const Index = () => {
         selectedHousehold={selectedHousehold}
         onHouseholdChange={handleHouseholdChange}
         onSignOut={handleSignOut}
+        onHouseholdLeft={handleHouseholdLeft}
       />
 
       {/* Main Content */}

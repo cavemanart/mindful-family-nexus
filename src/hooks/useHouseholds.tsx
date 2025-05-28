@@ -207,6 +207,97 @@ export const useHouseholds = () => {
     }
   };
 
+  const leaveHousehold = async (householdId: string) => {
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "You must be logged in to leave a household.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      // First, check if user is an admin/owner
+      const { data: userMembership, error: membershipError } = await supabase
+        .from('household_members')
+        .select('role')
+        .eq('household_id', householdId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (membershipError) {
+        toast({
+          title: "Error",
+          description: "Failed to check your membership status.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // If user is admin/owner, check if there are other admins/owners
+      if (userMembership.role === 'admin' || userMembership.role === 'owner') {
+        const { data: adminMembers, error: adminError } = await supabase
+          .from('household_members')
+          .select('user_id')
+          .eq('household_id', householdId)
+          .in('role', ['admin', 'owner'])
+          .neq('user_id', user.id);
+
+        if (adminError) {
+          toast({
+            title: "Error",
+            description: "Failed to check admin members.",
+            variant: "destructive"
+          });
+          return false;
+        }
+
+        if (!adminMembers || adminMembers.length === 0) {
+          toast({
+            title: "Cannot leave household",
+            description: "You cannot leave this household as you are the only admin. Please promote another member to admin first.",
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+
+      // Remove user from household
+      const { error: leaveError } = await supabase
+        .from('household_members')
+        .delete()
+        .eq('household_id', householdId)
+        .eq('user_id', user.id);
+
+      if (leaveError) {
+        toast({
+          title: "Failed to leave household",
+          description: leaveError.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Refresh households
+      fetchHouseholds();
+
+      toast({
+        title: "Success",
+        description: "You have successfully left the household.",
+      });
+
+      return true;
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchHouseholds();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -217,6 +308,7 @@ export const useHouseholds = () => {
     loading,
     fetchHouseholds,
     createHousehold,
-    joinHousehold
+    joinHousehold,
+    leaveHousehold
   };
 };

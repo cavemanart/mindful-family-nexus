@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Moon, Sun, LogOut, Users } from "lucide-react";
+import { Menu, Moon, Sun, Users } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Household } from '@/hooks/useHouseholds';
+import UserProfile from './UserProfile';
 
 interface TopBarProps {
   user: any;
@@ -14,6 +14,7 @@ interface TopBarProps {
   selectedHousehold: Household | null;
   onHouseholdChange: (householdId: string) => void;
   onSignOut: () => void;
+  onHouseholdLeft?: () => void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({
@@ -21,7 +22,8 @@ const TopBar: React.FC<TopBarProps> = ({
   households,
   selectedHousehold,
   onHouseholdChange,
-  onSignOut
+  onSignOut,
+  onHouseholdLeft
 }) => {
   const { theme, setTheme } = useTheme();
 
@@ -63,16 +65,12 @@ const TopBar: React.FC<TopBarProps> = ({
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col space-y-4 py-4">
-                <div className="flex items-center space-x-3 pb-4 border-b">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">Family Member</p>
-                  </div>
-                </div>
+                <UserProfile 
+                  user={user}
+                  selectedHousehold={selectedHousehold}
+                  onSignOut={onSignOut}
+                  onHouseholdLeft={onHouseholdLeft}
+                />
 
                 {/* Household Selector */}
                 {households.length > 0 && (
@@ -92,11 +90,6 @@ const TopBar: React.FC<TopBarProps> = ({
                     </Select>
                   </div>
                 )}
-
-                <Button variant="outline" onClick={onSignOut} className="w-full justify-start">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </Button>
               </div>
             </SheetContent>
           </Sheet>
@@ -117,10 +110,12 @@ const TopBar: React.FC<TopBarProps> = ({
                 </SelectContent>
               </Select>
             )}
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <UserProfile 
+              user={user}
+              selectedHousehold={selectedHousehold}
+              onSignOut={onSignOut}
+              onHouseholdLeft={onHouseholdLeft}
+            />
             <Button variant="outline" size="sm" onClick={onSignOut}>
               Sign Out
             </Button>
