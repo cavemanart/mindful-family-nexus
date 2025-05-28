@@ -10,7 +10,6 @@ export const useNannyTokens = () => {
   const generateToken = async (householdId: string): Promise<string | null> => {
     setLoading(true);
     try {
-      // The database function now generates numeric-only tokens
       const { data, error } = await supabase.rpc('generate_nanny_token', {
         p_household_id: householdId
       });
@@ -26,7 +25,7 @@ export const useNannyTokens = () => {
 
       toast({
         title: "Token generated successfully",
-        description: "Share this numeric code with your nanny for secure access",
+        description: "Share this token with your nanny for secure access",
       });
 
       return data;

@@ -1,9 +1,9 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -18,29 +18,13 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    // Use multiple setTimeout calls to ensure React is completely ready
-    const timer1 = setTimeout(() => {
-      const timer2 = setTimeout(() => {
-        setIsReady(true);
-      }, 10);
-      return () => clearTimeout(timer2);
-    }, 0);
-    
-    return () => clearTimeout(timer1);
-  }, []);
-
-  if (!isReady) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-        <TooltipProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -53,10 +37,8 @@ const App = () => {
               </Routes>
               <PWAInstallPrompt />
             </BrowserRouter>
-            <Toaster />
-            <Sonner />
-          </AuthProvider>
-        </TooltipProvider>
+          </TooltipProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -27,67 +27,38 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Initialize with defaultTheme, no browser access
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
-  const [mounted, setMounted] = useState(false)
+  const [theme, setTheme] = useState<Theme>(
+    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+  )
 
-  // Only run once when component mounts
   useEffect(() => {
-    setMounted(true)
-    
-    // Only access localStorage after mounting
-    if (typeof window !== "undefined") {
-      try {
-        const storedTheme = window.localStorage.getItem(storageKey) as Theme
-        if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
-          setTheme(storedTheme)
-        }
-      } catch (error) {
-        console.warn("Could not access localStorage:", error)
-      }
+    const root = window.document.documentElement
+
+    root.classList.remove("light", "dark")
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light"
+
+      root.classList.add(systemTheme)
+      return
     }
-  }, [storageKey])
 
-  // Apply theme to DOM when theme or mounted state changes
-  useEffect(() => {
-    if (!mounted || typeof window === "undefined") return
-
-    try {
-      const root = window.document.documentElement
-      root.classList.remove("light", "dark")
-
-      if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-        root.classList.add(systemTheme)
-      } else {
-        root.classList.add(theme)
-      }
-    } catch (error) {
-      console.warn("Could not apply theme:", error)
-    }
-  }, [theme, mounted])
+    root.classList.add(theme)
+  }, [theme])
 
   const value = {
     theme,
-    setTheme: (newTheme: Theme) => {
-      setTheme(newTheme)
-      
-      // Save to localStorage after state update
-      if (mounted && typeof window !== "undefined") {
-        try {
-          window.localStorage.setItem(storageKey, newTheme)
-        } catch (error) {
-          console.warn("Could not save theme to localStorage:", error)
-        }
-      }
+    setTheme: (theme: Theme) => {
+      localStorage.setItem(storageKey, theme)
+      setTheme(theme)
     },
   }
 
-  // Always render the provider, but with initial state until mounted
   return (
-    <ThemeProviderContext.Provider {...props} value={mounted ? value : initialState}>
+    <ThemeProviderContext.Provider {...props} value={value}>
       {children}
     </ThemeProviderContext.Provider>
   )
