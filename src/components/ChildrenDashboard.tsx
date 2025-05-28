@@ -31,10 +31,10 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   };
 
   const getRewardLevel = (points: number) => {
-    if (points >= 50) return { level: 'Super Star', color: 'text-purple-600', icon: '🌟' };
-    if (points >= 30) return { level: 'Champion', color: 'text-blue-600', icon: '🏆' };
-    if (points >= 15) return { level: 'Helper', color: 'text-green-600', icon: '⭐' };
-    return { level: 'Getting Started', color: 'text-gray-600', icon: '👍' };
+    if (points >= 50) return { level: 'Super Star', color: 'text-purple-600 dark:text-purple-400', icon: '🌟' };
+    if (points >= 30) return { level: 'Champion', color: 'text-blue-600 dark:text-blue-400', icon: '🏆' };
+    if (points >= 15) return { level: 'Helper', color: 'text-green-600 dark:text-green-400', icon: '⭐' };
+    return { level: 'Getting Started', color: 'text-gray-600 dark:text-gray-400', icon: '👍' };
   };
 
   const reward = getRewardLevel(totalPoints);
@@ -51,8 +51,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   return (
     <div className="space-y-6">
       {/* Child Selector */}
-      <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">
+      <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
+        <h2 className="text-3xl font-bold text-foreground mb-4">
           Kid's Dashboard 🎈
         </h2>
         <div className="flex justify-center gap-2">
@@ -61,7 +61,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               key={child}
               variant={selectedChild === child ? "default" : "outline"}
               onClick={() => setSelectedChild(child)}
-              className={selectedChild === child ? "bg-purple-600 hover:bg-purple-700" : ""}
+              className={selectedChild === child ? "bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600" : ""}
             >
               {child}
             </Button>
@@ -70,35 +70,35 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
       </div>
 
       {/* Points and Rewards */}
-      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200 dark:border-yellow-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-800">
-            <Star className="text-yellow-600" size={24} />
+          <CardTitle className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+            <Star className="text-yellow-600 dark:text-yellow-400" size={24} />
             {selectedChild}'s Rewards
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-3xl font-bold text-yellow-600">{totalPoints} Points</p>
-              <p className="text-sm text-gray-600">This week</p>
+              <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{totalPoints} Points</p>
+              <p className="text-sm text-muted-foreground">This week</p>
             </div>
             <div className="text-center">
               <div className="text-4xl mb-2">{reward.icon}</div>
-              <Badge className={`${reward.color} font-semibold`}>
+              <Badge className={`${reward.color} font-semibold bg-white dark:bg-gray-800 border`}>
                 {reward.level}
               </Badge>
             </div>
           </div>
           
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-sm text-foreground">
               <span>Next reward at 30 points</span>
               <span>{Math.max(0, 30 - totalPoints)} points to go!</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div 
-                className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+                className="bg-yellow-500 dark:bg-yellow-400 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(100, (totalPoints / 30) * 100)}%` }}
               ></div>
             </div>
@@ -108,7 +108,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
       {/* Chores Section */}
       <div className="space-y-4">
-        <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <CheckCircle className="text-green-500" size={24} />
           {selectedChild}'s Chores
         </h3>
@@ -119,8 +119,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               key={chore.id} 
               className={`${
                 chore.completed 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-blue-50 border-blue-200 hover:shadow-md transition-shadow'
+                  ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-700' 
+                  : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow'
               }`}
             >
               <CardContent className="p-6">
@@ -131,30 +131,30 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleCompleteChore(chore.id)}
-                        className="text-blue-600 hover:bg-blue-100 mt-1"
+                        className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950/50 mt-1"
                       >
                         <CheckCircle size={20} />
                       </Button>
                     )}
                     {chore.completed && (
-                      <div className="text-green-600 mt-1">
+                      <div className="text-green-600 dark:text-green-400 mt-1">
                         <CheckCircle size={20} />
                       </div>
                     )}
                     <div className="flex-1">
-                      <h4 className={`font-semibold ${chore.completed ? 'text-green-800 line-through' : 'text-gray-800'}`}>
+                      <h4 className={`font-semibold ${chore.completed ? 'text-green-800 dark:text-green-200 line-through' : 'text-foreground'}`}>
                         {chore.title}
                       </h4>
-                      <p className={`text-sm mb-2 ${chore.completed ? 'text-green-600' : 'text-gray-600'}`}>
+                      <p className={`text-sm mb-2 ${chore.completed ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
                         {chore.description}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
                           Due: {new Date(chore.due_date).toLocaleDateString()}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Star size={12} className="text-yellow-500" />
+                          <Star size={12} className="text-yellow-500 dark:text-yellow-400" />
                           {chore.points} points
                         </span>
                       </div>
@@ -172,7 +172,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
       {/* Messages Section */}
       <div className="space-y-4">
-        <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Heart className="text-pink-500" size={24} />
           Messages for {selectedChild}
         </h3>
@@ -183,30 +183,30 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               key={message.id} 
               className={`${
                 message.is_special 
-                  ? 'bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200' 
-                  : 'bg-gray-50 border-gray-200'
+                  ? 'bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 border-pink-200 dark:border-pink-700' 
+                  : 'bg-card border-border'
               }`}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.is_special ? 'bg-pink-100' : 'bg-gray-100'
+                      message.is_special ? 'bg-pink-100 dark:bg-pink-800' : 'bg-muted'
                     }`}>
                       {message.is_special ? '💝' : '📝'}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-800">From {message.from_member}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-semibold text-foreground">From {message.from_member}</p>
+                      <p className="text-xs text-muted-foreground">
                         {new Date(message.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   {message.is_special && (
-                    <Badge className="bg-pink-100 text-pink-600">Special</Badge>
+                    <Badge className="bg-pink-100 dark:bg-pink-800 text-pink-600 dark:text-pink-200">Special</Badge>
                   )}
                 </div>
-                <p className="text-gray-800">{message.message}</p>
+                <p className="text-foreground">{message.message}</p>
               </CardContent>
             </Card>
           ))}

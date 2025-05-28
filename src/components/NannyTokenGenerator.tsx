@@ -32,7 +32,7 @@ const NannyTokenGenerator: React.FC<NannyTokenGeneratorProps> = ({ householdId }
   };
 
   return (
-    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 border-blue-200 dark:border-blue-700">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-blue-500" />
@@ -40,17 +40,17 @@ const NannyTokenGenerator: React.FC<NannyTokenGeneratorProps> = ({ householdId }
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Generate a secure, one-time access code for your nanny or caregiver to access important 
           household information including emergency contacts, medications, access codes, and routines.
         </p>
 
         {currentToken ? (
           <div className="space-y-4">
-            <div className="bg-white p-4 rounded-lg border-2 border-dashed border-blue-300">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-dashed border-blue-300 dark:border-blue-600">
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-700 mb-2">Access Code</p>
-                <div className="text-2xl font-mono font-bold text-blue-600 tracking-wider">
+                <p className="text-sm font-medium text-foreground mb-2">Access Code</p>
+                <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400 tracking-wider">
                   {currentToken.slice(0, 4)}-{currentToken.slice(4)}
                 </div>
                 <div className="flex items-center justify-center gap-2 mt-2">
@@ -92,10 +92,12 @@ const NannyTokenGenerator: React.FC<NannyTokenGeneratorProps> = ({ householdId }
               </Button>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-3">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 <strong>Share this code with your nanny:</strong> They can use it at{' '}
-                <code className="bg-yellow-100 px-1 rounded">{window.location.origin}/nanny</code>
+                <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded text-yellow-900 dark:text-yellow-100">
+                  {window.location.origin}/nanny
+                </code>
               </p>
             </div>
           </div>
@@ -103,7 +105,7 @@ const NannyTokenGenerator: React.FC<NannyTokenGeneratorProps> = ({ householdId }
           <Button
             onClick={handleGenerateToken}
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
             {loading ? (
               <>

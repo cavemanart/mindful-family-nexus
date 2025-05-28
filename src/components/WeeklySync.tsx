@@ -54,31 +54,31 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center py-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
-        <h2 className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2 mb-2">
+      <div className="text-center py-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-xl">
+        <h2 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2 mb-2">
           <Calendar className="text-blue-500" size={32} />
           Weekly Family Sync
         </h2>
-        <p className="text-gray-600">Celebrate wins and set goals together</p>
+        <p className="text-muted-foreground">Celebrate wins and set goals together</p>
       </div>
 
       {/* Weekly Wins Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Trophy className="text-yellow-500" size={24} />
             This Week's Wins
           </h3>
-          <Button onClick={() => setIsAddingWin(true)} className="bg-yellow-600 hover:bg-yellow-700">
+          <Button onClick={() => setIsAddingWin(true)} className="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600">
             <Plus size={16} className="mr-2" />
             Add Win
           </Button>
         </div>
 
         {isAddingWin && (
-          <Card className="border-2 border-dashed border-yellow-300 bg-gradient-to-r from-yellow-50 to-orange-50">
+          <Card className="border-2 border-dashed border-yellow-300 dark:border-yellow-600 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30">
             <CardHeader>
-              <CardTitle className="text-yellow-800">Share a Family Win</CardTitle>
+              <CardTitle className="text-yellow-800 dark:text-yellow-200">Share a Family Win</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
@@ -93,7 +93,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
                 rows={3}
               />
               <select
-                className="w-full p-2 border rounded-md"
+                className="w-full p-2 border rounded-md bg-background text-foreground border-border"
                 value={newWin.added_by}
                 onChange={(e) => setNewWin({ ...newWin, added_by: e.target.value })}
               >
@@ -103,7 +103,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
                 ))}
               </select>
               <div className="flex gap-2">
-                <Button onClick={handleAddWin} className="bg-yellow-600 hover:bg-yellow-700">
+                <Button onClick={handleAddWin} className="bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600">
                   <Trophy size={16} className="mr-2" />
                   Add Win
                 </Button>
@@ -117,23 +117,23 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
 
         <div className="grid gap-4">
           {wins.map((win) => (
-            <Card key={win.id} className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+            <Card key={win.id} className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200 dark:border-yellow-700">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                      <Trophy size={20} className="text-yellow-600" />
+                    <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-800 rounded-full flex items-center justify-center">
+                      <Trophy size={20} className="text-yellow-600 dark:text-yellow-400" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800">{win.title}</h4>
-                      <p className="text-sm text-gray-600">by {win.added_by}</p>
+                      <h4 className="font-semibold text-foreground">{win.title}</h4>
+                      <p className="text-sm text-muted-foreground">by {win.added_by}</p>
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-xs">
                     {new Date(win.created_at).toLocaleDateString()}
                   </Badge>
                 </div>
-                <p className="text-gray-700">{win.description}</p>
+                <p className="text-foreground">{win.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -143,20 +143,20 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
       {/* Weekly Goals Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Target className="text-blue-500" size={24} />
             This Week's Goals
           </h3>
-          <Button onClick={() => setIsAddingGoal(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => setIsAddingGoal(true)} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
             <Plus size={16} className="mr-2" />
             Add Goal
           </Button>
         </div>
 
         {isAddingGoal && (
-          <Card className="border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+          <Card className="border-2 border-dashed border-blue-300 dark:border-blue-600 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
             <CardHeader>
-              <CardTitle className="text-blue-800">Set a Family Goal</CardTitle>
+              <CardTitle className="text-blue-800 dark:text-blue-200">Set a Family Goal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
@@ -171,7 +171,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
                 rows={3}
               />
               <select
-                className="w-full p-2 border rounded-md"
+                className="w-full p-2 border rounded-md bg-background text-foreground border-border"
                 value={newGoal.assigned_to}
                 onChange={(e) => setNewGoal({ ...newGoal, assigned_to: e.target.value })}
               >
@@ -181,7 +181,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
                 ))}
               </select>
               <div className="flex gap-2">
-                <Button onClick={handleAddGoal} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handleAddGoal} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
                   <Target size={16} className="mr-2" />
                   Add Goal
                 </Button>
@@ -195,7 +195,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
 
         <div className="grid gap-4">
           {goals.map((goal) => (
-            <Card key={goal.id} className={`${goal.completed ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+            <Card key={goal.id} className={`${goal.completed ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-700' : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700'}`}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
@@ -203,16 +203,16 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleGoal(goal.id)}
-                      className={`mt-1 ${goal.completed ? 'text-green-600' : 'text-gray-400'}`}
+                      className={`mt-1 ${goal.completed ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}
                     >
                       <Check size={20} />
                     </Button>
                     <div className="flex-1">
-                      <h4 className={`font-semibold ${goal.completed ? 'text-green-800 line-through' : 'text-gray-800'}`}>
+                      <h4 className={`font-semibold ${goal.completed ? 'text-green-800 dark:text-green-200 line-through' : 'text-foreground'}`}>
                         {goal.title}
                       </h4>
-                      <p className="text-sm text-gray-600 mb-2">Assigned to {goal.assigned_to}</p>
-                      <p className={`text-sm ${goal.completed ? 'text-green-700' : 'text-gray-700'}`}>
+                      <p className="text-sm text-muted-foreground mb-2">Assigned to {goal.assigned_to}</p>
+                      <p className={`text-sm ${goal.completed ? 'text-green-700 dark:text-green-300' : 'text-foreground'}`}>
                         {goal.description}
                       </p>
                     </div>
