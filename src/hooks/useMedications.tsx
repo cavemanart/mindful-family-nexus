@@ -88,6 +88,38 @@ export const useMedications = (householdId?: string) => {
     }
   };
 
+  const deleteMedication = async (medicationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('medications')
+        .delete()
+        .eq('id', medicationId);
+
+      if (error) {
+        toast({
+          title: "Error deleting medication",
+          description: error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      fetchMedications();
+      toast({
+        title: "Success",
+        description: "Medication deleted successfully"
+      });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchMedications();
   }, [householdId]);
@@ -96,6 +128,7 @@ export const useMedications = (householdId?: string) => {
     medications,
     loading,
     fetchMedications,
-    addMedication
+    addMedication,
+    deleteMedication
   };
 };

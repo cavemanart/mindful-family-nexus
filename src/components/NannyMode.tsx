@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,8 +27,8 @@ const NannyMode = () => {
   const { userProfile } = useAuth();
   const { households } = useHouseholds();
   
-  const correctPin = '1234'; // In a real app, this would be stored securely
-  const selectedHousehold = households[0]; // For demo purposes
+  const correctPin = '1234';
+  const selectedHousehold = households[0];
 
   const { contacts, addContact, deleteContact } = useEmergencyContacts(selectedHousehold?.id);
   const { medications, addMedication, deleteMedication } = useMedications(selectedHousehold?.id);
@@ -511,7 +510,7 @@ const NannyMode = () => {
                     </Button>
                   </div>
                 </DialogContent>
-              </DialogContent>
+              </Dialog>
             )}
           </div>
           

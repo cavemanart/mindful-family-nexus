@@ -85,6 +85,38 @@ export const useEmergencyContacts = (householdId?: string) => {
     }
   };
 
+  const deleteContact = async (contactId: string) => {
+    try {
+      const { error } = await supabase
+        .from('emergency_contacts')
+        .delete()
+        .eq('id', contactId);
+
+      if (error) {
+        toast({
+          title: "Error deleting contact",
+          description: error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      fetchContacts();
+      toast({
+        title: "Success",
+        description: "Emergency contact deleted successfully"
+      });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchContacts();
   }, [householdId]);
@@ -93,6 +125,7 @@ export const useEmergencyContacts = (householdId?: string) => {
     contacts,
     loading,
     fetchContacts,
-    addContact
+    addContact,
+    deleteContact
   };
 };

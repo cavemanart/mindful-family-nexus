@@ -86,6 +86,38 @@ export const useHouseholdInfo = (householdId?: string) => {
     }
   };
 
+  const deleteHouseholdInfo = async (infoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('household_info')
+        .delete()
+        .eq('id', infoId);
+
+      if (error) {
+        toast({
+          title: "Error deleting household info",
+          description: error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      fetchHouseholdInfo();
+      toast({
+        title: "Success",
+        description: "Household info deleted successfully"
+      });
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchHouseholdInfo();
   }, [householdId]);
@@ -94,6 +126,7 @@ export const useHouseholdInfo = (householdId?: string) => {
     householdInfo,
     loading,
     fetchHouseholdInfo,
-    addHouseholdInfo
+    addHouseholdInfo,
+    deleteHouseholdInfo
   };
 };
