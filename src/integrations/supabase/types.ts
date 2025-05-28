@@ -197,6 +197,78 @@ export type Database = {
           },
         ]
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          assigned_to: string[] | null
+          color: string
+          created_at: string
+          creator_id: string
+          description: string | null
+          end_datetime: string | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          household_id: string
+          id: string
+          location: string | null
+          required_roles: string[] | null
+          start_datetime: string
+          title: string
+          updated_at: string
+          visibility: Database["public"]["Enums"]["event_visibility"]
+        }
+        Insert: {
+          all_day?: boolean
+          assigned_to?: string[] | null
+          color?: string
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          end_datetime?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          household_id: string
+          id?: string
+          location?: string | null
+          required_roles?: string[] | null
+          start_datetime: string
+          title: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["event_visibility"]
+        }
+        Update: {
+          all_day?: boolean
+          assigned_to?: string[] | null
+          color?: string
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          end_datetime?: string | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          household_id?: string
+          id?: string
+          location?: string | null
+          required_roles?: string[] | null
+          start_datetime?: string
+          title?: string
+          updated_at?: string
+          visibility?: Database["public"]["Enums"]["event_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chores: {
         Row: {
           assigned_to: string
@@ -275,6 +347,117 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "emergency_contacts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          household_id: string
+          id: string
+          responded_at: string | null
+          response_note: string | null
+          status: Database["public"]["Enums"]["rsvp_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          household_id: string
+          id?: string
+          responded_at?: string | null
+          response_note?: string | null
+          status?: Database["public"]["Enums"]["rsvp_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          household_id?: string
+          id?: string
+          responded_at?: string | null
+          response_note?: string | null
+          status?: Database["public"]["Enums"]["rsvp_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rsvps_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rsvps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_types: {
+        Row: {
+          can_create_roles: string[]
+          can_view_roles: string[]
+          color: string
+          created_at: string
+          default_visibility: Database["public"]["Enums"]["event_visibility"]
+          description: string | null
+          household_id: string
+          icon: string
+          id: string
+          name: string
+          type_key: Database["public"]["Enums"]["event_type"]
+          updated_at: string
+        }
+        Insert: {
+          can_create_roles?: string[]
+          can_view_roles?: string[]
+          color?: string
+          created_at?: string
+          default_visibility?: Database["public"]["Enums"]["event_visibility"]
+          description?: string | null
+          household_id: string
+          icon?: string
+          id?: string
+          name: string
+          type_key: Database["public"]["Enums"]["event_type"]
+          updated_at?: string
+        }
+        Update: {
+          can_create_roles?: string[]
+          can_view_roles?: string[]
+          color?: string
+          created_at?: string
+          default_visibility?: Database["public"]["Enums"]["event_visibility"]
+          description?: string | null
+          household_id?: string
+          icon?: string
+          id?: string
+          name?: string
+          type_key?: Database["public"]["Enums"]["event_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_types_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
@@ -800,6 +983,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_calendar_event: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_calendar_event: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
       create_profile_and_household: {
         Args: {
           p_email: string
@@ -850,8 +1041,18 @@ export type Database = {
       }
     }
     Enums: {
+      event_type:
+        | "task"
+        | "meeting"
+        | "milestone"
+        | "appointment"
+        | "reminder"
+        | "social"
+        | "sync"
+      event_visibility: "public" | "household" | "role_specific" | "private"
       household_role: "owner" | "admin" | "member"
       invitation_status: "pending" | "accepted" | "declined" | "expired"
+      rsvp_status: "pending" | "accepted" | "declined" | "maybe"
       user_role: "parent" | "nanny" | "child" | "grandparent"
     }
     CompositeTypes: {
@@ -968,8 +1169,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      event_type: [
+        "task",
+        "meeting",
+        "milestone",
+        "appointment",
+        "reminder",
+        "social",
+        "sync",
+      ],
+      event_visibility: ["public", "household", "role_specific", "private"],
       household_role: ["owner", "admin", "member"],
       invitation_status: ["pending", "accepted", "declined", "expired"],
+      rsvp_status: ["pending", "accepted", "declined", "maybe"],
       user_role: ["parent", "nanny", "child", "grandparent"],
     },
   },
