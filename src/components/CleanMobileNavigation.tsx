@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X } from 'lucide-react';
+import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { usePagePreferences } from '@/hooks/usePagePreferences';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CleanMobileNavigationProps {
   activeTab: string;
@@ -12,13 +13,15 @@ interface CleanMobileNavigationProps {
 const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab, setActiveTab }) => {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const { getVisiblePages } = usePagePreferences();
+  const { user } = useAuth();
 
-  // Primary navigation items (shown in bottom bar)
+  // Primary navigation items (shown in bottom bar) - now includes profile
   const primaryItems = [
     { key: 'dashboard', label: 'Home', icon: Home },
     { key: 'appreciations', label: 'Thanks', icon: Heart },
     { key: 'bills', label: 'Bills', icon: DollarSign },
     { key: 'notes', label: 'Notes', icon: StickyNote },
+    { key: 'profile', label: 'Profile', icon: User, alwaysVisible: true },
   ];
 
   // Secondary navigation items (shown in "More" menu)
@@ -30,14 +33,41 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
     { key: 'weekly-sync', label: 'Goals', icon: Calendar },
   ];
 
-  // Filter items based on user preferences
-  const visiblePrimaryItems = getVisiblePages(primaryItems);
+  // Filter items based on user preferences (except profile which is always visible)
+  const visiblePrimaryItems = primaryItems.filter(item => 
+    item.alwaysVisible || getVisiblePages([item]).length > 0
+  );
   const visibleSecondaryItems = getVisiblePages(secondaryItems);
-  const allVisibleItems = [...visiblePrimaryItems, ...visibleSecondaryItems];
+  const allVisibleItems = [...visiblePrimaryItems.filter(item => item.key !== 'profile'), ...visibleSecondaryItems];
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setIsMoreMenuOpen(false);
+  };
+
+  // Special rendering for profile tab with user avatar
+  const renderProfileTab = () => {
+    const isActive = activeTab === 'profile';
+    return (
+      <button
+        key="profile"
+        onClick={() => handleTabChange('profile')}
+        className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
+          isActive
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+        }`}
+      >
+        <div className={`h-5 w-5 rounded-full flex items-center justify-center text-xs font-medium ${
+          isActive 
+            ? 'bg-primary-foreground text-primary' 
+            : 'bg-blue-600 text-white'
+        }`}>
+          {user?.email?.[0].toUpperCase() || 'U'}
+        </div>
+        <span className="text-xs font-medium truncate">Profile</span>
+      </button>
+    );
   };
 
   return (
@@ -67,11 +97,11 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - Now with 5 tabs including profile */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border shadow-lg z-40">
         <div className="grid grid-cols-5 gap-1 p-2">
-          {/* Primary Navigation Items */}
-          {visiblePrimaryItems.slice(0, 4).map((item) => {
+          {/* First 3 primary navigation items */}
+          {visiblePrimaryItems.slice(0, 3).map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -89,7 +119,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
             );
           })}
 
-          {/* More Menu Button - only show if there are secondary items or more than 4 primary items */}
+          {/* More Menu Button - only show if there are more items */}
           {(visibleSecondaryItems.length > 0 || visiblePrimaryItems.length > 4) && (
             <button
               onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
@@ -104,6 +134,9 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
               <span className="text-xs font-medium">More</span>
             </button>
           )}
+
+          {/* Profile Tab - Always visible as the last tab */}
+          {renderProfileTab()}
         </div>
 
         {/* More Menu Overlay */}
@@ -123,7 +156,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {/* Show remaining primary items first, then secondary items */}
-                {[...visiblePrimaryItems.slice(4), ...visibleSecondaryItems].map((item) => {
+                {[...visiblePrimaryItems.slice(4).filter(item => item.key !== 'profile'), ...visibleSecondaryItems].map((item) => {
                   const Icon = item.icon;
                   return (
                     <button

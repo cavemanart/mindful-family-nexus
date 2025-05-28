@@ -76,9 +76,9 @@ const Index = () => {
     }
   }, [user, households, householdsLoading]);
 
-  // Redirect to dashboard if current tab is not visible
+  // Redirect to dashboard if current tab is not visible (except profile which is always accessible)
   useEffect(() => {
-    if (activeTab !== 'dashboard' && !isPageVisible(activeTab)) {
+    if (activeTab !== 'dashboard' && activeTab !== 'profile' && !isPageVisible(activeTab)) {
       setActiveTab('dashboard');
     }
   }, [activeTab, isPageVisible]);
@@ -107,6 +107,15 @@ const Index = () => {
     console.log('🔄 Retrying all failed operations');
     retryAuth();
     retryHouseholds();
+  };
+
+  // Handle tab changes including profile navigation
+  const handleTabChange = (tab: string) => {
+    if (tab === 'profile') {
+      navigate('/profile');
+    } else {
+      setActiveTab(tab);
+    }
   };
 
   // Progressive loading messages
@@ -253,7 +262,7 @@ const Index = () => {
         </main>
 
         {showMobileNav && (
-          <CleanMobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+          <CleanMobileNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
         )}
       </div>
     </ErrorBoundary>
