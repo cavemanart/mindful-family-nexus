@@ -27,41 +27,43 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
+  // Initialize with defaultTheme, no browser access
   const [theme, setTheme] = useState<Theme>(defaultTheme)
   const [mounted, setMounted] = useState(false)
 
+  // Only run once when component mounts
   useEffect(() => {
     setMounted(true)
-    try {
-      const storedTheme = localStorage.getItem(storageKey) as Theme
-      if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
-        setTheme(storedTheme)
+    
+    // Only access localStorage after mounting
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = window.localStorage.getItem(storageKey) as Theme
+        if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
+          setTheme(storedTheme)
+        }
+      } catch (error) {
+        console.warn("Could not access localStorage:", error)
       }
-    } catch (error) {
-      // localStorage might not be available
-      console.warn("Could not access localStorage:", error)
     }
   }, [storageKey])
 
+  // Apply theme to DOM when theme or mounted state changes
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || typeof window === "undefined") return
 
     try {
       const root = window.document.documentElement
-
       root.classList.remove("light", "dark")
 
       if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light"
-
         root.classList.add(systemTheme)
-        return
+      } else {
+        root.classList.add(theme)
       }
-
-      root.classList.add(theme)
     } catch (error) {
       console.warn("Could not apply theme:", error)
     }
@@ -69,29 +71,23 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      try {
-        if (mounted && typeof window !== "undefined") {
-          localStorage.setItem(storageKey, theme)
+    setTheme: (newTheme: Theme) => {
+      setTheme(newTheme)
+      
+      // Save to localStorage after state update
+      if (mounted && typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(storageKey, newTheme)
+        } catch (error) {
+          console.warn("Could not save theme to localStorage:", error)
         }
-      } catch (error) {
-        console.warn("Could not save theme to localStorage:", error)
       }
-      setTheme(theme)
     },
   }
 
-  // Don't render until mounted to prevent hydration issues
-  if (!mounted) {
-    return (
-      <ThemeProviderContext.Provider value={initialState}>
-        {children}
-      </ThemeProviderContext.Provider>
-    )
-  }
-
+  // Always render the provider, but with initial state until mounted
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext.Provider {...props} value={mounted ? value : initialState}>
       {children}
     </ThemeProviderContext.Provider>
   )
