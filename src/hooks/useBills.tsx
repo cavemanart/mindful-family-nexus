@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +39,18 @@ export const useBills = (householdId: string | null) => {
         .order('due_date', { ascending: true });
 
       if (error) throw error;
-      setBills(data || []);
+      
+      // Transform the data to ensure proper typing
+      const typedBills: Bill[] = (data || []).map(bill => ({
+        ...bill,
+        recurrence_type: bill.recurrence_type as 'none' | 'weekly' | 'monthly' || 'none',
+        recurrence_interval: bill.recurrence_interval || 1,
+        next_due_date: bill.next_due_date || undefined,
+        is_template: bill.is_template || false,
+        parent_bill_id: bill.parent_bill_id || undefined
+      }));
+      
+      setBills(typedBills);
     } catch (error: any) {
       toast({
         title: "Error fetching bills",
