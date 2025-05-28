@@ -20,11 +20,11 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const colors = [
-    'bg-yellow-100 border-yellow-300',
-    'bg-green-100 border-green-300',
-    'bg-blue-100 border-blue-300',
-    'bg-pink-100 border-pink-300',
-    'bg-purple-100 border-purple-300',
+    'bg-yellow-50 border-yellow-300 dark:bg-yellow-950/30 dark:border-yellow-700',
+    'bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700',
+    'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700',
+    'bg-pink-50 border-pink-300 dark:bg-pink-950/30 dark:border-pink-700',
+    'bg-purple-50 border-purple-300 dark:bg-purple-950/30 dark:border-purple-700',
   ];
 
   const handleAddNote = async () => {
@@ -71,10 +71,10 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Family Notes</h2>
+        <h2 className="text-2xl font-bold text-foreground">Family Notes</h2>
         <div className="flex gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
             <Input
               placeholder="Search notes..."
               value={searchTerm}
@@ -90,7 +90,7 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
       </div>
 
       {isAddingNote && (
-        <Card className="border-2 border-dashed border-gray-300">
+        <Card className="border-2 border-dashed border-border">
           <CardHeader>
             <CardTitle>Add New Note</CardTitle>
           </CardHeader>
@@ -120,8 +120,8 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
 
       {pinnedNotes.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Pin size={18} className="text-gray-500" />
+          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Pin size={18} className="text-muted-foreground" />
             Pinned Notes
           </h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -129,13 +129,13 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
               <Card key={note.id} className={`${note.color} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-800">{note.title}</CardTitle>
+                    <CardTitle className="text-lg font-semibold text-foreground">{note.title}</CardTitle>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleTogglePin(note.id, note.is_pinned)}
-                        className="text-yellow-600 hover:bg-yellow-200 p-1"
+                        className="text-yellow-600 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 p-1"
                       >
                         <Pin size={14} />
                       </Button>
@@ -143,7 +143,7 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteNote(note.id)}
-                        className="text-red-500 hover:bg-red-100 p-1"
+                        className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 p-1"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -151,12 +151,12 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 text-sm mb-3">{note.content}</p>
+                  <p className="text-foreground text-sm mb-3">{note.content}</p>
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs">
                       by {note.author}
                     </Badge>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(note.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -169,19 +169,19 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
 
       {regularNotes.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">All Notes</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-3">All Notes</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {regularNotes.map((note) => (
               <Card key={note.id} className={`${note.color} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-gray-800">{note.title}</CardTitle>
+                    <CardTitle className="text-lg font-semibold text-foreground">{note.title}</CardTitle>
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleTogglePin(note.id, note.is_pinned)}
-                        className="text-gray-500 hover:bg-gray-200 p-1"
+                        className="text-muted-foreground hover:bg-muted p-1"
                       >
                         <Pin size={14} />
                       </Button>
@@ -189,7 +189,7 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteNote(note.id)}
-                        className="text-red-500 hover:bg-red-100 p-1"
+                        className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 p-1"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -197,12 +197,12 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 text-sm mb-3">{note.content}</p>
+                  <p className="text-foreground text-sm mb-3">{note.content}</p>
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs">
                       by {note.author}
                     </Badge>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted-foreground">
                       {new Date(note.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -215,8 +215,8 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
 
       {filteredNotes.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No notes found.</p>
-          <p className="text-gray-400 text-sm mt-2">Start by adding your first family note!</p>
+          <p className="text-muted-foreground text-lg">No notes found.</p>
+          <p className="text-muted-foreground text-sm mt-2">Start by adding your first family note!</p>
         </div>
       )}
     </div>

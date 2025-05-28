@@ -36,16 +36,16 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editedMessage, setEditedMessage] = useState(appreciation.message);
 
-  const getRandomColor = () => {
-    const colors = [
-      'from-pink-100 to-pink-200',
-      'from-purple-100 to-purple-200',
-      'from-blue-100 to-blue-200',
-      'from-green-100 to-green-200',
-      'from-yellow-100 to-yellow-200',
-      'from-orange-100 to-orange-200',
+  const getRandomCardStyle = () => {
+    const styles = [
+      'bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-950/40 dark:to-pink-900/40 border-pink-200 dark:border-pink-800',
+      'bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/40 dark:to-purple-900/40 border-purple-200 dark:border-purple-800',
+      'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/40 dark:to-blue-900/40 border-blue-200 dark:border-blue-800',
+      'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/40 dark:to-green-900/40 border-green-200 dark:border-green-800',
+      'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-950/40 dark:to-yellow-900/40 border-yellow-200 dark:border-yellow-800',
+      'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950/40 dark:to-orange-900/40 border-orange-200 dark:border-orange-800',
     ];
-    return colors[Math.floor(Math.random() * colors.length)];
+    return styles[Math.floor(Math.random() * styles.length)];
   };
 
   const userHasReacted = reactions.some(r => r.reactor_name === currentUser);
@@ -83,16 +83,16 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
   };
 
   return (
-    <Card className={`bg-gradient-to-r ${getRandomColor()} border-0 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
+    <Card className={`${getRandomCardStyle()} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <User size={20} className="text-gray-600" />
+            <div className="w-10 h-10 bg-background rounded-full flex items-center justify-center shadow-sm border">
+              <User size={20} className="text-muted-foreground" />
             </div>
             <div>
-              <p className="font-semibold text-gray-800">{appreciation.from_member}</p>
-              <p className="text-sm text-gray-600">to {appreciation.to_member}</p>
+              <p className="font-semibold text-foreground">{appreciation.from_member}</p>
+              <p className="text-sm text-muted-foreground">to {appreciation.to_member}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
           </div>
         </div>
         
-        <p className="text-gray-800 mb-4 leading-relaxed">{appreciation.message}</p>
+        <p className="text-foreground mb-4 leading-relaxed">{appreciation.message}</p>
         
         <div className="flex items-center justify-between mb-4">
           <Button
@@ -137,8 +137,8 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
             onClick={() => onToggleReaction(appreciation.id, currentUser)}
             className={`transition-colors ${
               userHasReacted 
-                ? 'text-pink-600 bg-pink-50 hover:bg-pink-100' 
-                : 'text-pink-600 hover:bg-white/50'
+                ? 'text-pink-600 bg-pink-50 hover:bg-pink-100 dark:bg-pink-950/30 dark:hover:bg-pink-900/50' 
+                : 'text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/30'
             }`}
           >
             <Heart size={16} className={`mr-2 ${userHasReacted ? 'fill-current' : ''}`} />
@@ -149,7 +149,7 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleToggleComments}
-            className="text-gray-600 hover:bg-white/50"
+            className="text-muted-foreground hover:bg-muted"
           >
             <MessageCircle size={16} className="mr-2" />
             {comments.length} Comment{comments.length !== 1 ? 's' : ''}
@@ -160,14 +160,14 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
         {showComments && (
           <div className="border-t pt-4 space-y-3">
             {comments.map((comment) => (
-              <div key={comment.id} className="bg-white/50 rounded-lg p-3">
+              <div key={comment.id} className="bg-background/50 rounded-lg p-3 border">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-sm text-gray-700">{comment.commenter_name}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="font-medium text-sm text-foreground">{comment.commenter_name}</span>
+                  <span className="text-xs text-muted-foreground">
                     {new Date(comment.created_at).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-gray-800 text-sm">{comment.comment}</p>
+                <p className="text-foreground text-sm">{comment.comment}</p>
               </div>
             ))}
             
@@ -177,7 +177,7 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={2}
-                className="flex-1 resize-none bg-white/70"
+                className="flex-1 resize-none"
               />
               <Button
                 onClick={handleAddComment}
@@ -191,7 +191,7 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
         )}
 
         <div className="flex items-center justify-end mt-2">
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-muted-foreground">
             {new Date(appreciation.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>

@@ -65,11 +65,11 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Heart className="text-pink-500" size={28} />
             Family Appreciations
           </h2>
-          <p className="text-gray-600 mt-1">Share love and gratitude with your family</p>
+          <p className="text-muted-foreground mt-1">Share love and gratitude with your family</p>
         </div>
         <Button 
           onClick={() => setIsAddingAppreciation(true)} 
@@ -81,14 +81,14 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
       </div>
 
       {isAddingAppreciation && (
-        <Card className="border-2 border-dashed border-pink-300 bg-gradient-to-r from-pink-50 to-purple-50">
+        <Card className="border-2 border-dashed border-pink-300 dark:border-pink-700 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30">
           <CardHeader>
-            <CardTitle className="text-pink-800">Share an Appreciation</CardTitle>
+            <CardTitle className="text-pink-800 dark:text-pink-200">Share an Appreciation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">From</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">From</label>
                 <Select value={newAppreciation.from_member} onValueChange={(value) => 
                   setNewAppreciation({ ...newAppreciation, from_member: value })
                 }>
@@ -103,7 +103,7 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">To</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">To</label>
                 <Select value={newAppreciation.to_member} onValueChange={(value) => 
                   setNewAppreciation({ ...newAppreciation, to_member: value })
                 }>
@@ -119,7 +119,7 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Message</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">Message</label>
               <Textarea
                 placeholder="Share what you appreciate about this person..."
                 value={newAppreciation.message}
@@ -161,8 +161,8 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
       {appreciations.length === 0 && (
         <div className="text-center py-12">
           <Heart size={48} className="text-pink-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No appreciations yet!</p>
-          <p className="text-gray-400 text-sm mt-2">Start spreading love by sharing your first appreciation.</p>
+          <p className="text-muted-foreground text-lg">No appreciations yet!</p>
+          <p className="text-muted-foreground text-sm mt-2">Start spreading love by sharing your first appreciation.</p>
         </div>
       )}
     </div>
