@@ -24,6 +24,7 @@ const App = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+          {/* Removed TooltipProvider */}
           <AuthProvider>
             <Toaster />
             <Sonner />
@@ -32,7 +33,22 @@ const App = () => {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile" element={
+                  <ErrorBoundary fallback={
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="p-6 bg-white rounded-lg shadow-lg text-center">
+                        <h2 className="text-xl font-bold text-red-600 mb-2">Profile Error</h2>
+                        <p className="mb-4">There was an error loading your profile</p>
+                        <button onClick={() => window.location.href = '/'} 
+                          className="px-4 py-2 bg-blue-600 text-white rounded">
+                          Return Home
+                        </button>
+                      </div>
+                    </div>
+                  }>
+                    <Profile />
+                  </ErrorBoundary>
+                } />
                 <Route path="/nanny" element={<NannyAccess />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

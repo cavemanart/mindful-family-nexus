@@ -15,6 +15,7 @@ import { Household } from '@/hooks/useHouseholds';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import LeaveHouseholdDialog from './LeaveHouseholdDialog';
+import UserProfileErrorBoundary from './UserProfileErrorBoundary';
 
 interface UserProfileProps {
   user: any;
@@ -37,96 +38,98 @@ const UserProfile: React.FC<UserProfileProps> = ({
     switch (role) {
       case 'parent': return 'Parent';
       case 'nanny': return 'Nanny/Caregiver';
-      case 'child': return 'Child';
+      case 'chil d': return 'Child';
       case 'grandparent': return 'Grandparent';
       default: return 'Family Member';
     }
   };
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[350px]">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
+    <UserProfileErrorBoundary>
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
+            <Avatar className="h-8 w-8">
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
             </Avatar>
-            <div className="text-left">
-              <p className="text-lg font-semibold">
-                {userProfile?.first_name && userProfile?.last_name 
-                  ? `${userProfile.first_name} ${userProfile.last_name}`
-                  : user?.email
-                }
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {getRoleDisplay(userProfile?.role)}
-              </p>
-            </div>
-          </SheetTitle>
-        </SheetHeader>
-
-        <div className="mt-6 space-y-6">
-          {/* Current Household Info */}
-          {selectedHousehold && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground">Current Household</h3>
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="font-medium">{selectedHousehold.name}</p>
-                <p className="text-sm text-muted-foreground capitalize">
-                  Role: {selectedHousehold.role}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-[350px]">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="text-left">
+                <p className="text-lg font-semibold">
+                  {userProfile?.first_name && userProfile?.last_name 
+                    ? `${userProfile.first_name} ${userProfile.last_name}`
+                    : user?.email
+                  }
                 </p>
-                {selectedHousehold.description && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedHousehold.description}
+                <p className="text-sm text-muted-foreground">
+                  {getRoleDisplay(userProfile?.role)}
+                </p>
+              </div>
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            {/* Current Household Info */}
+            {selectedHousehold && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Current Household</h3>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="font-medium">{selectedHousehold.name}</p>
+                  <p className="text-sm text-muted-foreground capitalize">
+                    Role: {selectedHousehold.role}
                   </p>
-                )}
+                  {selectedHousehold.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {selectedHousehold.description}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Admin Actions */}
-          {isAdminOrOwner && selectedHousehold && userProfile?.role !== 'child' && (
+            {/* Admin Actions */}
+            {isAdminOrOwner && selectedHousehold && userProfile?.role !== 'child' && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Admin Actions</h3>
+                <div className="space-y-2">
+                  <LeaveHouseholdDialog 
+                    household={selectedHousehold} 
+                    onLeave={onHouseholdLeft}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* General Actions */}
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-muted-foreground">Admin Actions</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Account</h3>
               <div className="space-y-2">
-                <LeaveHouseholdDialog 
-                  household={selectedHousehold} 
-                  onLeave={onHouseholdLeft}
-                />
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => navigate('/profile')}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Profile Settings
+                </Button>
+                <Button variant="outline" onClick={onSignOut} className="w-full justify-start">
+                  <User className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
               </div>
-            </div>
-          )}
-
-          {/* General Actions */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground">Account</h3>
-            <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => navigate('/profile')}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Profile Settings
-              </Button>
-              <Button variant="outline" onClick={onSignOut} className="w-full justify-start">
-                <User className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
             </div>
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+    </UserProfileErrorBoundary>
   );
 };
 
