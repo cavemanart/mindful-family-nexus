@@ -32,40 +32,62 @@ export function ThemeProvider({
 
   useEffect(() => {
     setMounted(true)
-    const storedTheme = localStorage.getItem(storageKey) as Theme
-    if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
-      setTheme(storedTheme)
+    try {
+      const storedTheme = localStorage.getItem(storageKey) as Theme
+      if (storedTheme && (storedTheme === "dark" || storedTheme === "light" || storedTheme === "system")) {
+        setTheme(storedTheme)
+      }
+    } catch (error) {
+      // localStorage might not be available
+      console.warn("Could not access localStorage:", error)
     }
   }, [storageKey])
 
   useEffect(() => {
     if (!mounted) return
 
-    const root = window.document.documentElement
+    try {
+      const root = window.document.documentElement
 
-    root.classList.remove("light", "dark")
+      root.classList.remove("light", "dark")
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
+      if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
+          ? "dark"
+          : "light"
 
-      root.classList.add(systemTheme)
-      return
+        root.classList.add(systemTheme)
+        return
+      }
+
+      root.classList.add(theme)
+    } catch (error) {
+      console.warn("Could not apply theme:", error)
     }
-
-    root.classList.add(theme)
   }, [theme, mounted])
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      if (mounted) {
-        localStorage.setItem(storageKey, theme)
+      try {
+        if (mounted && typeof window !== "undefined") {
+          localStorage.setItem(storageKey, theme)
+        }
+      } catch (error) {
+        console.warn("Could not save theme to localStorage:", error)
       }
       setTheme(theme)
     },
+  }
+
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <ThemeProviderContext.Provider value={initialState}>
+        {children}
+      </ThemeProviderContext.Provider>
+    )
   }
 
   return (
