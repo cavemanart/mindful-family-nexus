@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
@@ -16,8 +17,16 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { signUp, signIn } = useAuth();
+  const { signUp, signIn, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +51,7 @@ const Auth = () => {
           title: 'Success',
           description: isSignUp ? 'Account created successfully!' : 'Signed in successfully!',
         });
+        // Navigation will be handled by the useEffect hook above
       }
     } catch (error) {
       toast({
@@ -53,6 +63,11 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Don't render anything if user is already authenticated
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">

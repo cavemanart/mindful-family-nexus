@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useHouseholds, Household } from '@/hooks/useHouseholds';
+import { Household } from '@/hooks/useHouseholds';
 import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
 
@@ -12,19 +12,6 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold }) => {
   const { user } = useAuth();
-  const { loading: householdsLoading } = useHouseholds();
-
-  // Show loading spinner while fetching households
-  if (householdsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   // If not logged in, prompt to log in
   if (!user) {
@@ -32,6 +19,18 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">Please log in to continue</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no household selected, show message
+  if (!selectedHousehold) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">No Household Selected</h2>
+          <p className="text-muted-foreground">Please select or create a household to continue</p>
         </div>
       </div>
     );
@@ -48,11 +47,9 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
         <p className="text-muted-foreground text-base md:text-lg">
           Your family's digital headquarters
         </p>
-        {selectedHousehold && (
-          <p className="text-muted-foreground text-sm mt-2">
-            {selectedHousehold.name}
-          </p>
-        )}
+        <p className="text-muted-foreground text-sm mt-2">
+          {selectedHousehold.name}
+        </p>
       </div>
 
       {/* Quick Actions */}
