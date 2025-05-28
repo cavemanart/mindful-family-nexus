@@ -16,23 +16,6 @@ import NannyAccess from "./pages/NannyAccess";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => {
-    // Ensure the theme is applied immediately on app load
-    const savedTheme = localStorage.getItem("hublie-theme") || "light";
-    const root = window.document.documentElement;
-    
-    root.classList.remove("light", "dark");
-    
-    if (savedTheme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(savedTheme);
-    }
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
