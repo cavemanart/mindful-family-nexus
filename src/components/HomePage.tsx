@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { StickyNotes, Receipt, CheckSquare, Heart, Calendar, Brain, ArrowRight } from 'lucide-react';
+import { StickyNote, Receipt, CheckSquare, Heart, Calendar, Brain, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
@@ -10,7 +9,7 @@ const HomePage = () => {
 
   const features = [
     {
-      icon: StickyNotes,
+      icon: StickyNote,
       title: "Shared Notes",
       description: "Keep everyone in the loop with targeted notes for different family members.",
       gradient: "from-blue-500 to-cyan-500"
