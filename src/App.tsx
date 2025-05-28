@@ -20,12 +20,15 @@ const App = () => {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Use setTimeout to ensure React is completely ready
-    const timer = setTimeout(() => {
-      setIsReady(true);
+    // Use multiple setTimeout calls to ensure React is completely ready
+    const timer1 = setTimeout(() => {
+      const timer2 = setTimeout(() => {
+        setIsReady(true);
+      }, 10);
+      return () => clearTimeout(timer2);
     }, 0);
     
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer1);
   }, []);
 
   if (!isReady) {
@@ -36,8 +39,6 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
         <AuthProvider>
-          <Toaster />
-          <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -50,6 +51,12 @@ const App = () => {
             </Routes>
             <PWAInstallPrompt />
           </BrowserRouter>
+          {isReady && (
+            <>
+              <Toaster />
+              <Sonner />
+            </>
+          )}
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
