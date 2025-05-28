@@ -1,6 +1,6 @@
 
 import * as React from "react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { ThemeProvider as NextThemesProvider, useTheme as useNextTheme } from "next-themes"
 
 type Theme = "dark" | "light" | "system"
 
@@ -30,6 +30,6 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const { theme, setTheme } = require("next-themes").useTheme()
+  const { theme, setTheme } = useNextTheme()
   return { theme, setTheme }
 }
