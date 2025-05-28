@@ -27,8 +27,8 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Safe localStorage access with fallback
-  const getStoredTheme = (): Theme => {
+  // Initialize state with a function that safely gets stored theme
+  const [theme, setTheme] = useState<Theme>(() => {
     try {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem(storageKey);
@@ -38,9 +38,7 @@ export function ThemeProvider({
     } catch {
       return defaultTheme;
     }
-  };
-
-  const [theme, setTheme] = useState<Theme>(getStoredTheme)
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
