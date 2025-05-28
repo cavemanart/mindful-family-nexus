@@ -561,6 +561,39 @@ export type Database = {
           },
         ]
       }
+      nanny_access_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          household_id: string
+          id: string
+          is_active: boolean
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          household_id: string
+          id?: string
+          is_active?: boolean
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          household_id?: string
+          id?: string
+          is_active?: boolean
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -726,6 +759,10 @@ export type Database = {
           | { p_household_id: string; p_invited_email: string }
         Returns: string
       }
+      generate_nanny_token: {
+        Args: { p_household_id: string }
+        Returns: string
+      }
       is_household_member: {
         Args: { household_id: string }
         Returns: boolean
@@ -741,6 +778,10 @@ export type Database = {
       is_user_member_of_household: {
         Args: { hh_id: string } | { user_id: string; household_id: string }
         Returns: boolean
+      }
+      verify_nanny_token: {
+        Args: { p_token: string }
+        Returns: string
       }
     }
     Enums: {
