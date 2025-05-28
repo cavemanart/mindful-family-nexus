@@ -13,7 +13,7 @@ interface ChildDashboardProps {
 
 const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
-  const { chores, toggleChoreComplete } = useChores(selectedHousehold?.id);
+  const { chores, toggleChore } = useChores(selectedHousehold?.id);
 
   if (!selectedHousehold) {
     return (
@@ -104,7 +104,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                     <Button
                       variant={chore.completed ? "secondary" : "default"}
                       size="lg"
-                      onClick={() => toggleChoreComplete(chore.id, !chore.completed)}
+                      onClick={() => toggleChore(chore.id)}
                       className={chore.completed ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
                     >
                       {chore.completed ? (
