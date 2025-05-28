@@ -3,9 +3,12 @@ import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
 import { useChores } from '@/hooks/useChores';
+import { useWeeklyData } from '@/hooks/useWeeklyData';
+import { useAppreciations } from '@/hooks/useAppreciations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Star, Trophy, Calendar } from 'lucide-react';
+import { CheckCircle, Star, Trophy, Calendar, Heart, Target } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface ChildDashboardProps {
   selectedHousehold?: Household | null;
@@ -14,6 +17,8 @@ interface ChildDashboardProps {
 const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
   const { chores, toggleChore } = useChores(selectedHousehold?.id);
+  const { wins, goals } = useWeeklyData(selectedHousehold?.id || null);
+  const { appreciations } = useAppreciations(selectedHousehold?.id || null);
 
   if (!selectedHousehold) {
     return (
@@ -33,6 +38,12 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
 
   const completedChores = myChores.filter(chore => chore.completed);
   const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
+
+  // Filter appreciations for or from this child
+  const myAppreciations = appreciations.filter(appreciation => 
+    appreciation.to_member.toLowerCase() === userProfile?.first_name?.toLowerCase() ||
+    appreciation.from_member.toLowerCase() === userProfile?.first_name?.toLowerCase()
+  );
 
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -116,6 +127,102 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                         "Mark Done"
                       )}
                     </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Family Wins */}
+      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Family Wins This Week 🎉
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {wins.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No wins shared yet this week!</p>
+            ) : (
+              wins.slice(0, 3).map((win) => (
+                <div key={win.id} className="bg-white rounded-lg p-3 border">
+                  <div className="flex items-start gap-2">
+                    <Trophy className="h-4 w-4 text-yellow-500 mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{win.title}</h4>
+                      <p className="text-xs text-muted-foreground">by {win.added_by}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Family Goals */}
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-blue-500" />
+            Family Goals This Week 🎯
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {goals.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No goals set yet this week!</p>
+            ) : (
+              goals.slice(0, 3).map((goal) => (
+                <div key={goal.id} className={`rounded-lg p-3 border ${goal.completed ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-2 flex-1">
+                      <CheckCircle className={`h-4 w-4 mt-1 flex-shrink-0 ${goal.completed ? 'text-green-500' : 'text-gray-300'}`} />
+                      <div>
+                        <h4 className={`font-medium text-sm ${goal.completed ? 'text-green-800 line-through' : 'text-gray-800'}`}>
+                          {goal.title}
+                        </h4>
+                        <p className="text-xs text-muted-foreground">for {goal.assigned_to}</p>
+                      </div>
+                    </div>
+                    <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs">
+                      {goal.completed ? 'Done!' : 'In Progress'}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* My Appreciations */}
+      <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5 text-pink-500" />
+            Family Love ❤️
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {myAppreciations.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">No appreciations yet!</p>
+            ) : (
+              myAppreciations.slice(0, 3).map((appreciation) => (
+                <div key={appreciation.id} className="bg-white rounded-lg p-3 border">
+                  <div className="flex items-start gap-2">
+                    <Heart className="h-4 w-4 text-pink-500 mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm">{appreciation.message}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        From {appreciation.from_member} to {appreciation.to_member}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))
