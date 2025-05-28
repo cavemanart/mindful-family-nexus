@@ -6,34 +6,34 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ff6b35",
+  "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png",
+      "src": "/placeholder.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png",
+      "src": "/placeholder.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
   "categories": ["lifestyle", "productivity"],
   "screenshots": [
     {
-      "src": "/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png",
+      "src": "/placeholder.svg",
       "sizes": "1280x720",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "form_factor": "wide"
     },
     {
-      "src": "/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png",
+      "src": "/placeholder.svg",
       "sizes": "750x1334",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "form_factor": "narrow"
     }
   ],
@@ -45,7 +45,7 @@
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png",
+          "src": "/placeholder.svg",
           "sizes": "96x96"
         }
       ]
@@ -57,7 +57,7 @@
       "url": "/nanny",
       "icons": [
         {
-          "src": "/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png",
+          "src": "/placeholder.svg",
           "sizes": "96x96"
         }
       ]
