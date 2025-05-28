@@ -9,6 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      appreciation_comments: {
+        Row: {
+          appreciation_id: string
+          comment: string
+          commenter_name: string
+          created_at: string
+          household_id: string
+          id: string
+        }
+        Insert: {
+          appreciation_id: string
+          comment: string
+          commenter_name: string
+          created_at?: string
+          household_id: string
+          id?: string
+        }
+        Update: {
+          appreciation_id?: string
+          comment?: string
+          commenter_name?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appreciation_comments_appreciation_id_fkey"
+            columns: ["appreciation_id"]
+            isOneToOne: false
+            referencedRelation: "appreciations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appreciation_comments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appreciation_reactions: {
+        Row: {
+          appreciation_id: string
+          created_at: string
+          household_id: string
+          id: string
+          reactor_name: string
+        }
+        Insert: {
+          appreciation_id: string
+          created_at?: string
+          household_id: string
+          id?: string
+          reactor_name: string
+        }
+        Update: {
+          appreciation_id?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          reactor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appreciation_reactions_appreciation_id_fkey"
+            columns: ["appreciation_id"]
+            isOneToOne: false
+            referencedRelation: "appreciations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appreciation_reactions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appreciations: {
         Row: {
           created_at: string

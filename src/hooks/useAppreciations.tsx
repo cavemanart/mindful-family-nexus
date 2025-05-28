@@ -13,8 +13,27 @@ export interface Appreciation {
   household_id: string;
 }
 
+export interface AppreciationComment {
+  id: string;
+  appreciation_id: string;
+  household_id: string;
+  commenter_name: string;
+  comment: string;
+  created_at: string;
+}
+
+export interface AppreciationReaction {
+  id: string;
+  appreciation_id: string;
+  household_id: string;
+  reactor_name: string;
+  created_at: string;
+}
+
 export const useAppreciations = (householdId: string | null) => {
   const [appreciations, setAppreciations] = useState<Appreciation[]>([]);
+  const [comments, setComments] = useState<{ [key: string]: AppreciationComment[] }>({});
+  const [reactions, setReactions] = useState<{ [key: string]: AppreciationReaction[] }>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -41,6 +60,49 @@ export const useAppreciations = (householdId: string | null) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async (appreciationId: string) => {
+    if (!householdId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('appreciation_comments')
+        .select('*')
+        .eq('appreciation_id', appreciationId)
+        .eq('household_id', householdId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setComments(prev => ({ ...prev, [appreciationId]: data || [] }));
+    } catch (error: any) {
+      toast({
+        title: "Error fetching comments",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchReactions = async (appreciationId: string) => {
+    if (!householdId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('appreciation_reactions')
+        .select('*')
+        .eq('appreciation_id', appreciationId)
+        .eq('household_id', householdId);
+
+      if (error) throw error;
+      setReactions(prev => ({ ...prev, [appreciationId]: data || [] }));
+    } catch (error: any) {
+      toast({
+        title: "Error fetching reactions",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -71,22 +133,92 @@ export const useAppreciations = (householdId: string | null) => {
     }
   };
 
-  const addReaction = async (id: string) => {
+  const updateAppreciation = async (id: string, updates: Partial<Appreciation>) => {
     try {
-      const appreciation = appreciations.find(a => a.id === id);
-      if (!appreciation) return false;
-
       const { error } = await supabase
         .from('appreciations')
-        .update({ reactions: appreciation.reactions + 1 })
+        .update(updates)
         .eq('id', id);
 
       if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Appreciation updated successfully!",
+      });
+      
       fetchAppreciations();
       return true;
     } catch (error: any) {
       toast({
-        title: "Error adding reaction",
+        title: "Error updating appreciation",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const toggleReaction = async (appreciationId: string, reactorName: string) => {
+    if (!householdId) return false;
+
+    try {
+      const existingReactions = reactions[appreciationId] || [];
+      const userReaction = existingReactions.find(r => r.reactor_name === reactorName);
+
+      if (userReaction) {
+        // Remove reaction
+        const { error } = await supabase
+          .from('appreciation_reactions')
+          .delete()
+          .eq('id', userReaction.id);
+
+        if (error) throw error;
+      } else {
+        // Add reaction
+        const { error } = await supabase
+          .from('appreciation_reactions')
+          .insert([{
+            appreciation_id: appreciationId,
+            household_id: householdId,
+            reactor_name: reactorName
+          }]);
+
+        if (error) throw error;
+      }
+
+      fetchReactions(appreciationId);
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error updating reaction",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const addComment = async (appreciationId: string, commenterName: string, comment: string) => {
+    if (!householdId) return false;
+
+    try {
+      const { error } = await supabase
+        .from('appreciation_comments')
+        .insert([{
+          appreciation_id: appreciationId,
+          household_id: householdId,
+          commenter_name: commenterName,
+          comment: comment
+        }]);
+
+      if (error) throw error;
+      
+      fetchComments(appreciationId);
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error adding comment",
         description: error.message,
         variant: "destructive"
       });
@@ -100,9 +232,15 @@ export const useAppreciations = (householdId: string | null) => {
 
   return {
     appreciations,
+    comments,
+    reactions,
     loading,
     addAppreciation,
-    addReaction,
+    updateAppreciation,
+    toggleReaction,
+    addComment,
+    fetchComments,
+    fetchReactions,
     refetch: fetchAppreciations
   };
 };

@@ -1,20 +1,32 @@
 
 import React, { useState } from 'react';
-import { Heart, Plus, User } from 'lucide-react';
+import { Heart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { useAppreciations } from '@/hooks/useAppreciations';
 import { Household } from '@/hooks/useHouseholds';
+import AppreciationCard from './AppreciationCard';
 
 interface AppreciationsProps {
   selectedHousehold: Household;
 }
 
 const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
-  const { appreciations, loading, addAppreciation, addReaction } = useAppreciations(selectedHousehold?.id);
+  const { 
+    appreciations, 
+    comments, 
+    reactions, 
+    loading, 
+    addAppreciation, 
+    updateAppreciation,
+    toggleReaction,
+    addComment,
+    fetchComments,
+    fetchReactions
+  } = useAppreciations(selectedHousehold?.id);
+  
   const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
   const [newAppreciation, setNewAppreciation] = useState({
     message: '',
@@ -23,6 +35,7 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
   });
 
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
+  const currentUser = 'Mom'; // This should come from auth context in a real app
 
   const handleAddAppreciation = async () => {
     if (newAppreciation.message.trim() && newAppreciation.from_member && newAppreciation.to_member) {
@@ -38,22 +51,6 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
         setIsAddingAppreciation(false);
       }
     }
-  };
-
-  const handleAddReaction = async (id: string) => {
-    await addReaction(id);
-  };
-
-  const getRandomColor = () => {
-    const colors = [
-      'from-pink-100 to-pink-200',
-      'from-purple-100 to-purple-200',
-      'from-blue-100 to-blue-200',
-      'from-green-100 to-green-200',
-      'from-yellow-100 to-yellow-200',
-      'from-orange-100 to-orange-200',
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
   };
 
   if (loading) {
@@ -146,46 +143,18 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
 
       <div className="space-y-4">
         {appreciations.map((appreciation) => (
-          <Card 
-            key={appreciation.id} 
-            className={`bg-gradient-to-r ${getRandomColor()} border-0 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
-                    <User size={20} className="text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-800">{appreciation.from_member}</p>
-                    <p className="text-sm text-gray-600">to {appreciation.to_member}</p>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  {new Date(appreciation.created_at).toLocaleDateString()}
-                </Badge>
-              </div>
-              
-              <p className="text-gray-800 mb-4 leading-relaxed">{appreciation.message}</p>
-              
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleAddReaction(appreciation.id)}
-                  className="text-pink-600 hover:bg-white/50 transition-colors"
-                >
-                  <Heart size={16} className="mr-2" />
-                  {appreciation.reactions} Love{appreciation.reactions !== 1 ? 's' : ''}
-                </Button>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">
-                    {new Date(appreciation.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AppreciationCard
+            key={appreciation.id}
+            appreciation={appreciation}
+            comments={comments[appreciation.id] || []}
+            reactions={reactions[appreciation.id] || []}
+            currentUser={currentUser}
+            onToggleReaction={toggleReaction}
+            onAddComment={addComment}
+            onUpdateAppreciation={updateAppreciation}
+            onLoadComments={fetchComments}
+            onLoadReactions={fetchReactions}
+          />
         ))}
       </div>
 
