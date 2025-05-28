@@ -100,8 +100,8 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New update available!',
-    icon: '/placeholder.svg',
-    badge: '/placeholder.svg',
+    icon: '/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png',
+    badge: '/lovable-uploads/e453ee1f-ded0-4310-b72f-a76dab12bfca.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
