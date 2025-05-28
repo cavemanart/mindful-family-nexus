@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Users } from 'lucide-react';
+import { Eye, EyeOff, Users, Shield } from 'lucide-react';
+import { useNannyTokens } from '@/hooks/useNannyTokens';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -16,10 +18,12 @@ const Auth = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<'parent' | 'nanny' | 'child' | 'grandparent'>('parent');
+  const [accessCode, setAccessCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { signUp, signIn, user } = useAuth();
+  const { verifyToken } = useNannyTokens();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -36,7 +40,32 @@ const Auth = () => {
     try {
       let result;
       if (isSignUp) {
-        result = await signUp(email, password, firstName, lastName, role);
+        if (role === 'nanny') {
+          // For nanny signup, verify the access code first
+          if (!accessCode || accessCode.length !== 8) {
+            toast({
+              title: 'Error',
+              description: 'Please enter a valid 8-character access code',
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+          }
+
+          const householdId = await verifyToken(accessCode);
+          if (!householdId) {
+            setLoading(false);
+            return; // Error already shown by verifyToken
+          }
+
+          // Create account with minimal info (email is optional for nannies)
+          const nannyEmail = email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@temp.local`;
+          const tempPassword = password || Math.random().toString(36).slice(-8);
+          
+          result = await signUp(nannyEmail, tempPassword, firstName, lastName, role);
+        } else {
+          result = await signUp(email, password, firstName, lastName, role);
+        }
       } else {
         result = await signIn(email, password);
       }
@@ -68,17 +97,19 @@ const Auth = () => {
     return null;
   }
 
+  const isNannySignup = isSignUp && role === 'nanny';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-            <Users className="h-6 w-6" />
+            {isNannySignup ? <Shield className="h-6 w-6" /> : <Users className="h-6 w-6" />}
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
           <CardDescription>
             {isSignUp 
-              ? 'Create your account to start managing your family hub' 
+              ? (isNannySignup ? 'Create your nanny account using the access code provided by the family' : 'Create your account to start managing your family hub')
               : 'Sign in to access your family hub'
             }
           </CardDescription>
@@ -121,37 +152,135 @@ const Auth = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {isNannySignup && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Access Code
+                      </label>
+                      <div className="flex justify-center">
+                        <InputOTP
+                          maxLength={8}
+                          value={accessCode}
+                          onChange={setAccessCode}
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                          </InputOTPGroup>
+                          <div className="mx-2">-</div>
+                          <InputOTPGroup>
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                            <InputOTPSlot index={6} />
+                            <InputOTPSlot index={7} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                      <p className="text-xs text-gray-500 text-center">
+                        Enter the 8-character code provided by the family
+                      </p>
+                    </div>
+
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="Email (optional)"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Password (optional - one will be generated)"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {!isNannySignup && (
+                  <>
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {!isSignUp && (
+              <>
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </>
             )}
             
-            <div>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={loading || (isNannySignup && accessCode.length !== 8)}
+            >
               {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
             </Button>
           </form>
@@ -165,6 +294,15 @@ const Auth = () => {
               {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             </button>
           </div>
+
+          {isNannySignup && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Note:</strong> The access code is provided by the family you'll be working with. 
+                It ensures you're added to the correct household automatically.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
