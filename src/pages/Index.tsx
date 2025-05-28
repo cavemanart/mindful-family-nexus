@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
+import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { Loader2 } from "lucide-react"
 import ErrorBoundary from '@/components/ErrorBoundary';
 import CleanMobileNavigation from '@/components/CleanMobileNavigation';
@@ -23,6 +24,7 @@ import FamilyCalendar from '@/components/FamilyCalendar';
 const Index = () => {
   const { user, userProfile, signOut, loading: authLoading } = useAuth();
   const { households, loading: householdsLoading } = useHouseholds();
+  const { isPageVisible } = usePagePreferences();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
@@ -57,6 +59,13 @@ const Index = () => {
       }
     }
   }, [user, households, householdsLoading]);
+
+  // Redirect to dashboard if current tab is not visible
+  useEffect(() => {
+    if (activeTab !== 'dashboard' && !isPageVisible(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, isPageVisible]);
 
   const handleHouseholdSelect = (household: Household) => {
     setSelectedHousehold(household);
@@ -112,14 +121,14 @@ const Index = () => {
       case 'grandparent':
       default:
         if (activeTab === 'dashboard') return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'appreciations') return <Appreciations selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'bills') return <BillsTracker selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'notes') return <FamilyNotes selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'calendar') return <FamilyCalendar selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'mental-load') return <MentalLoad />;
-        if (activeTab === 'nanny-mode') return <NannyMode />;
-        if (activeTab === 'children') return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'weekly-sync') return <WeeklySync selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'appreciations' && isPageVisible('appreciations')) return <Appreciations selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'bills' && isPageVisible('bills')) return <BillsTracker selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'notes' && isPageVisible('notes')) return <FamilyNotes selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'calendar' && isPageVisible('calendar')) return <FamilyCalendar selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'mental-load' && isPageVisible('mental-load')) return <MentalLoad />;
+        if (activeTab === 'nanny-mode' && isPageVisible('nanny-mode')) return <NannyMode />;
+        if (activeTab === 'children' && isPageVisible('children')) return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'weekly-sync' && isPageVisible('weekly-sync')) return <WeeklySync selectedHousehold={selectedHousehold} />;
         return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
     }
   };

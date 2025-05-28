@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 interface CleanMobileNavigationProps {
   activeTab: string;
@@ -10,6 +11,7 @@ interface CleanMobileNavigationProps {
 
 const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab, setActiveTab }) => {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const { getVisiblePages } = usePagePreferences();
 
   // Primary navigation items (shown in bottom bar)
   const primaryItems = [
@@ -28,7 +30,10 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
     { key: 'weekly-sync', label: 'Goals', icon: Calendar },
   ];
 
-  const allItems = [...primaryItems, ...secondaryItems];
+  // Filter items based on user preferences
+  const visiblePrimaryItems = getVisiblePages(primaryItems);
+  const visibleSecondaryItems = getVisiblePages(secondaryItems);
+  const allVisibleItems = [...visiblePrimaryItems, ...visibleSecondaryItems];
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -41,7 +46,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
       <div className="hidden md:block fixed left-0 right-0 top-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm z-30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2 py-3 overflow-x-auto">
-            {allItems.map((item) => {
+            {allVisibleItems.map((item) => {
               const Icon = item.icon;
               return (
                 <button
@@ -66,7 +71,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border shadow-lg z-40">
         <div className="grid grid-cols-5 gap-1 p-2">
           {/* Primary Navigation Items */}
-          {primaryItems.map((item) => {
+          {visiblePrimaryItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
             return (
               <button
@@ -84,18 +89,21 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
             );
           })}
 
-          {/* More Menu Button */}
-          <button
-            onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-            className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
-              secondaryItems.some(item => item.key === activeTab)
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-          >
-            <MoreHorizontal size={18} />
-            <span className="text-xs font-medium">More</span>
-          </button>
+          {/* More Menu Button - only show if there are secondary items or more than 4 primary items */}
+          {(visibleSecondaryItems.length > 0 || visiblePrimaryItems.length > 4) && (
+            <button
+              onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
+                visibleSecondaryItems.some(item => item.key === activeTab) || 
+                visiblePrimaryItems.slice(4).some(item => item.key === activeTab)
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <MoreHorizontal size={18} />
+              <span className="text-xs font-medium">More</span>
+            </button>
+          )}
         </div>
 
         {/* More Menu Overlay */}
@@ -114,7 +122,8 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {secondaryItems.map((item) => {
+                {/* Show remaining primary items first, then secondary items */}
+                {[...visiblePrimaryItems.slice(4), ...visibleSecondaryItems].map((item) => {
                   const Icon = item.icon;
                   return (
                     <button

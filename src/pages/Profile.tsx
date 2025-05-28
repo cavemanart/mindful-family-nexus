@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
+import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useTheme } from '@/components/theme-provider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Home, Palette, Shield, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { households } = useHouseholds();
   const { theme, setTheme } = useTheme();
+  const { availablePages, isPageVisible, togglePageVisibility, loading: preferencesLoading } = usePagePreferences();
   const navigate = useNavigate();
   
   console.log('📄 Profile component state:', { 
@@ -125,6 +127,14 @@ const Profile = () => {
       default: return 'Family Member';
     }
   };
+
+  const groupedPages = availablePages.reduce((acc, page) => {
+    if (!acc[page.category]) {
+      acc[page.category] = [];
+    }
+    acc[page.category].push(page);
+    return acc;
+  }, {} as Record<string, typeof availablePages>);
 
   // Show loading state while authentication is loading
   if (authLoading) {
@@ -242,6 +252,58 @@ const Profile = () => {
               >
                 {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Page Visibility Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Page Visibility
+              </CardTitle>
+              <CardDescription>
+                Choose which pages you want to see in your navigation. You can always change these settings later.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {preferencesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="animate-spin h-6 w-6" />
+                </div>
+              ) : (
+                Object.entries(groupedPages).map(([category, pages]) => (
+                  <div key={category} className="space-y-4">
+                    <h3 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
+                      {category === 'core' ? 'Core Pages' : 
+                       category === 'family' ? 'Family Features' : 'Management Tools'}
+                    </h3>
+                    <div className="space-y-3">
+                      {pages.map((page) => (
+                        <div key={page.key} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Label className="font-medium">{page.label}</Label>
+                              {page.alwaysVisible && (
+                                <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
+                                  Always visible
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{page.description}</p>
+                          </div>
+                          <Switch
+                            checked={isPageVisible(page.key)}
+                            onCheckedChange={() => togglePageVisibility(page.key)}
+                            disabled={page.alwaysVisible}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {category !== 'management' && <Separator />}
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 
