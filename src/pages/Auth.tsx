@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,7 +44,7 @@ const Auth = () => {
         if (nannyToken.length !== 8) {
           toast({
             title: 'Error',
-            description: 'Please enter a valid 8-character access code',
+            description: 'Please enter a valid 8-digit access code',
             variant: 'destructive',
           });
           setLoading(false);
@@ -159,6 +158,7 @@ const Auth = () => {
                     maxLength={8}
                     value={nannyToken}
                     onChange={setNannyToken}
+                    pattern="[0-9]*"
                   >
                     <InputOTPGroup>
                       <InputOTPSlot index={0} />
@@ -176,7 +176,7 @@ const Auth = () => {
                   </InputOTP>
                 </div>
                 <p className="text-xs text-gray-500 text-center">
-                  Enter the 8-character access code provided by the family
+                  Enter the 8-digit access code provided by the family
                 </p>
               </div>
             ) : (
