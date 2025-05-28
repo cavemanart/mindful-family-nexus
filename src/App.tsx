@@ -24,7 +24,6 @@ const App = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-          {/* Removed TooltipProvider */}
           <AuthProvider>
             <Toaster />
             <Sonner />
@@ -50,7 +49,6 @@ const App = () => {
                   </ErrorBoundary>
                 } />
                 <Route path="/nanny" element={<NannyAccess />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <PWAInstallPrompt />

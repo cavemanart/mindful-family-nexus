@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
 import { Loader2 } from "lucide-react"
 import ErrorBoundary from '@/components/ErrorBoundary';
-import MobileNavigation from '@/components/MobileNavigation';
-import TopBar from '@/components/TopBar';
+import SimpleMobileNavigation from '@/components/SimpleMobileNavigation';
+import SimpleTopBar from '@/components/SimpleTopBar';
 import Appreciations from '@/components/Appreciations';
 import BillsTracker from '@/components/BillsTracker';
 import FamilyNotes from '@/components/FamilyNotes';
@@ -77,12 +78,6 @@ const Index = () => {
     navigate('/');
   };
 
-  const handleHouseholdLeft = () => {
-    setSelectedHousehold(null);
-    setShowHouseholdSelector(true);
-    localStorage.removeItem('selectedHouseholdId');
-  };
-
   if (authLoading || (user && householdsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -116,7 +111,6 @@ const Index = () => {
       case 'parent':
       case 'grandparent':
       default:
-        // Full dashboard access for parents and grandparents
         if (activeTab === 'dashboard') return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
         if (activeTab === 'appreciations') return <Appreciations selectedHousehold={selectedHousehold} />;
         if (activeTab === 'bills') return <BillsTracker selectedHousehold={selectedHousehold} />;
@@ -130,7 +124,6 @@ const Index = () => {
     }
   };
 
-  // Don't show mobile navigation for children - they only get their simple dashboard
   const showMobileNav = userProfile?.role !== 'child';
 
   return (
@@ -143,13 +136,12 @@ const Index = () => {
       </div>
     }>
       <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-        <TopBar 
+        <SimpleTopBar 
           user={user}
           households={households}
           selectedHousehold={selectedHousehold}
           onHouseholdChange={handleHouseholdChange}
           onSignOut={handleSignOut}
-          onHouseholdLeft={handleHouseholdLeft}
         />
 
         <main className={`${showMobileNav ? "pb-20 md:pb-4" : "pb-4"} ${showMobileNav ? "md:pt-28" : "md:pt-16"} pt-16`}>
@@ -159,7 +151,7 @@ const Index = () => {
         </main>
 
         {showMobileNav && (
-          <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+          <SimpleMobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
       </div>
     </ErrorBoundary>

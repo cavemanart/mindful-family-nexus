@@ -4,18 +4,14 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Ensure React is properly initialized before creating root
+// Ensure DOM is loaded before creating root
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
   throw new Error('Root element not found');
 }
 
+// Create root and render without StrictMode to avoid potential dispatcher issues
 const root = createRoot(rootElement);
 
-// Use React.StrictMode to help catch issues early in development
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+root.render(<App />);
