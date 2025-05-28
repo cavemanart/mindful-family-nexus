@@ -2,14 +2,18 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, DollarSign, StickyNote, Users, Calendar, Baby } from 'lucide-react';
+import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 interface QuickActionsProps {
   setActiveSection: (section: string) => void;
 }
 
 const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
+  const { getVisiblePages } = usePagePreferences();
+
   const actions = [
     {
+      key: 'appreciations',
       title: 'Send Appreciation',
       description: 'Share gratitude with family',
       icon: Heart,
@@ -18,6 +22,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-pink-950/30 dark:to-rose-950/30'
     },
     {
+      key: 'bills',
       title: 'Track Bills',
       description: 'Manage family expenses',
       icon: DollarSign,
@@ -26,6 +31,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/30 dark:to-emerald-950/30'
     },
     {
+      key: 'notes',
       title: 'Family Notes',
       description: 'Share important reminders',
       icon: StickyNote,
@@ -34,6 +40,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-yellow-50/50 to-amber-50/50 dark:from-yellow-950/30 dark:to-amber-950/30'
     },
     {
+      key: 'children',
       title: 'Kids Dashboard',
       description: 'Manage children activities',
       icon: Users,
@@ -42,6 +49,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-purple-50/50 to-violet-50/50 dark:from-purple-950/30 dark:to-violet-950/30'
     },
     {
+      key: 'weekly-sync',
       title: 'Weekly Goals',
       description: 'Plan and track progress',
       icon: Calendar,
@@ -50,6 +58,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/30 dark:to-cyan-950/30'
     },
     {
+      key: 'nanny-mode',
       title: 'Nanny Mode',
       description: 'Caregiver information hub',
       icon: Baby,
@@ -59,13 +68,27 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
     },
   ];
 
+  // Filter actions based on user preferences
+  const visibleActions = getVisiblePages(actions);
+
+  if (visibleActions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground mb-2">No quick actions available</p>
+        <p className="text-sm text-muted-foreground">
+          Enable pages in your profile settings to see quick actions here
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {actions.map((action) => {
+      {visibleActions.map((action) => {
         const Icon = action.icon;
         return (
           <Card 
-            key={action.title}
+            key={action.key}
             className={`${action.bgColor} border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group hover:-translate-y-1 bg-card/50 backdrop-blur-sm`}
             onClick={action.action}
           >
