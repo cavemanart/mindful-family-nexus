@@ -222,6 +222,44 @@ export type Database = {
           },
         ]
       }
+      emergency_contacts: {
+        Row: {
+          created_at: string | null
+          household_id: string
+          id: string
+          is_primary: boolean | null
+          name: string
+          phone: string
+          relationship: string
+        }
+        Insert: {
+          created_at?: string | null
+          household_id: string
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          phone: string
+          relationship: string
+        }
+        Update: {
+          created_at?: string | null
+          household_id?: string
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          phone?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_contacts_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_messages: {
         Row: {
           created_at: string
@@ -297,6 +335,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "family_notes_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_info: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          household_id: string
+          id: string
+          info_type: string
+          title: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          household_id: string
+          id?: string
+          info_type: string
+          title: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          household_id?: string
+          id?: string
+          info_type?: string
+          title?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_info_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
@@ -435,35 +514,102 @@ export type Database = {
           },
         ]
       }
+      medications: {
+        Row: {
+          child_name: string
+          created_at: string | null
+          dosage: string
+          frequency: string
+          household_id: string
+          id: string
+          instructions: string | null
+          medication_name: string
+          prescribing_doctor: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          child_name: string
+          created_at?: string | null
+          dosage: string
+          frequency: string
+          household_id: string
+          id?: string
+          instructions?: string | null
+          medication_name: string
+          prescribing_doctor?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          child_name?: string
+          created_at?: string | null
+          dosage?: string
+          frequency?: string
+          household_id?: string
+          id?: string
+          instructions?: string | null
+          medication_name?: string
+          prescribing_doctor?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medications_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          device_id: string | null
           email: string
           first_name: string | null
           id: string
+          is_child_account: boolean | null
           last_name: string | null
+          parent_id: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          device_id?: string | null
           email: string
           first_name?: string | null
           id: string
+          is_child_account?: boolean | null
           last_name?: string | null
+          parent_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          device_id?: string | null
           email?: string
           first_name?: string | null
           id?: string
+          is_child_account?: boolean | null
           last_name?: string | null
+          parent_id?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -600,6 +746,7 @@ export type Database = {
     Enums: {
       household_role: "owner" | "admin" | "member"
       invitation_status: "pending" | "accepted" | "declined" | "expired"
+      user_role: "parent" | "nanny" | "child" | "grandparent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -717,6 +864,7 @@ export const Constants = {
     Enums: {
       household_role: ["owner", "admin", "member"],
       invitation_status: ["pending", "accepted", "declined", "expired"],
+      user_role: ["parent", "nanny", "child", "grandparent"],
     },
   },
 } as const

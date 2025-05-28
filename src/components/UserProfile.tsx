@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { User, Settings } from 'lucide-react';
 import { Household } from '@/hooks/useHouseholds';
+import { useAuth } from '@/hooks/useAuth';
 import LeaveHouseholdDialog from './LeaveHouseholdDialog';
 
 interface UserProfileProps {
@@ -27,7 +28,18 @@ const UserProfile: React.FC<UserProfileProps> = ({
   onSignOut, 
   onHouseholdLeft 
 }) => {
+  const { userProfile } = useAuth();
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
+
+  const getRoleDisplay = (role?: string) => {
+    switch (role) {
+      case 'parent': return 'Parent';
+      case 'nanny': return 'Nanny/Caregiver';
+      case 'child': return 'Child';
+      case 'grandparent': return 'Grandparent';
+      default: return 'Family Member';
+    }
+  };
 
   return (
     <Sheet>
@@ -47,8 +59,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
               <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="text-left">
-              <p className="text-lg font-semibold">{user?.email}</p>
-              <p className="text-sm text-muted-foreground">Family Member</p>
+              <p className="text-lg font-semibold">
+                {userProfile?.first_name && userProfile?.last_name 
+                  ? `${userProfile.first_name} ${userProfile.last_name}`
+                  : user?.email
+                }
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {getRoleDisplay(userProfile?.role)}
+              </p>
             </div>
           </SheetTitle>
         </SheetHeader>
@@ -73,7 +92,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
           )}
 
           {/* Admin Actions */}
-          {isAdminOrOwner && selectedHousehold && (
+          {isAdminOrOwner && selectedHousehold && userProfile?.role !== 'child' && (
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-muted-foreground">Admin Actions</h3>
               <div className="space-y-2">

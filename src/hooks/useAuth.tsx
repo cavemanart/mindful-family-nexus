@@ -3,11 +3,14 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+export type UserRole = 'parent' | 'nanny' | 'child' | 'grandparent';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  userProfile: any;
   loading: boolean;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<any>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, role?: UserRole) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
 }
@@ -17,29 +20,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (!error && data) {
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setUserProfile(null);
+        }
+        
         setLoading(false);
       }
     );
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -47,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: {
           first_name: firstName,
           last_name: lastName,
+          role: role,
+          is_child_account: role === 'child',
         },
       },
     });
@@ -63,11 +97,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUserProfile(null);
   };
 
   const value = {
     user,
     session,
+    userProfile,
     loading,
     signUp,
     signIn,

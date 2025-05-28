@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Users } from 'lucide-react';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -14,6 +15,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState<'parent' | 'nanny' | 'child' | 'grandparent'>('parent');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -21,10 +23,9 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [user, navigate]);
 
@@ -35,7 +36,7 @@ const Auth = () => {
     try {
       let result;
       if (isSignUp) {
-        result = await signUp(email, password, firstName, lastName);
+        result = await signUp(email, password, firstName, lastName, role);
       } else {
         result = await signIn(email, password);
       }
@@ -51,7 +52,6 @@ const Auth = () => {
           title: 'Success',
           description: isSignUp ? 'Account created successfully!' : 'Signed in successfully!',
         });
-        // Navigation will be handled by the useEffect hook above
       }
     } catch (error) {
       toast({
@@ -64,7 +64,6 @@ const Auth = () => {
     }
   };
 
-  // Don't render anything if user is already authenticated
   if (user) {
     return null;
   }
@@ -73,7 +72,8 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-800">
+          <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+            <Users className="h-6 w-6" />
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
           <CardDescription>
@@ -86,26 +86,42 @@ const Auth = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Input
-                    type="text"
-                    placeholder="First Name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Input
+                      type="text"
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Input
+                      type="text"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
+                
                 <div>
-                  <Input
-                    type="text"
-                    placeholder="Last Name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
+                  <Select value={role} onValueChange={(value: 'parent' | 'nanny' | 'child' | 'grandparent') => setRole(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="nanny">Nanny/Caregiver</SelectItem>
+                      <SelectItem value="grandparent">Grandparent</SelectItem>
+                      <SelectItem value="child">Child</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
+              </>
             )}
             
             <div>

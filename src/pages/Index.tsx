@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -13,36 +14,33 @@ import NannyMode from '@/components/NannyMode';
 import ChildrenDashboard from '@/components/ChildrenDashboard';
 import WeeklySync from '@/components/WeeklySync';
 import Dashboard from '@/components/Dashboard';
+import NannyDashboard from '@/components/NannyDashboard';
+import ChildDashboard from '@/components/ChildDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
 
 const Index = () => {
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, userProfile, signOut, loading: authLoading } = useAuth();
   const { households, loading: householdsLoading } = useHouseholds();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [showHouseholdSelector, setShowHouseholdSelector] = useState(false);
 
-  // Redirect to homepage if not logged in
   useEffect(() => {
     if (!user && !authLoading) {
       navigate('/');
     }
   }, [user, authLoading, navigate]);
 
-  // Handle household selection logic after login
   useEffect(() => {
     if (user && !householdsLoading) {
       if (households.length === 0) {
-        // No households - show selector to create or join one
         setShowHouseholdSelector(true);
         setSelectedHousehold(null);
       } else if (households.length === 1) {
-        // Single household - auto-select it
         setSelectedHousehold(households[0]);
         setShowHouseholdSelector(false);
       } else {
-        // Multiple households - check if we have a previously selected one
         const savedHouseholdId = localStorage.getItem('selectedHouseholdId');
         const savedHousehold = households.find(h => h.id === savedHouseholdId);
         
@@ -50,7 +48,6 @@ const Index = () => {
           setSelectedHousehold(savedHousehold);
           setShowHouseholdSelector(false);
         } else {
-          // No saved selection or invalid ID - auto-select first household
           setSelectedHousehold(households[0]);
           setShowHouseholdSelector(false);
           localStorage.setItem('selectedHouseholdId', households[0].id);
@@ -80,13 +77,11 @@ const Index = () => {
   };
 
   const handleHouseholdLeft = () => {
-    // Clear selected household and show selector again
     setSelectedHousehold(null);
     setShowHouseholdSelector(true);
     localStorage.removeItem('selectedHouseholdId');
   };
 
-  // Show loading spinner while checking auth or households
   if (authLoading || (user && householdsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -98,20 +93,46 @@ const Index = () => {
     );
   }
 
-  // If not authenticated, don't render anything (redirect handles this)
   if (!user) {
     return null;
   }
 
-  // Show household selector if user needs to select/create a household
   if (showHouseholdSelector) {
     return <HouseholdSelector onHouseholdSelect={handleHouseholdSelect} />;
   }
 
-  // Main app interface
+  // Role-based dashboard rendering
+  const renderDashboard = () => {
+    if (!userProfile || !selectedHousehold) {
+      return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
+    }
+
+    switch (userProfile.role) {
+      case 'child':
+        return <ChildDashboard selectedHousehold={selectedHousehold} />;
+      case 'nanny':
+        return <NannyDashboard selectedHousehold={selectedHousehold} />;
+      case 'parent':
+      case 'grandparent':
+      default:
+        // Full dashboard access for parents and grandparents
+        if (activeTab === 'dashboard') return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'appreciations') return <Appreciations selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'bills') return <BillsTracker selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'notes') return <FamilyNotes selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'mental-load') return <MentalLoad />;
+        if (activeTab === 'nanny-mode') return <NannyMode />;
+        if (activeTab === 'children') return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'weekly-sync') return <WeeklySync selectedHousehold={selectedHousehold} />;
+        return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
+    }
+  };
+
+  // Don't show mobile navigation for children - they only get their simple dashboard
+  const showMobileNav = userProfile?.role !== 'child';
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Bar */}
       <TopBar 
         user={user}
         households={households}
@@ -121,22 +142,15 @@ const Index = () => {
         onHouseholdLeft={handleHouseholdLeft}
       />
 
-      {/* Main Content */}
-      <main className="pb-20 md:pb-4">
-        <div className="px-4 py-6 max-w-7xl mx-auto">
-          {activeTab === 'dashboard' && <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />}
-          {activeTab === 'appreciations' && <Appreciations selectedHousehold={selectedHousehold} />}
-          {activeTab === 'bills' && <BillsTracker selectedHousehold={selectedHousehold} />}
-          {activeTab === 'notes' && <FamilyNotes selectedHousehold={selectedHousehold} />}
-          {activeTab === 'mental-load' && <MentalLoad />}
-          {activeTab === 'nanny-mode' && <NannyMode />}
-          {activeTab === 'children' && <ChildrenDashboard selectedHousehold={selectedHousehold} />}
-          {activeTab === 'weekly-sync' && <WeeklySync selectedHousehold={selectedHousehold} />}
+      <main className={showMobileNav ? "pb-20 md:pb-4" : "pb-4"}>
+        <div className={userProfile?.role === 'child' ? "" : "px-4 py-6 max-w-7xl mx-auto"}>
+          {renderDashboard()}
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      {showMobileNav && (
+        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      )}
     </div>
   );
 };
