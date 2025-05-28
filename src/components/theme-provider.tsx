@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "dark" | "light" | "system"
 
@@ -27,16 +27,14 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Initialize state with a function that safely gets stored theme
   const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return defaultTheme
+    
     try {
-      if (typeof window !== "undefined") {
-        const stored = localStorage.getItem(storageKey);
-        return (stored as Theme) || defaultTheme;
-      }
-      return defaultTheme;
+      const stored = localStorage.getItem(storageKey)
+      return (stored as Theme) || defaultTheme
     } catch {
-      return defaultTheme;
+      return defaultTheme
     }
   })
 
@@ -61,12 +59,12 @@ export function ThemeProvider({
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      try {
-        if (typeof window !== "undefined") {
+      if (typeof window !== "undefined") {
+        try {
           localStorage.setItem(storageKey, theme)
+        } catch {
+          // Silently fail if localStorage is not available
         }
-      } catch {
-        // Silently fail if localStorage is not available
       }
       setTheme(theme)
     },
