@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Moon, Sun, Users, Menu, X } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Household } from '@/hooks/useHouseholds';
+import CleanUserProfile from './CleanUserProfile';
 
 interface SimpleTopBarProps {
   user: any;
@@ -83,13 +84,11 @@ const SimpleTopBar: React.FC<SimpleTopBarProps> = ({
               </select>
             )}
             
-            {/* User Info */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                {user?.email?.[0].toUpperCase()}
-              </div>
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
-            </div>
+            <CleanUserProfile 
+              user={user}
+              selectedHousehold={selectedHousehold}
+              onSignOut={onSignOut}
+            />
             
             <Button variant="outline" size="sm" onClick={onSignOut}>
               Sign Out
@@ -135,6 +134,14 @@ const SimpleTopBar: React.FC<SimpleTopBarProps> = ({
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Mobile menu overlay */}
+      {showMobileMenu && (
+        <div 
+          className="fixed inset-0 z-40 md:hidden" 
+          onClick={() => setShowMobileMenu(false)}
+        />
       )}
     </header>
   );
