@@ -17,6 +17,7 @@ export interface Household {
 export const useHouseholds = () => {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -25,9 +26,21 @@ export const useHouseholds = () => {
       setLoading(false);
       return;
     }
+    
     setLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase
+      console.log('🏠 Fetching households for user:', user.id);
+      
+      // Set timeout for household fetch
+      const fetchTimeout = setTimeout(() => {
+        console.error('⏰ Household fetch timeout');
+        setError('Loading households took too long');
+        setLoading(false);
+      }, 10000); // 10 second timeout
+
+      const { data, error: fetchError } = await supabase
         .from('household_members')
         .select(`
           role,
@@ -42,10 +55,14 @@ export const useHouseholds = () => {
         `)
         .eq('user_id', user.id);
 
-      if (error) {
+      clearTimeout(fetchTimeout);
+
+      if (fetchError) {
+        console.error('❌ Error fetching households:', fetchError);
+        setError('Failed to load households');
         toast({
           title: "Failed to fetch households",
-          description: error.message,
+          description: fetchError.message,
           variant: "destructive"
         });
         setHouseholds([]);
@@ -54,9 +71,13 @@ export const useHouseholds = () => {
           ...hm.households,
           role: hm.role
         }));
+        console.log('✅ Households loaded:', formatted.length);
         setHouseholds(formatted);
+        setError(null);
       }
     } catch (err: any) {
+      console.error('🚨 Household fetch error:', err);
+      setError('Failed to load households');
       toast({
         title: "Error",
         description: err.message,
@@ -299,13 +320,21 @@ export const useHouseholds = () => {
   };
 
   useEffect(() => {
-    fetchHouseholds();
+    if (user) {
+      fetchHouseholds();
+    } else {
+      setHouseholds([]);
+      setLoading(false);
+      setError(null);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   return {
     households,
     loading,
+    error,
+    retry: fetchHouseholds,
     fetchHouseholds,
     createHousehold,
     joinHousehold,

@@ -37,12 +37,14 @@ export const usePagePreferences = () => {
   const { user } = useAuth();
   const [preferences, setPreferences] = useState<PagePreference[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchPreferences();
     } else {
       setLoading(false);
+      setError(null);
     }
   }, [user]);
 
@@ -50,16 +52,37 @@ export const usePagePreferences = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      setError(null);
+      
+      console.log('📋 Fetching page preferences for user:', user.id);
+      
+      // Set timeout for preferences fetch
+      const fetchTimeout = setTimeout(() => {
+        console.error('⏰ Page preferences fetch timeout');
+        setError('Loading preferences took too long');
+        setLoading(false);
+      }, 8000); // 8 second timeout
+
+      const { data, error: fetchError } = await supabase
         .from('user_page_preferences')
         .select('*')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      clearTimeout(fetchTimeout);
 
-      setPreferences(data || []);
+      if (fetchError) {
+        console.error('❌ Error fetching page preferences:', fetchError);
+        setError('Failed to load page preferences');
+        toast.error('Failed to load page preferences');
+      } else {
+        console.log('✅ Page preferences loaded:', data?.length || 0);
+        setPreferences(data || []);
+        setError(null);
+      }
     } catch (error) {
-      console.error('Error fetching page preferences:', error);
+      console.error('🚨 Error fetching page preferences:', error);
+      setError('Failed to load page preferences');
       toast.error('Failed to load page preferences');
     } finally {
       setLoading(false);
@@ -125,6 +148,8 @@ export const usePagePreferences = () => {
   return {
     preferences,
     loading,
+    error,
+    retry: fetchPreferences,
     isPageVisible,
     togglePageVisibility,
     getVisiblePages,

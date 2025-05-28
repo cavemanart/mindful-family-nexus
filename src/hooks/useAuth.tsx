@@ -10,6 +10,8 @@ interface AuthContextType {
   session: Session | null;
   userProfile: any;
   loading: boolean;
+  error: string | null;
+  retry: () => void;
   signUp: (email: string, password: string, firstName: string, lastName: string, role?: UserRole) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
@@ -22,8 +24,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading });
+  console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error });
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -37,12 +40,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!error && data) {
         console.log('✅ User profile fetched:', data);
         setUserProfile(data);
+        setError(null);
       } else {
         console.log('❌ Error fetching user profile:', error);
+        setError('Failed to load user profile');
       }
     } catch (error) {
       console.error('🚨 Error in fetchUserProfile:', error);
+      setError('Failed to load user profile');
     }
+  };
+
+  const initializeAuth = async () => {
+    try {
+      console.log('🚀 Initializing auth with timeout');
+      setLoading(true);
+      setError(null);
+
+      // Set a timeout for the entire auth initialization
+      const authTimeout = setTimeout(() => {
+        console.error('⏰ Auth initialization timeout');
+        setError('Authentication took too long. Please try again.');
+        setLoading(false);
+      }, 15000); // 15 second timeout
+
+      // Check if we're online
+      if (!navigator.onLine) {
+        clearTimeout(authTimeout);
+        setError('You appear to be offline. Please check your connection.');
+        setLoading(false);
+        return;
+      }
+
+      // Get initial session with timeout
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError);
+        // Clear potentially corrupted tokens
+        await supabase.auth.signOut();
+        setError('Session error. Please sign in again.');
+        clearTimeout(authTimeout);
+        setLoading(false);
+        return;
+      }
+
+      console.log('🎯 Initial session check:', !!session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await fetchUserProfile(session.user.id);
+      }
+      
+      clearTimeout(authTimeout);
+      setLoading(false);
+    } catch (error) {
+      console.error('🚨 Auth initialization error:', error);
+      setError('Failed to initialize authentication');
+      setLoading(false);
+    }
+  };
+
+  const retry = () => {
+    console.log('🔄 Retrying auth initialization');
+    initializeAuth();
   };
 
   useEffect(() => {
@@ -56,32 +118,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           console.log('👤 User authenticated, fetching profile');
-          await fetchUserProfile(session.user.id);
+          // Use setTimeout to prevent potential deadlocks
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           console.log('👤 User not authenticated, clearing profile');
           setUserProfile(null);
         }
         
-        setLoading(false);
+        if (event === 'SIGNED_OUT') {
+          setError(null);
+        }
       }
     );
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🎯 Initial session check:', !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
+    // Initialize auth
+    initializeAuth();
+
+    // Online/offline detection
+    const handleOnline = () => {
+      console.log('🌐 Back online, retrying auth');
+      if (error && error.includes('offline')) {
+        retry();
       }
-      
-      setLoading(false);
-    });
+    };
+
+    const handleOffline = () => {
+      console.log('📴 Gone offline');
+      setError('You are currently offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
       console.log('🧹 Cleaning up auth subscription');
       subscription.unsubscribe();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -115,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🚪 Signing out user');
     await supabase.auth.signOut();
     setUserProfile(null);
+    setError(null);
   };
 
   const value = {
@@ -122,6 +198,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     userProfile,
     loading,
+    error,
+    retry,
     signUp,
     signIn,
     signOut,
