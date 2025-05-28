@@ -24,10 +24,10 @@ const Index = () => {
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [showHouseholdSelector, setShowHouseholdSelector] = useState(false);
 
-  // Redirect to auth if not logged in
+  // Redirect to homepage if not logged in
   useEffect(() => {
     if (!user && !authLoading) {
-      navigate('/auth');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 
@@ -77,6 +77,7 @@ const Index = () => {
   const handleSignOut = async () => {
     localStorage.removeItem('selectedHouseholdId');
     await signOut();
+    navigate('/');
   };
 
   // Show loading spinner while checking auth or households

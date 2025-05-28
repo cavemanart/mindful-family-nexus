@@ -42,7 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
       {/* Welcome Header */}
       <div className="text-center py-6 md:py-8 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border">
         <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">
-          Welcome Home! 🏠
+          Welcome to Hublie! 🏠
         </h1>
         <p className="text-muted-foreground text-base md:text-lg">
           Your family's digital headquarters
