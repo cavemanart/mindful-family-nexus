@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { useTheme } from '@/components/theme-provider';
@@ -11,31 +11,67 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Home, Palette, Shield } from 'lucide-react';
+import { ArrowLeft, User, Home, Palette, Shield, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const Profile = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const { households } = useHouseholds();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   
-  const [firstName, setFirstName] = useState(userProfile?.first_name || '');
-  const [lastName, setLastName] = useState(userProfile?.last_name || '');
+  console.log('📄 Profile component state:', { 
+    user: !!user, 
+    userProfile: !!userProfile, 
+    authLoading,
+    householdsCount: households?.length || 0 
+  });
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
-  const selectedHousehold = households.find(h => h.id === localStorage.getItem('selectedHouseholdId'));
-  const [householdName, setHouseholdName] = useState(selectedHousehold?.name || '');
+  const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId'));
+  const [householdName, setHouseholdName] = useState('');
   const [isUpdatingHousehold, setIsUpdatingHousehold] = useState(false);
   
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
 
+  // Update form values when userProfile loads
+  useEffect(() => {
+    if (userProfile) {
+      console.log('👤 Setting profile form values:', userProfile);
+      setFirstName(userProfile.first_name || '');
+      setLastName(userProfile.last_name || '');
+    }
+  }, [userProfile]);
+
+  // Update household name when selectedHousehold loads
+  useEffect(() => {
+    if (selectedHousehold) {
+      console.log('🏠 Setting household name:', selectedHousehold.name);
+      setHouseholdName(selectedHousehold.name || '');
+    }
+  }, [selectedHousehold]);
+
+  // Redirect if not authenticated (but wait for auth loading to complete)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      console.log('🔄 Not authenticated, redirecting to auth');
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
   const handleUpdateProfile = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ No user found for profile update');
+      return;
+    }
     
     setIsUpdatingProfile(true);
     try {
+      console.log('💾 Updating profile for user:', user.id);
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -48,7 +84,7 @@ const Profile = () => {
       
       toast.success('Profile updated successfully!');
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('❌ Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setIsUpdatingProfile(false);
@@ -56,10 +92,14 @@ const Profile = () => {
   };
 
   const handleUpdateHousehold = async () => {
-    if (!selectedHousehold) return;
+    if (!selectedHousehold) {
+      console.log('❌ No selected household for update');
+      return;
+    }
     
     setIsUpdatingHousehold(true);
     try {
+      console.log('🏠 Updating household:', selectedHousehold.id);
       const { error } = await supabase
         .from('households')
         .update({ name: householdName })
@@ -69,7 +109,7 @@ const Profile = () => {
       
       toast.success('Household name updated successfully!');
     } catch (error) {
-      console.error('Error updating household:', error);
+      console.error('❌ Error updating household:', error);
       toast.error('Failed to update household name');
     } finally {
       setIsUpdatingHousehold(false);
@@ -85,6 +125,35 @@ const Profile = () => {
       default: return 'Family Member';
     }
   };
+
+  // Show loading state while authentication is loading
+  if (authLoading) {
+    console.log('⏳ Auth loading, showing spinner');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/50">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4 text-blue-600" />
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if user is not found after loading
+  if (!authLoading && !user) {
+    console.log('❌ No user found after loading complete');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/50">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-red-600 mb-2">Authentication Required</p>
+          <p className="text-muted-foreground mb-4">Please sign in to view your profile.</p>
+          <Button onClick={() => navigate('/auth')}>Go to Sign In</Button>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('✅ Rendering profile page');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 dark:from-background dark:to-muted/20">
@@ -108,7 +177,7 @@ const Profile = () => {
             <Avatar className="h-24 w-24 mx-auto">
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback className="text-2xl">
-                {user?.email?.[0].toUpperCase()}
+                {user?.email?.[0].toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
             <div>
