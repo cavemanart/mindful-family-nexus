@@ -1,49 +1,22 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-export interface CalendarEvent {
+export interface SimpleCalendarEvent {
   id: string;
   household_id: string;
   creator_id: string;
   title: string;
   description?: string;
-  event_type: 'task' | 'meeting' | 'milestone' | 'appointment' | 'reminder' | 'social' | 'sync';
   start_datetime: string;
-  end_datetime?: string;
-  all_day: boolean;
-  color: string;
-  location?: string;
-  assigned_to?: string[];
   created_at: string;
-  updated_at: string;
 }
 
-export interface EventType {
-  id: string;
-  household_id: string;
-  name: string;
-  type_key: 'task' | 'meeting' | 'milestone' | 'appointment' | 'reminder' | 'social' | 'sync';
-  icon: string;
-  color: string;
-  description?: string;
-}
-
-export interface EventRSVP {
-  id: string;
-  event_id: string;
-  user_id: string;
-  household_id: string;
-  status: 'pending' | 'accepted' | 'declined' | 'maybe';
-  response_note?: string;
-  responded_at?: string;
-}
-
-export const useCalendarEvents = (householdId: string | null) => {
+export const useSimpleCalendarEvents = (householdId: string | null) => {
   const { user } = useAuth();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+  const [events, setEvents] = useState<SimpleCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +27,7 @@ export const useCalendarEvents = (householdId: string | null) => {
       setLoading(true);
       setError(null);
 
-      console.log('📅 Fetching calendar events for household:', householdId);
+      console.log('📅 Fetching simple calendar events for household:', householdId);
 
       const { data, error: fetchError } = await supabase
         .from('calendar_events')
@@ -64,8 +37,8 @@ export const useCalendarEvents = (householdId: string | null) => {
 
       if (fetchError) {
         console.error('❌ Error fetching calendar events:', fetchError);
-        setError('Failed to load calendar events');
-        toast.error('Failed to load calendar events');
+        setError('Failed to load events');
+        toast.error('Failed to load events');
       } else {
         console.log('✅ Calendar events loaded:', data?.length || 0);
         setEvents(data || []);
@@ -73,46 +46,20 @@ export const useCalendarEvents = (householdId: string | null) => {
       }
     } catch (error) {
       console.error('🚨 Error fetching calendar events:', error);
-      setError('Failed to load calendar events');
-      toast.error('Failed to load calendar events');
+      setError('Failed to load events');
+      toast.error('Failed to load events');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchEventTypes = async () => {
-    if (!householdId || !user) return;
-
-    try {
-      console.log('🏷️ Fetching event types for household:', householdId);
-
-      const { data, error: fetchError } = await supabase
-        .from('event_types')
-        .select('*')
-        .eq('household_id', householdId)
-        .order('name');
-
-      if (fetchError) {
-        console.error('❌ Error fetching event types:', fetchError);
-        toast.error('Failed to load event types');
-      } else {
-        console.log('✅ Event types loaded:', data?.length || 0);
-        setEventTypes(data || []);
-      }
-    } catch (error) {
-      console.error('🚨 Error fetching event types:', error);
-      toast.error('Failed to load event types');
     }
   };
 
   useEffect(() => {
     if (householdId && user) {
       fetchEvents();
-      fetchEventTypes();
     }
   }, [householdId, user]);
 
-  const createEvent = async (eventData: Omit<CalendarEvent, 'id' | 'creator_id' | 'created_at' | 'updated_at'>) => {
+  const createEvent = async (eventData: Omit<SimpleCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
     if (!user || !householdId) return null;
 
     try {
@@ -145,7 +92,7 @@ export const useCalendarEvents = (householdId: string | null) => {
     }
   };
 
-  const updateEvent = async (eventId: string, updates: Partial<CalendarEvent>) => {
+  const updateEvent = async (eventId: string, updates: Partial<SimpleCalendarEvent>) => {
     if (!user) return null;
 
     try {
@@ -205,14 +152,11 @@ export const useCalendarEvents = (householdId: string | null) => {
 
   return {
     events,
-    eventTypes,
     loading,
     error,
-    retry: fetchEvents,
     createEvent,
     updateEvent,
     deleteEvent,
     refreshEvents: fetchEvents,
-    refreshEventTypes: fetchEventTypes,
   };
 };
