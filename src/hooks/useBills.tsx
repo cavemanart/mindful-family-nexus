@@ -14,6 +14,11 @@ export interface Bill {
   created_at: string;
   updated_at: string;
   household_id: string;
+  recurrence_type?: 'none' | 'weekly' | 'monthly';
+  recurrence_interval?: number;
+  next_due_date?: string;
+  is_template?: boolean;
+  parent_bill_id?: string;
 }
 
 export const useBills = (householdId: string | null) => {
@@ -51,9 +56,15 @@ export const useBills = (householdId: string | null) => {
     if (!householdId) return false;
 
     try {
+      const newBill = {
+        ...billData,
+        household_id: householdId,
+        next_due_date: billData.recurrence_type !== 'none' ? calculateNextDueDate(billData.due_date, billData.recurrence_type, billData.recurrence_interval) : null
+      };
+
       const { error } = await supabase
         .from('bills')
-        .insert([{ ...billData, household_id: householdId }]);
+        .insert([newBill]);
 
       if (error) throw error;
       
@@ -100,6 +111,68 @@ export const useBills = (householdId: string | null) => {
     }
   };
 
+  const generateNextInstance = async (billId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('generate_next_bill_instance', {
+        p_bill_id: billId
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Next bill instance generated!",
+      });
+      
+      fetchBills();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error generating next bill",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const processRecurringBills = async () => {
+    try {
+      const { data, error } = await supabase.rpc('process_recurring_bills');
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `Processed ${data || 0} recurring bills`,
+      });
+      
+      fetchBills();
+      return data || 0;
+    } catch (error: any) {
+      toast({
+        title: "Error processing recurring bills",
+        description: error.message,
+        variant: "destructive"
+      });
+      return 0;
+    }
+  };
+
+  const calculateNextDueDate = (dueDate: string, recurrenceType?: string, interval?: number): string => {
+    if (!recurrenceType || recurrenceType === 'none' || !interval) return dueDate;
+
+    const date = new Date(dueDate);
+    
+    if (recurrenceType === 'weekly') {
+      date.setDate(date.getDate() + (7 * interval));
+    } else if (recurrenceType === 'monthly') {
+      date.setMonth(date.getMonth() + interval);
+    }
+    
+    return date.toISOString().split('T')[0];
+  };
+
   useEffect(() => {
     fetchBills();
   }, [householdId]);
@@ -109,6 +182,8 @@ export const useBills = (householdId: string | null) => {
     loading,
     addBill,
     togglePaid,
+    generateNextInstance,
+    processRecurringBills,
     refetch: fetchBills
   };
 };

@@ -138,7 +138,12 @@ export type Database = {
           household_id: string
           id: string
           is_paid: boolean
+          is_template: boolean | null
           name: string
+          next_due_date: string | null
+          parent_bill_id: string | null
+          recurrence_interval: number | null
+          recurrence_type: string | null
           updated_at: string
         }
         Insert: {
@@ -150,7 +155,12 @@ export type Database = {
           household_id: string
           id?: string
           is_paid?: boolean
+          is_template?: boolean | null
           name: string
+          next_due_date?: string | null
+          parent_bill_id?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -162,7 +172,12 @@ export type Database = {
           household_id?: string
           id?: string
           is_paid?: boolean
+          is_template?: boolean | null
           name?: string
+          next_due_date?: string | null
+          parent_bill_id?: string | null
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -171,6 +186,13 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_parent_bill_id_fkey"
+            columns: ["parent_bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
             referencedColumns: ["id"]
           },
         ]
@@ -763,6 +785,10 @@ export type Database = {
         Args: { p_household_id: string }
         Returns: string
       }
+      generate_next_bill_instance: {
+        Args: { p_bill_id: string }
+        Returns: string
+      }
       is_household_member: {
         Args: { household_id: string }
         Returns: boolean
@@ -778,6 +804,10 @@ export type Database = {
       is_user_member_of_household: {
         Args: { hh_id: string } | { user_id: string; household_id: string }
         Returns: boolean
+      }
+      process_recurring_bills: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       verify_nanny_token: {
         Args: { p_token: string }

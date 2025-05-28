@@ -1,12 +1,13 @@
-
 import React, { useState } from 'react';
-import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useBills } from '@/hooks/useBills';
 import { Household } from '@/hooks/useHouseholds';
 
@@ -15,7 +16,7 @@ interface BillsTrackerProps {
 }
 
 const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
-  const { bills, loading, addBill, togglePaid } = useBills(selectedHousehold?.id);
+  const { bills, loading, addBill, togglePaid, generateNextInstance, processRecurringBills } = useBills(selectedHousehold?.id);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [newBill, setNewBill] = useState({
     name: '',
@@ -23,6 +24,9 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     due_date: '',
     category: '',
     assigned_to: '',
+    recurrence_type: 'none' as 'none' | 'weekly' | 'monthly',
+    recurrence_interval: 1,
+    is_template: false,
   });
 
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
@@ -37,10 +41,22 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         category: newBill.category,
         is_paid: false,
         assigned_to: newBill.assigned_to,
+        recurrence_type: newBill.recurrence_type,
+        recurrence_interval: newBill.recurrence_interval,
+        is_template: newBill.is_template,
       });
       
       if (success) {
-        setNewBill({ name: '', amount: '', due_date: '', category: '', assigned_to: '' });
+        setNewBill({ 
+          name: '', 
+          amount: '', 
+          due_date: '', 
+          category: '', 
+          assigned_to: '',
+          recurrence_type: 'none',
+          recurrence_interval: 1,
+          is_template: false,
+        });
         setIsAddingBill(false);
       }
     }
@@ -48,6 +64,14 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
   const handleTogglePaid = async (id: string) => {
     await togglePaid(id);
+  };
+
+  const handleGenerateNext = async (billId: string) => {
+    await generateNextInstance(billId);
+  };
+
+  const handleProcessRecurring = async () => {
+    await processRecurringBills();
   };
 
   const getDaysUntilDue = (dueDate: string) => {
@@ -60,6 +84,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
   const upcomingBills = bills.filter(bill => !bill.is_paid);
   const paidBills = bills.filter(bill => bill.is_paid);
+  const recurringBills = bills.filter(bill => bill.recurrence_type !== 'none');
 
   const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
   const paidAmount = paidBills.reduce((sum, bill) => sum + bill.amount, 0);
@@ -96,17 +121,27 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           </h2>
           <p className="text-gray-600 mt-1">Keep track of family expenses and due dates</p>
         </div>
-        <Button 
-          onClick={() => setIsAddingBill(true)} 
-          className="bg-green-600 hover:bg-green-700"
-        >
-          <Plus size={16} className="mr-2" />
-          Add Bill
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleProcessRecurring} 
+            variant="outline"
+            className="border-green-600 text-green-600 hover:bg-green-50"
+          >
+            <Repeat size={16} className="mr-2" />
+            Process Recurring
+          </Button>
+          <Button 
+            onClick={() => setIsAddingBill(true)} 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Plus size={16} className="mr-2" />
+            Add Bill
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -139,6 +174,18 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 <p className="text-2xl font-bold text-red-600">${(totalAmount - paidAmount).toFixed(2)}</p>
               </div>
               <AlertCircle className="text-red-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Recurring</p>
+                <p className="text-2xl font-bold text-blue-600">{recurringBills.length}</p>
+              </div>
+              <Repeat className="text-blue-400" size={24} />
             </div>
           </CardContent>
         </Card>
@@ -220,7 +267,44 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Recurrence</label>
+                <Select value={newBill.recurrence_type} onValueChange={(value: 'none' | 'weekly' | 'monthly') => 
+                  setNewBill({ ...newBill, recurrence_type: value })
+                }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select recurrence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {newBill.recurrence_type !== 'none' && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Interval</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={newBill.recurrence_interval}
+                    onChange={(e) => setNewBill({ ...newBill, recurrence_interval: parseInt(e.target.value) || 1 })}
+                    placeholder="e.g., every 2 weeks"
+                  />
+                </div>
+              )}
             </div>
+            {newBill.recurrence_type !== 'none' && (
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is-template"
+                  checked={newBill.is_template}
+                  onCheckedChange={(checked) => setNewBill({ ...newBill, is_template: checked })}
+                />
+                <Label htmlFor="is-template">Make this a recurring template</Label>
+              </div>
+            )}
             <div className="flex gap-2">
               <Button onClick={handleAddBill} className="bg-green-600 hover:bg-green-700">
                 <Receipt size={16} className="mr-2" />
@@ -257,7 +341,15 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{bill.name}</h4>
+                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            {bill.name}
+                            {bill.recurrence_type !== 'none' && (
+                              <Badge variant="outline" className="text-xs">
+                                <Repeat size={12} className="mr-1" />
+                                {bill.recurrence_type}
+                              </Badge>
+                            )}
+                          </h4>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge className={getCategoryColor(bill.category)} variant="secondary">
                               {bill.category}
@@ -277,13 +369,26 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                            daysUntilDue === 0 ? 'Due today' :
                            `Due in ${daysUntilDue} days`}
                         </p>
-                        <Button
-                          onClick={() => handleTogglePaid(bill.id)}
-                          size="sm"
-                          className="mt-2 bg-green-600 hover:bg-green-700"
-                        >
-                          Mark as Paid
-                        </Button>
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            onClick={() => handleTogglePaid(bill.id)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            Mark as Paid
+                          </Button>
+                          {bill.recurrence_type !== 'none' && (
+                            <Button
+                              onClick={() => handleGenerateNext(bill.id)}
+                              size="sm"
+                              variant="outline"
+                              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                            >
+                              <Clock size={14} className="mr-1" />
+                              Generate Next
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -306,7 +411,15 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                     <div className="flex items-center space-x-4">
                       <CheckCircle className="text-green-600" size={20} />
                       <div>
-                        <h4 className="font-semibold text-gray-900">{bill.name}</h4>
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          {bill.name}
+                          {bill.recurrence_type !== 'none' && (
+                            <Badge variant="outline" className="text-xs">
+                              <Repeat size={12} className="mr-1" />
+                              {bill.recurrence_type}
+                            </Badge>
+                          )}
+                        </h4>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={getCategoryColor(bill.category)} variant="secondary">
                             {bill.category}
