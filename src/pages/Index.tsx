@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +16,7 @@ import Dashboard from '@/components/Dashboard';
 import NannyDashboard from '@/components/NannyDashboard';
 import ChildDashboard from '@/components/ChildDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
+import FamilyCalendar from '@/components/FamilyCalendar';
 
 const Index = () => {
   const { user, userProfile, signOut, loading: authLoading } = useAuth();
@@ -120,6 +120,7 @@ const Index = () => {
         if (activeTab === 'appreciations') return <Appreciations selectedHousehold={selectedHousehold} />;
         if (activeTab === 'bills') return <BillsTracker selectedHousehold={selectedHousehold} />;
         if (activeTab === 'notes') return <FamilyNotes selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'calendar') return <FamilyCalendar selectedHousehold={selectedHousehold} />;
         if (activeTab === 'mental-load') return <MentalLoad />;
         if (activeTab === 'nanny-mode') return <NannyMode />;
         if (activeTab === 'children') return <ChildrenDashboard selectedHousehold={selectedHousehold} />;

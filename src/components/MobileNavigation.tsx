@@ -22,6 +22,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiv
 
   // Secondary navigation items (shown in "More" menu)
   const secondaryItems = [
+    { key: 'calendar', label: 'Calendar', icon: Calendar },
     { key: 'mental-load', label: 'Tasks', icon: Brain },
     { key: 'nanny-mode', label: 'Nanny', icon: Baby },
     { key: 'children', label: 'Kids', icon: Users },
