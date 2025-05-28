@@ -4,9 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { StickyNote, Receipt, CheckSquare, Heart, Calendar, Brain, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   const features = [
     {
@@ -61,10 +71,10 @@ const HomePage = () => {
             </span>
           </div>
           <Button 
-            onClick={() => navigate('/dashboard')}
+            onClick={handleGetStarted}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full px-6 py-2 transition-all duration-300 hover:scale-105 hover:shadow-lg"
           >
-            Get Started
+            {user ? 'Go to Dashboard' : 'Get Started'}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
@@ -84,11 +94,11 @@ const HomePage = () => {
               Keep your household organized, connected, and thriving with tools designed for modern families.
             </p>
             <Button 
-              onClick={() => navigate('/dashboard')}
+              onClick={handleGetStarted}
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl"
             >
-              Start Your Journey
+              {user ? 'Go to Dashboard' : 'Start Your Journey'}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
@@ -149,11 +159,11 @@ const HomePage = () => {
               Join thousands of families who have simplified their lives with Hublie.
             </p>
             <Button 
-              onClick={() => navigate('/dashboard')}
+              onClick={handleGetStarted}
               size="lg"
               className="bg-white text-blue-600 hover:bg-gray-50 rounded-full px-8 py-4 text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl"
             >
-              Get Started Free
+              {user ? 'Go to Dashboard' : 'Get Started Free'}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
