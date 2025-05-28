@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarEvent, EventType } from '@/hooks/useCalendarEvents';
 import { useEventRSVPs } from '@/hooks/useEventRSVPs';
 import { format } from 'date-fns';
-import { Calendar, Clock, MapPin, Users, Eye, Trash2, Edit } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Trash2, Edit } from 'lucide-react';
 
 interface EventDetailsDialogProps {
   isOpen: boolean;
@@ -45,16 +45,6 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
       if (success) {
         onClose();
       }
-    }
-  };
-
-  const getVisibilityLabel = (visibility: string) => {
-    switch (visibility) {
-      case 'public': return 'Public';
-      case 'household': return 'Household';
-      case 'role_specific': return 'Role Specific';
-      case 'private': return 'Private';
-      default: return visibility;
     }
   };
 
@@ -130,14 +120,6 @@ const EventDetailsDialog: React.FC<EventDetailsDialogProps> = ({
                 </div>
               </div>
             )}
-
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-gray-500" />
-              <div>
-                <p className="text-sm font-medium">Visibility</p>
-                <Badge variant="outline">{getVisibilityLabel(event.visibility)}</Badge>
-              </div>
-            </div>
 
             {event.assigned_to && event.assigned_to.length > 0 && (
               <div className="flex items-center gap-2">

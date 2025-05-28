@@ -30,7 +30,6 @@ const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventType, setEventType] = useState<string>('task');
-  const [visibility, setVisibility] = useState<'public' | 'household' | 'role_specific' | 'private'>('household');
   const [startDate, setStartDate] = useState(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('09:00');
   const [endDate, setEndDate] = useState(selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
@@ -38,7 +37,6 @@ const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
   const [allDay, setAllDay] = useState(false);
   const [location, setLocation] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
-  const [requiredRoles, setRequiredRoles] = useState('');
   const [loading, setLoading] = useState(false);
 
   const selectedEventType = eventTypes.find(type => type.type_key === eventType);
@@ -63,16 +61,12 @@ const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
         title: title.trim(),
         description: description.trim() || undefined,
         event_type: eventType as CalendarEvent['event_type'],
-        visibility,
         start_datetime: startDateTime.toISOString(),
         end_datetime: endDateTime.toISOString(),
         all_day: allDay,
         color: selectedEventType?.color || 'bg-blue-500',
         location: location.trim() || undefined,
         assigned_to: assignedTo.trim() ? assignedTo.split(',').map(s => s.trim()) : undefined,
-        required_roles: visibility === 'role_specific' && requiredRoles.trim() 
-          ? requiredRoles.split(',').map(s => s.trim()) 
-          : undefined,
       };
 
       const result = await onEventCreated(eventData);
@@ -82,10 +76,8 @@ const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
         setTitle('');
         setDescription('');
         setEventType('task');
-        setVisibility('household');
         setLocation('');
         setAssignedTo('');
-        setRequiredRoles('');
       }
     } catch (error) {
       console.error('Error creating event:', error);
@@ -142,33 +134,6 @@ const CreateEventDialog: React.FC<CreateEventDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-
-          <div>
-            <Label htmlFor="visibility">Visibility</Label>
-            <Select value={visibility} onValueChange={(value: any) => setVisibility(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="public">Public</SelectItem>
-                <SelectItem value="household">Household</SelectItem>
-                <SelectItem value="role_specific">Role Specific</SelectItem>
-                <SelectItem value="private">Private</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {visibility === 'role_specific' && (
-            <div>
-              <Label htmlFor="requiredRoles">Required Roles (comma-separated)</Label>
-              <Input
-                id="requiredRoles"
-                value={requiredRoles}
-                onChange={(e) => setRequiredRoles(e.target.value)}
-                placeholder="parent, grandparent"
-              />
-            </div>
-          )}
 
           <div className="flex items-center space-x-2">
             <Switch

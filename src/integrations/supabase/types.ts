@@ -210,11 +210,9 @@ export type Database = {
           household_id: string
           id: string
           location: string | null
-          required_roles: string[] | null
           start_datetime: string
           title: string
           updated_at: string
-          visibility: Database["public"]["Enums"]["event_visibility"]
         }
         Insert: {
           all_day?: boolean
@@ -228,11 +226,9 @@ export type Database = {
           household_id: string
           id?: string
           location?: string | null
-          required_roles?: string[] | null
           start_datetime: string
           title: string
           updated_at?: string
-          visibility?: Database["public"]["Enums"]["event_visibility"]
         }
         Update: {
           all_day?: boolean
@@ -246,11 +242,9 @@ export type Database = {
           household_id?: string
           id?: string
           location?: string | null
-          required_roles?: string[] | null
           start_datetime?: string
           title?: string
           updated_at?: string
-          visibility?: Database["public"]["Enums"]["event_visibility"]
         }
         Relationships: [
           {
@@ -414,11 +408,8 @@ export type Database = {
       }
       event_types: {
         Row: {
-          can_create_roles: string[]
-          can_view_roles: string[]
           color: string
           created_at: string
-          default_visibility: Database["public"]["Enums"]["event_visibility"]
           description: string | null
           household_id: string
           icon: string
@@ -428,11 +419,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          can_create_roles?: string[]
-          can_view_roles?: string[]
           color?: string
           created_at?: string
-          default_visibility?: Database["public"]["Enums"]["event_visibility"]
           description?: string | null
           household_id: string
           icon?: string
@@ -442,11 +430,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          can_create_roles?: string[]
-          can_view_roles?: string[]
           color?: string
           created_at?: string
-          default_visibility?: Database["public"]["Enums"]["event_visibility"]
           description?: string | null
           household_id?: string
           icon?: string
@@ -1049,7 +1034,6 @@ export type Database = {
         | "reminder"
         | "social"
         | "sync"
-      event_visibility: "public" | "household" | "role_specific" | "private"
       household_role: "owner" | "admin" | "member"
       invitation_status: "pending" | "accepted" | "declined" | "expired"
       rsvp_status: "pending" | "accepted" | "declined" | "maybe"
@@ -1178,7 +1162,6 @@ export const Constants = {
         "social",
         "sync",
       ],
-      event_visibility: ["public", "household", "role_specific", "private"],
       household_role: ["owner", "admin", "member"],
       invitation_status: ["pending", "accepted", "declined", "expired"],
       rsvp_status: ["pending", "accepted", "declined", "maybe"],

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,14 +10,12 @@ export interface CalendarEvent {
   title: string;
   description?: string;
   event_type: 'task' | 'meeting' | 'milestone' | 'appointment' | 'reminder' | 'social' | 'sync';
-  visibility: 'public' | 'household' | 'role_specific' | 'private';
   start_datetime: string;
   end_datetime?: string;
   all_day: boolean;
   color: string;
   location?: string;
   assigned_to?: string[];
-  required_roles?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -31,9 +28,6 @@ export interface EventType {
   icon: string;
   color: string;
   description?: string;
-  default_visibility: 'public' | 'household' | 'role_specific' | 'private';
-  can_create_roles: string[];
-  can_view_roles: string[];
 }
 
 export interface EventRSVP {
