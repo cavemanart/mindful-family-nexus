@@ -3,7 +3,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
 import { Loader2 } from "lucide-react"
-import { TooltipProvider } from "@/components/ui/tooltip";
 import MobileNavigation from '@/components/MobileNavigation';
 import TopBar from '@/components/TopBar';
 import Appreciations from '@/components/Appreciations';
@@ -134,28 +133,26 @@ const Index = () => {
   const showMobileNav = userProfile?.role !== 'child';
 
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-        <TopBar 
-          user={user}
-          households={households}
-          selectedHousehold={selectedHousehold}
-          onHouseholdChange={handleHouseholdChange}
-          onSignOut={handleSignOut}
-          onHouseholdLeft={handleHouseholdLeft}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+      <TopBar 
+        user={user}
+        households={households}
+        selectedHousehold={selectedHousehold}
+        onHouseholdChange={handleHouseholdChange}
+        onSignOut={handleSignOut}
+        onHouseholdLeft={handleHouseholdLeft}
+      />
 
-        <main className={`${showMobileNav ? "pb-20 md:pb-4" : "pb-4"} ${showMobileNav ? "md:pt-28" : "md:pt-16"} pt-16`}>
-          <div className="max-w-7xl mx-auto px-4">
-            {renderDashboard()}
-          </div>
-        </main>
+      <main className={`${showMobileNav ? "pb-20 md:pb-4" : "pb-4"} ${showMobileNav ? "md:pt-28" : "md:pt-16"} pt-16`}>
+        <div className="max-w-7xl mx-auto px-4">
+          {renderDashboard()}
+        </div>
+      </main>
 
-        {showMobileNav && (
-          <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-        )}
-      </div>
-    </TooltipProvider>
+      {showMobileNav && (
+        <MobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      )}
+    </div>
   );
 };
 
