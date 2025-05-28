@@ -40,7 +40,7 @@ const Auth = () => {
     try {
       let result;
       
-      // Handle nanny login with token during signup
+      // Handle nanny access with token during signup
       if (isSignUp && role === 'nanny') {
         if (nannyToken.length !== 8) {
           toast({
@@ -54,7 +54,7 @@ const Auth = () => {
         
         const householdId = await verifyToken(nannyToken);
         if (householdId) {
-          // For now, just redirect to nanny access page with the token
+          // Redirect to nanny access page with the token
           navigate(`/nanny-access?token=${nannyToken}`);
           return;
         }
@@ -146,42 +146,40 @@ const Auth = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {isNannySignUp && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Access Code
-                    </label>
-                    <div className="flex justify-center">
-                      <InputOTP
-                        maxLength={8}
-                        value={nannyToken}
-                        onChange={setNannyToken}
-                      >
-                        <InputOTPGroup>
-                          <InputOTPSlot index={0} />
-                          <InputOTPSlot index={1} />
-                          <InputOTPSlot index={2} />
-                          <InputOTPSlot index={3} />
-                        </InputOTPGroup>
-                        <div className="mx-2">-</div>
-                        <InputOTPGroup>
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
-                          <InputOTPSlot index={6} />
-                          <InputOTPSlot index={7} />
-                        </InputOTPGroup>
-                      </InputOTP>
-                    </div>
-                    <p className="text-xs text-gray-500 text-center">
-                      Enter the 8-character access code provided by the family
-                    </p>
-                  </div>
-                )}
               </>
             )}
 
-            {!isNannySignUp && (
+            {isNannySignUp ? (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Access Code
+                </label>
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={8}
+                    value={nannyToken}
+                    onChange={setNannyToken}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                    </InputOTPGroup>
+                    <div className="mx-2">-</div>
+                    <InputOTPGroup>
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                      <InputOTPSlot index={6} />
+                      <InputOTPSlot index={7} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <p className="text-xs text-gray-500 text-center">
+                  Enter the 8-character access code provided by the family
+                </p>
+              </div>
+            ) : (
               <>
                 <div>
                   <Input
