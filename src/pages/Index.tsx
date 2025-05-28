@@ -33,11 +33,15 @@ const Index = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
+    console.log('Households effect:', { user: !!user, householdsLoading, households });
+    
     if (user && !householdsLoading) {
       if (households.length === 0) {
+        console.log('No households found, showing selector');
         setShowHouseholdSelector(true);
         setSelectedHousehold(null);
       } else if (households.length === 1) {
+        console.log('One household found, selecting it');
         setSelectedHousehold(households[0]);
         setShowHouseholdSelector(false);
       } else {
@@ -45,9 +49,11 @@ const Index = () => {
         const savedHousehold = households.find(h => h.id === savedHouseholdId);
         
         if (savedHousehold) {
+          console.log('Restored saved household');
           setSelectedHousehold(savedHousehold);
           setShowHouseholdSelector(false);
         } else {
+          console.log('Selecting first household');
           setSelectedHousehold(households[0]);
           setShowHouseholdSelector(false);
           localStorage.setItem('selectedHouseholdId', households[0].id);
@@ -82,12 +88,12 @@ const Index = () => {
     localStorage.removeItem('selectedHouseholdId');
   };
 
-  if (authLoading || (user && householdsLoading)) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center">
           <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading your family hub...</p>
+          <p className="text-gray-600">Loading authentication...</p>
         </div>
       </div>
     );
@@ -95,6 +101,18 @@ const Index = () => {
 
   if (!user) {
     return null;
+  }
+
+  if (householdsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading your family hub...</p>
+          <p className="text-sm text-gray-500 mt-2">Fetching your households...</p>
+        </div>
+      </div>
+    );
   }
 
   if (showHouseholdSelector) {

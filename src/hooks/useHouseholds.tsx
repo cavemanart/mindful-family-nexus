@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -25,8 +26,11 @@ export const useHouseholds = () => {
       setLoading(false);
       return;
     }
+    
     setLoading(true);
     try {
+      console.log('Fetching households for user:', user.id);
+      
       const { data, error } = await supabase
         .from('household_members')
         .select(`
@@ -42,7 +46,10 @@ export const useHouseholds = () => {
         `)
         .eq('user_id', user.id);
 
+      console.log('Households query result:', { data, error });
+
       if (error) {
+        console.error('Error fetching households:', error);
         toast({
           title: "Failed to fetch households",
           description: error.message,
@@ -54,9 +61,11 @@ export const useHouseholds = () => {
           ...hm.households,
           role: hm.role
         }));
+        console.log('Formatted households:', formatted);
         setHouseholds(formatted);
       }
     } catch (err: any) {
+      console.error('Unexpected error fetching households:', err);
       toast({
         title: "Error",
         description: err.message,
