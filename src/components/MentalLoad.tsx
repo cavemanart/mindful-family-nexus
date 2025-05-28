@@ -102,22 +102,22 @@ const MentalLoad = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'low': return 'bg-green-100 text-green-800 border-green-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'high': return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700';
+      case 'low': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-700';
     }
   };
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
-      'Healthcare': 'bg-blue-100 text-blue-800',
-      'Education': 'bg-purple-100 text-purple-800',
-      'Events': 'bg-pink-100 text-pink-800',
-      'Household': 'bg-green-100 text-green-800',
-      'Finance': 'bg-yellow-100 text-yellow-800',
-      'Social': 'bg-orange-100 text-orange-800',
-      'Other': 'bg-gray-100 text-gray-800',
+      'Healthcare': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+      'Education': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+      'Events': 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+      'Household': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+      'Finance': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+      'Social': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+      'Other': 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
     };
     return colors[category] || colors['Other'];
   };
@@ -130,37 +130,38 @@ const MentalLoad = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Brain className="text-purple-500" size={28} />
+    <div className="space-y-4 p-4 md:p-6">
+      <div className="flex flex-col gap-4 items-start justify-between">
+        <div className="w-full">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2 mb-2">
+            <Brain className="text-purple-500" size={24} />
             Mental Load Sharing
           </h2>
-          <p className="text-gray-600 mt-1">Share the invisible work and mental tasks</p>
+          <p className="text-muted-foreground text-sm">Share the invisible work and mental tasks</p>
         </div>
         <Button 
           onClick={() => setIsAddingItem(true)} 
-          className="bg-purple-600 hover:bg-purple-700"
+          className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700"
+          size="sm"
         >
           <Plus size={16} className="mr-2" />
           Share Mental Load
         </Button>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Statistics - Mobile optimized grid */}
+      <div className="grid grid-cols-2 gap-3">
         {familyMembers.slice(0, 2).map((member) => {
           const memberItems = getItemsByAssignee(member);
           const highPriorityCount = memberItems.filter(item => item.priority === 'high').length;
           
           return (
-            <Card key={member}>
-              <CardContent className="p-4">
+            <Card key={member} className="p-3">
+              <CardContent className="p-0">
                 <div className="text-center">
-                  <p className="text-sm font-medium text-gray-600">{member}</p>
-                  <p className="text-2xl font-bold text-gray-900">{memberItems.length}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs font-medium text-muted-foreground">{member}</p>
+                  <p className="text-lg font-bold text-foreground">{memberItems.length}</p>
+                  <p className="text-xs text-muted-foreground">
                     {highPriorityCount > 0 && `${highPriorityCount} high priority`}
                   </p>
                 </div>
@@ -171,13 +172,13 @@ const MentalLoad = () => {
       </div>
 
       {isAddingItem && (
-        <Card className="border-2 border-dashed border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
-          <CardHeader>
-            <CardTitle className="text-purple-800">Share a Mental Load Item</CardTitle>
+        <Card className="border-2 border-dashed border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-purple-800 dark:text-purple-200 text-lg">Share a Mental Load Item</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">What needs to be done?</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">What needs to be done?</label>
               <Input
                 placeholder="e.g., Schedule doctor appointment"
                 value={newItem.title}
@@ -185,7 +186,7 @@ const MentalLoad = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Details</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">Details</label>
               <Textarea
                 placeholder="Provide more context about this task..."
                 value={newItem.description}
@@ -193,9 +194,9 @@ const MentalLoad = () => {
                 rows={3}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Category</label>
                 <Select value={newItem.category} onValueChange={(value) => 
                   setNewItem({ ...newItem, category: value })
                 }>
@@ -209,51 +210,53 @@ const MentalLoad = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Priority</label>
-                <Select value={newItem.priority} onValueChange={(value: 'low' | 'medium' | 'high') => 
-                  setNewItem({ ...newItem, priority: value })
-                }>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Assign To</label>
-                <Select value={newItem.assignedTo} onValueChange={(value) => 
-                  setNewItem({ ...newItem, assignedTo: value })
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Who should handle this?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {familyMembers.map((member) => (
-                      <SelectItem key={member} value={member}>{member}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Priority</label>
+                  <Select value={newItem.priority} onValueChange={(value: 'low' | 'medium' | 'high') => 
+                    setNewItem({ ...newItem, priority: value })
+                  }>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Assign To</label>
+                  <Select value={newItem.assignedTo} onValueChange={(value) => 
+                    setNewItem({ ...newItem, assignedTo: value })
+                  }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Who?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {familyMembers.map((member) => (
+                        <SelectItem key={member} value={member}>{member}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Due Date (Optional)</label>
+              <label className="text-sm font-medium text-foreground mb-2 block">Due Date (Optional)</label>
               <Input
                 type="date"
                 value={newItem.dueDate}
                 onChange={(e) => setNewItem({ ...newItem, dueDate: e.target.value })}
               />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={addItem} className="bg-purple-600 hover:bg-purple-700">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={addItem} className="bg-purple-600 hover:bg-purple-700 flex-1">
                 <Brain size={16} className="mr-2" />
                 Share Item
               </Button>
-              <Button variant="outline" onClick={() => setIsAddingItem(false)}>
+              <Button variant="outline" onClick={() => setIsAddingItem(false)} className="flex-1">
                 Cancel
               </Button>
             </div>
@@ -262,20 +265,20 @@ const MentalLoad = () => {
       )}
 
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="active">Active Items ({activeItems.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completedItems.length})</TabsTrigger>
-          <TabsTrigger value="by-person">By Person</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="active" className="text-xs">Active ({activeItems.length})</TabsTrigger>
+          <TabsTrigger value="completed" className="text-xs">Done ({completedItems.length})</TabsTrigger>
+          <TabsTrigger value="by-person" className="text-xs">By Person</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="space-y-4">
+        <TabsContent value="active" className="space-y-3">
           {activeItems.map((item) => (
             <Card key={item.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-semibold text-gray-900">{item.title}</h4>
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-start gap-2">
+                    <h4 className="font-semibold text-foreground flex-1 min-w-0">{item.title}</h4>
+                    <div className="flex flex-wrap gap-1">
                       <Badge className={getPriorityColor(item.priority)} variant="outline">
                         {item.priority}
                       </Badge>
@@ -283,123 +286,129 @@ const MentalLoad = () => {
                         {item.category}
                       </Badge>
                     </div>
-                    <p className="text-gray-700 mb-3">{item.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                  </div>
+                  <p className="text-muted-foreground text-sm">{item.description}</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <User size={14} />
-                        <span>Assigned to {item.assignedTo}</span>
+                        <User size={12} />
+                        <span>{item.assignedTo}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span>Shared by {item.sharedBy}</span>
+                        <span>by {item.sharedBy}</span>
                       </div>
                       {item.dueDate && (
                         <div className="flex items-center gap-1">
-                          <Clock size={14} />
+                          <Clock size={12} />
                           <span>Due {item.dueDate.toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
+                    <Button
+                      onClick={() => toggleCompleted(item.id)}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                    >
+                      <CheckCircle size={14} className="mr-2" />
+                      Complete
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => toggleCompleted(item.id)}
-                    size="sm"
-                    className="ml-4 bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle size={16} className="mr-2" />
-                    Complete
-                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
           {activeItems.length === 0 && (
-            <div className="text-center py-12">
+            <div className="text-center py-8">
               <Brain size={48} className="text-purple-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No active mental load items!</p>
-              <p className="text-gray-400 text-sm mt-2">Great job staying on top of everything.</p>
+              <p className="text-muted-foreground text-lg">No active mental load items!</p>
+              <p className="text-muted-foreground text-sm mt-2">Great job staying on top of everything.</p>
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="completed" className="space-y-4">
+        <TabsContent value="completed" className="space-y-3">
           {completedItems.map((item) => (
-            <Card key={item.id} className="bg-green-50 border-green-200">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CheckCircle className="text-green-600" size={20} />
-                      <h4 className="font-semibold text-gray-900 line-through">{item.title}</h4>
-                      <Badge className={getCategoryColor(item.category)} variant="secondary">
-                        {item.category}
-                      </Badge>
+            <Card key={item.id} className="bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-700">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="text-green-600 mt-1 flex-shrink-0" size={20} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-start gap-2 mb-2">
+                        <h4 className="font-semibold text-foreground line-through flex-1 min-w-0">{item.title}</h4>
+                        <Badge className={getCategoryColor(item.category)} variant="secondary">
+                          {item.category}
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground text-sm mb-2">{item.description}</p>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        <span>Completed by {item.assignedTo}</span>
+                        <span>Shared by {item.sharedBy}</span>
+                      </div>
                     </div>
-                    <p className="text-gray-700 mb-3">{item.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span>Completed by {item.assignedTo}</span>
-                      <span>Shared by {item.sharedBy}</span>
-                    </div>
+                    <Button
+                      onClick={() => toggleCompleted(item.id)}
+                      variant="outline"
+                      size="sm"
+                      className="border-green-600 text-green-600 hover:bg-green-100 dark:hover:bg-green-950/50 flex-shrink-0"
+                    >
+                      Undo
+                    </Button>
                   </div>
-                  <Button
-                    onClick={() => toggleCompleted(item.id)}
-                    variant="outline"
-                    size="sm"
-                    className="ml-4 border-green-600 text-green-600 hover:bg-green-100"
-                  >
-                    Undo
-                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
           {completedItems.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No completed items yet.</p>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground text-lg">No completed items yet.</p>
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="by-person" className="space-y-6">
+        <TabsContent value="by-person" className="space-y-4">
           {familyMembers.slice(0, 2).map((member) => {
             const memberItems = getItemsByAssignee(member);
             return (
               <Card key={member}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User size={20} />
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <User size={18} />
                     {member} ({memberItems.length} items)
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {memberItems.length > 0 ? (
                     memberItems.map((item) => (
-                      <div key={item.id} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h5 className="font-medium text-gray-900">{item.title}</h5>
-                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge className={getPriorityColor(item.priority)} variant="outline">
-                                {item.priority}
-                              </Badge>
-                              <Badge className={getCategoryColor(item.category)} variant="secondary">
-                                {item.category}
-                              </Badge>
+                      <div key={item.id} className="p-3 bg-muted rounded-lg">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-medium text-foreground">{item.title}</h5>
+                              <p className="text-sm text-muted-foreground mt-1 break-words">{item.description}</p>
                             </div>
+                            <Button
+                              onClick={() => toggleCompleted(item.id)}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 flex-shrink-0"
+                            >
+                              <CheckCircle size={12} className="mr-1" />
+                              Done
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => toggleCompleted(item.id)}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle size={14} className="mr-1" />
-                            Done
-                          </Button>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className={getPriorityColor(item.priority)} variant="outline">
+                              {item.priority}
+                            </Badge>
+                            <Badge className={getCategoryColor(item.category)} variant="secondary">
+                              {item.category}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center py-4">No items assigned to {member}</p>
+                    <p className="text-muted-foreground text-center py-4">No items assigned to {member}</p>
                   )}
                 </CardContent>
               </Card>
