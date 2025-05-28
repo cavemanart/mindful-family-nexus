@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { User, Settings } from 'lucide-react';
 import { Household } from '@/hooks/useHouseholds';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import LeaveHouseholdDialog from './LeaveHouseholdDialog';
 
 interface UserProfileProps {
@@ -29,6 +30,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   onHouseholdLeft 
 }) => {
   const { userProfile } = useAuth();
+  const navigate = useNavigate();
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
 
   const getRoleDisplay = (role?: string) => {
@@ -108,9 +110,13 @@ const UserProfile: React.FC<UserProfileProps> = ({
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-muted-foreground">Account</h3>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" disabled>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => navigate('/profile')}
+              >
                 <Settings className="mr-2 h-4 w-4" />
-                Settings (Coming Soon)
+                Profile Settings
               </Button>
               <Button variant="outline" onClick={onSignOut} className="w-full justify-start">
                 <User className="mr-2 h-4 w-4" />

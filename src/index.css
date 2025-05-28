@@ -95,3 +95,26 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* Custom dark mode enhancements */
+@layer utilities {
+  .dark .bg-gradient-to-br {
+    background: linear-gradient(to bottom right, hsl(var(--background)), hsl(var(--muted)));
+  }
+  
+  .dark .from-gray-50 {
+    --tw-gradient-from: hsl(var(--background));
+  }
+  
+  .dark .to-blue-50 {
+    --tw-gradient-to: hsl(var(--muted));
+  }
+  
+  .dark .from-blue-50 {
+    --tw-gradient-from: hsl(var(--background));
+  }
+  
+  .dark .to-purple-50 {
+    --tw-gradient-to: hsl(var(--muted));
+  }
+}
