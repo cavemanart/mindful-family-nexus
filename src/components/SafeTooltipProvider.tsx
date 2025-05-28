@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface SafeTooltipProviderProps {
@@ -7,29 +7,22 @@ interface SafeTooltipProviderProps {
 }
 
 const SafeTooltipProvider: React.FC<SafeTooltipProviderProps> = ({ children }) => {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    // Ensure React is fully initialized before rendering TooltipProvider
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Check if React is properly initialized
+  // Instead of using hooks, we'll use a try-catch approach
+  // to safely wrap the TooltipProvider
+  
+  // Check if React is properly available
   if (typeof React === 'undefined' || !React) {
-    console.warn('React not properly initialized, skipping TooltipProvider');
+    console.warn('React not properly initialized, rendering without TooltipProvider');
     return <>{children}</>;
   }
 
-  // Wait for next tick to ensure dispatcher is ready
-  if (!isReady) {
+  // Check if we're in a browser environment
+  if (typeof window === 'undefined') {
     return <>{children}</>;
   }
 
   try {
+    // Use a simple component wrapper to ensure we're in a valid React context
     return (
       <TooltipProvider>
         {children}
