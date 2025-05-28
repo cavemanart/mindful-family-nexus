@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
 import { Loader2 } from "lucide-react"
 import ErrorBoundary from '@/components/ErrorBoundary';
-import SimpleMobileNavigation from '@/components/SimpleMobileNavigation';
-import SimpleTopBar from '@/components/SimpleTopBar';
+import CleanMobileNavigation from '@/components/CleanMobileNavigation';
+import CleanTopBar from '@/components/CleanTopBar';
 import Appreciations from '@/components/Appreciations';
 import BillsTracker from '@/components/BillsTracker';
 import FamilyNotes from '@/components/FamilyNotes';
@@ -136,7 +136,7 @@ const Index = () => {
       </div>
     }>
       <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-        <SimpleTopBar 
+        <CleanTopBar 
           user={user}
           households={households}
           selectedHousehold={selectedHousehold}
@@ -151,7 +151,7 @@ const Index = () => {
         </main>
 
         {showMobileNav && (
-          <SimpleMobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+          <CleanMobileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
         )}
       </div>
     </ErrorBoundary>
