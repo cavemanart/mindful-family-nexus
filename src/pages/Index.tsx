@@ -84,10 +84,10 @@ const Index = () => {
 
   if (authLoading || (user && householdsLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="text-center">
-          <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <Loader2 className="animate-spin h-8 w-8 mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading your family hub...</p>
         </div>
       </div>
     );
@@ -132,7 +132,7 @@ const Index = () => {
   const showMobileNav = userProfile?.role !== 'child';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <TopBar 
         user={user}
         households={households}
@@ -142,8 +142,8 @@ const Index = () => {
         onHouseholdLeft={handleHouseholdLeft}
       />
 
-      <main className={showMobileNav ? "pb-20 md:pb-4" : "pb-4"}>
-        <div className={userProfile?.role === 'child' ? "" : "px-4 py-6 max-w-7xl mx-auto"}>
+      <main className={`${showMobileNav ? "pb-20 md:pb-4" : "pb-4"} ${showMobileNav ? "md:ml-64" : ""} pt-16`}>
+        <div className="max-w-7xl mx-auto">
           {renderDashboard()}
         </div>
       </main>
