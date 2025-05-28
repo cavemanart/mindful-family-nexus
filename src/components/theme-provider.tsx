@@ -1,10 +1,10 @@
 
-import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 
 type Theme = "dark" | "light" | "system"
 
 type ThemeProviderProps = {
-  children: ReactNode
+  children: React.ReactNode
   defaultTheme?: Theme
   storageKey?: string
 }
@@ -28,17 +28,10 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
-    () => {
-      if (typeof window !== "undefined") {
-        return (localStorage.getItem(storageKey) as Theme) || defaultTheme
-      }
-      return defaultTheme
-    }
+    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   )
 
   useEffect(() => {
-    if (typeof window === "undefined") return
-    
     const root = window.document.documentElement
 
     root.classList.remove("light", "dark")
@@ -56,15 +49,13 @@ export function ThemeProvider({
     root.classList.add(theme)
   }, [theme])
 
-  const value = useMemo(() => ({
+  const value = {
     theme,
     setTheme: (theme: Theme) => {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(storageKey, theme)
-      }
+      localStorage.setItem(storageKey, theme)
       setTheme(theme)
     },
-  }), [theme, storageKey])
+  }
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
