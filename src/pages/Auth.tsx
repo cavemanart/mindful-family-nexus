@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,63 +126,74 @@ const Auth = () => {
                   </Select>
                 </div>
 
-                {!isNannySignUp && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Input
-                        type="text"
-                        placeholder="First Name"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        type="text"
-                        placeholder="Last Name"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        required
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Input
+                      type="text"
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
                   </div>
+                  <div>
+                    <Input
+                      type="text"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {isNannySignUp && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Access Code
+                      </label>
+                      <div className="flex justify-center">
+                        <InputOTP
+                          maxLength={8}
+                          value={nannyToken}
+                          onChange={setNannyToken}
+                          pattern="[0-9]*"
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                          </InputOTPGroup>
+                          <div className="mx-2">-</div>
+                          <InputOTPGroup>
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                            <InputOTPSlot index={6} />
+                            <InputOTPSlot index={7} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                      <p className="text-xs text-gray-500 text-center">
+                        Enter the 8-digit access code provided by the family
+                      </p>
+                    </div>
+
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="Email (optional)"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </>
                 )}
               </>
             )}
 
-            {isNannySignUp ? (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Access Code
-                </label>
-                <div className="flex justify-center">
-                  <InputOTP
-                    maxLength={8}
-                    value={nannyToken}
-                    onChange={setNannyToken}
-                    pattern="[0-9]*"
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                    </InputOTPGroup>
-                    <div className="mx-2">-</div>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={4} />
-                      <InputOTPSlot index={5} />
-                      <InputOTPSlot index={6} />
-                      <InputOTPSlot index={7} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
-                <p className="text-xs text-gray-500 text-center">
-                  Enter the 8-digit access code provided by the family
-                </p>
-              </div>
-            ) : (
+            {!isNannySignUp && (
               <>
                 <div>
                   <Input
