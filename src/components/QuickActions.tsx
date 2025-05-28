@@ -15,7 +15,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: Heart,
       action: () => setActiveSection('appreciations'),
       color: 'from-pink-500 to-rose-500',
-      bgColor: 'bg-gradient-to-br from-pink-50 to-rose-50'
+      bgColor: 'bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-pink-950/30 dark:to-rose-950/30'
     },
     {
       title: 'Track Bills',
@@ -23,7 +23,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: DollarSign,
       action: () => setActiveSection('bills'),
       color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-gradient-to-br from-green-50 to-emerald-50'
+      bgColor: 'bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/30 dark:to-emerald-950/30'
     },
     {
       title: 'Family Notes',
@@ -31,7 +31,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: StickyNote,
       action: () => setActiveSection('notes'),
       color: 'from-yellow-500 to-amber-500',
-      bgColor: 'bg-gradient-to-br from-yellow-50 to-amber-50'
+      bgColor: 'bg-gradient-to-br from-yellow-50/50 to-amber-50/50 dark:from-yellow-950/30 dark:to-amber-950/30'
     },
     {
       title: 'Kids Dashboard',
@@ -39,7 +39,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: Users,
       action: () => setActiveSection('children'),
       color: 'from-purple-500 to-violet-500',
-      bgColor: 'bg-gradient-to-br from-purple-50 to-violet-50'
+      bgColor: 'bg-gradient-to-br from-purple-50/50 to-violet-50/50 dark:from-purple-950/30 dark:to-violet-950/30'
     },
     {
       title: 'Weekly Goals',
@@ -47,7 +47,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: Calendar,
       action: () => setActiveSection('weekly-sync'),
       color: 'from-blue-500 to-cyan-500',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-cyan-50'
+      bgColor: 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/30 dark:to-cyan-950/30'
     },
     {
       title: 'Nanny Mode',
@@ -55,7 +55,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: Baby,
       action: () => setActiveSection('nanny-mode'),
       color: 'from-orange-500 to-red-500',
-      bgColor: 'bg-gradient-to-br from-orange-50 to-red-50'
+      bgColor: 'bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/30 dark:to-red-950/30'
     },
   ];
 
@@ -66,7 +66,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
         return (
           <Card 
             key={action.title}
-            className={`${action.bgColor} border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group hover:-translate-y-1`}
+            className={`${action.bgColor} border-0 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group hover:-translate-y-1 bg-card/50 backdrop-blur-sm`}
             onClick={action.action}
           >
             <CardContent className="p-6">
@@ -75,8 +75,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
                   <Icon size={24} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 mb-1">{action.title}</h3>
-                  <p className="text-sm text-gray-600">{action.description}</p>
+                  <h3 className="font-semibold text-foreground mb-1">{action.title}</h3>
+                  <p className="text-sm text-muted-foreground">{action.description}</p>
                 </div>
               </div>
             </CardContent>

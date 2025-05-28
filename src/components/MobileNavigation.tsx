@@ -21,31 +21,33 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiv
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 shadow-sm z-30">
-        <div className="p-4 space-y-2">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.key}
-                onClick={() => setActiveTab(item.key)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
-                  activeTab === item.key
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg transform scale-105'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-                }`}
-              >
-                <Icon size={20} />
-                <span className="font-medium">{item.label}</span>
-              </button>
-            );
-          })}
+      {/* Desktop Top Navigation */}
+      <div className="hidden md:block fixed left-0 right-0 top-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border shadow-sm z-30">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-2 py-3 overflow-x-auto">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                    activeTab === item.key
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+      {/* Mobile Bottom Navigation - More Compact */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border shadow-lg z-40">
         <div className="grid grid-cols-4 gap-1 p-2">
           {navigationItems.slice(0, 4).map((item) => {
             const Icon = item.icon;
@@ -53,14 +55,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiv
               <button
                 key={item.key}
                 onClick={() => setActiveTab(item.key)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all duration-200 ${
+                className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
                   activeTab === item.key
-                    ? 'bg-gradient-to-t from-blue-500 to-purple-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
-                <Icon size={18} />
-                <span className="text-xs font-medium">{item.label}</span>
+                <Icon size={16} />
+                <span className="text-xs font-medium truncate">{item.label}</span>
               </button>
             );
           })}
@@ -72,14 +74,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiv
               <button
                 key={item.key}
                 onClick={() => setActiveTab(item.key)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-lg transition-all duration-200 ${
+                className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
                   activeTab === item.key
-                    ? 'bg-gradient-to-t from-blue-500 to-purple-600 text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
-                <Icon size={18} />
-                <span className="text-xs font-medium">{item.label}</span>
+                <Icon size={16} />
+                <span className="text-xs font-medium truncate">{item.label}</span>
               </button>
             );
           })}

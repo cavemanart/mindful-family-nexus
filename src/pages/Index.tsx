@@ -132,7 +132,7 @@ const Index = () => {
   const showMobileNav = userProfile?.role !== 'child';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <TopBar 
         user={user}
         households={households}
@@ -142,8 +142,8 @@ const Index = () => {
         onHouseholdLeft={handleHouseholdLeft}
       />
 
-      <main className={`${showMobileNav ? "pb-20 md:pb-4" : "pb-4"} ${showMobileNav ? "md:ml-64" : ""} pt-16`}>
-        <div className="max-w-7xl mx-auto">
+      <main className={`${showMobileNav ? "pb-20 md:pb-4" : "pb-4"} ${showMobileNav ? "md:pt-28" : "md:pt-16"} pt-16`}>
+        <div className="max-w-7xl mx-auto px-4">
           {renderDashboard()}
         </div>
       </main>
