@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Info } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -7,6 +7,8 @@ import { useSimpleCalendarEvents } from '@/hooks/useSimpleCalendarEvents';
 import { useAuth } from '@/hooks/useAuth';
 import SimpleEventForm from './SimpleEventForm';
 import SimpleEventsList from './SimpleEventsList';
+import SubscriptionBadge from './SubscriptionBadge';
+import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
 
 interface Household {
   id: string;
@@ -20,8 +22,27 @@ interface FamilyCalendarProps {
 const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
   const { events, loading, error, createEvent, deleteEvent } = useSimpleCalendarEvents(selectedHousehold?.id || null);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
 
   const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
+
+  useEffect(() => {
+    const loadSubscription = async () => {
+      if (userProfile?.id) {
+        try {
+          const sub = await getUserSubscription(userProfile.id);
+          setSubscription(sub);
+        } catch (error) {
+          console.error('Error loading subscription:', error);
+        } finally {
+          setSubscriptionLoading(false);
+        }
+      }
+    };
+
+    loadSubscription();
+  }, [userProfile?.id]);
 
   if (!selectedHousehold) {
     return (
@@ -43,19 +64,35 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
     );
   }
 
+  const trialActive = subscription ? isTrialActive(subscription) : false;
+  const planType = subscription?.plan_type || 'free';
+  const hasAdvancedCalendar = checkFeatureAccess(planType, 'advanced_calendar', trialActive);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Family Calendar</h2>
-        <p className="text-gray-600">{selectedHousehold.name}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Family Calendar</h2>
+          <p className="text-gray-600">{selectedHousehold.name}</p>
+        </div>
+        {!subscriptionLoading && (
+          <SubscriptionBadge 
+            planType={planType}
+            isTrialActive={trialActive}
+            trialEndDate={subscription?.trial_end_date}
+          />
+        )}
       </div>
 
-      {/* Coming Soon Notice */}
+      {/* Feature Info */}
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          📅 Simple calendar view is now available! More advanced calendar features (recurring events, invites, visual calendar grid) coming soon...
+          {hasAdvancedCalendar 
+            ? "🎉 Advanced calendar features available! Enjoy shared views, reminders, and event categories."
+            : "📅 Simple calendar view available. Upgrade to Pro for advanced features like shared views, reminders, and event categories."
+          }
         </AlertDescription>
       </Alert>
 

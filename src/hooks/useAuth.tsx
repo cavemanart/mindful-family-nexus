@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('✅ User profile fetched:', data);
         setUserProfile(data);
         setError(null);
+
+        // Check subscription status after profile is loaded
+        setTimeout(() => {
+          checkSubscriptionStatus();
+        }, 0);
       } else {
         console.log('❌ Error fetching user profile:', error);
         setError('Failed to load user profile');
@@ -48,6 +52,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('🚨 Error in fetchUserProfile:', error);
       setError('Failed to load user profile');
+    }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      console.log('💳 Checking subscription status');
+      const { data, error } = await supabase.functions.invoke('check-subscription-status');
+      if (error) {
+        console.error('❌ Subscription check error:', error);
+      } else {
+        console.log('✅ Subscription status checked:', data);
+      }
+    } catch (error) {
+      console.error('🚨 Error checking subscription:', error);
     }
   };
 

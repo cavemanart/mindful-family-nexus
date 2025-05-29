@@ -673,6 +673,7 @@ export type Database = {
           last_name: string | null
           parent_id: string | null
           role: Database["public"]["Enums"]["user_role"] | null
+          stripe_customer_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -686,6 +687,7 @@ export type Database = {
           last_name?: string | null
           parent_id?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -699,6 +701,7 @@ export type Database = {
           last_name?: string | null
           parent_id?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -745,6 +748,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          plan_type: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end_date: string | null
+          subscription_start_date: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          plan_type?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          plan_type?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       users: {
         Row: {
