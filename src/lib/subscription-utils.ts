@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { SUBSCRIPTION_PLANS, type PlanType, type FeatureName } from "./subscription-config";
+import { SUBSCRIPTION_PLANS, type PlanType, type FeatureName, isUnlimited, isWithinLimit } from "./subscription-config";
 
 export interface UserSubscription {
   id: string;
@@ -91,7 +91,7 @@ export async function canCreateHousehold(userId: string): Promise<boolean> {
   
   const currentCount = count || 0;
   const householdLimit = plan.households;
-  return householdLimit === -1 || currentCount < householdLimit;
+  return isWithinLimit(currentCount, householdLimit);
 }
 
 export async function canInviteHouseholdMember(userId: string, householdId: string): Promise<boolean> {
@@ -101,7 +101,7 @@ export async function canInviteHouseholdMember(userId: string, householdId: stri
   const limits = getFeatureLimits(planType, trialActive);
   
   const memberLimit = limits.household_members;
-  if (memberLimit === -1) return true;
+  if (isUnlimited(memberLimit)) return true;
   
   // Check current member count for this household
   const { count } = await supabase
@@ -110,7 +110,7 @@ export async function canInviteHouseholdMember(userId: string, householdId: stri
     .eq('household_id', householdId);
   
   const currentCount = count || 0;
-  return currentCount < memberLimit;
+  return isWithinLimit(currentCount, memberLimit);
 }
 
 export async function canCreateBill(userId: string): Promise<boolean> {
@@ -120,7 +120,7 @@ export async function canCreateBill(userId: string): Promise<boolean> {
   const limits = getFeatureLimits(planType, trialActive);
   
   const billLimit = limits.bills_per_month;
-  if (billLimit === -1) return true;
+  if (isUnlimited(billLimit)) return true;
   
   // Check bills created this month
   const startOfMonth = new Date();
@@ -140,7 +140,7 @@ export async function canCreateBill(userId: string): Promise<boolean> {
     );
   
   const currentCount = count || 0;
-  return currentCount < billLimit;
+  return isWithinLimit(currentCount, billLimit);
 }
 
 export async function canCreateVentTask(userId: string, isRecurring: boolean = false): Promise<boolean> {
@@ -150,7 +150,7 @@ export async function canCreateVentTask(userId: string, isRecurring: boolean = f
   const limits = getFeatureLimits(planType, trialActive);
   
   const limit = isRecurring ? limits.recurring_vent_tasks : limits.vent_tasks;
-  if (limit === -1) return true;
+  if (isUnlimited(limit)) return true;
   
   // Check current task count (using chores table for now, will rename later)
   const { count } = await supabase
@@ -165,7 +165,7 @@ export async function canCreateVentTask(userId: string, isRecurring: boolean = f
     );
   
   const currentCount = count || 0;
-  return currentCount < limit;
+  return isWithinLimit(currentCount, limit);
 }
 
 // Initialize subscription for existing users who don't have one
