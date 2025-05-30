@@ -5,6 +5,7 @@ import { Household } from '@/hooks/useHouseholds';
 import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
 import NannyTokenGenerator from './NannyTokenGenerator';
+import SubscriptionStatusCard from './SubscriptionStatusCard';
 
 interface DashboardProps {
   setActiveSection: (section: string) => void;
@@ -53,22 +54,36 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
         </p>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-card rounded-2xl border shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
-        <QuickActions setActiveSection={setActiveSection} />
-      </div>
+      {/* Grid layout for main content */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left column - Main actions and overview */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Quick Actions */}
+          <div className="bg-card rounded-2xl border shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
+            <QuickActions setActiveSection={setActiveSection} />
+          </div>
 
-      {/* Nanny Access Generator */}
-      <div className="bg-card rounded-2xl border shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Nanny Access</h2>
-        <NannyTokenGenerator householdId={selectedHousehold.id} />
-      </div>
+          {/* Overview Cards */}
+          <div className="bg-card rounded-2xl border shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Overview</h2>
+            <OverviewCards setActiveSection={setActiveSection} />
+          </div>
 
-      {/* Overview Cards */}
-      <div className="bg-card rounded-2xl border shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Overview</h2>
-        <OverviewCards setActiveSection={setActiveSection} />
+          {/* Nanny Access Generator */}
+          <div className="bg-card rounded-2xl border shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Nanny Access</h2>
+            <NannyTokenGenerator householdId={selectedHousehold.id} />
+          </div>
+        </div>
+
+        {/* Right column - Subscription status */}
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Your Plan</h2>
+            <SubscriptionStatusCard />
+          </div>
+        </div>
       </div>
     </div>
   );

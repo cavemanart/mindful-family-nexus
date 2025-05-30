@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { SUBSCRIPTION_PLANS, type PlanType, type FeatureName, isUnlimited, isWithinLimit } from "./subscription-config";
 
@@ -48,6 +47,26 @@ export function isTrialActive(subscription: UserSubscription | null): boolean {
   const now = new Date();
   
   return now < trialEnd;
+}
+
+export async function activateTrial(userId: string): Promise<boolean> {
+  try {
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 14);
+
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .update({
+        trial_start_date: new Date().toISOString(),
+        trial_end_date: trialEndDate.toISOString()
+      })
+      .eq('user_id', userId);
+
+    return !error;
+  } catch (error) {
+    console.error('Error activating trial:', error);
+    return false;
+  }
 }
 
 export function checkFeatureAccess(planType: PlanType, feature: FeatureName, isTrialActive: boolean = false): boolean {
@@ -177,9 +196,8 @@ export async function ensureUserSubscription(userId: string): Promise<UserSubscr
       .from('user_subscriptions')
       .insert({
         user_id: userId,
-        plan_type: 'free',
-        trial_start_date: new Date().toISOString(),
-        trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+        plan_type: 'free'
+        // No automatic trial - users must opt-in
       })
       .select()
       .single();
