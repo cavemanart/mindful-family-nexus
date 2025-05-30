@@ -30,7 +30,10 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
     return null;
   }
 
-  return data;
+  return {
+    ...data,
+    plan_type: data.plan_type as PlanType
+  };
 }
 
 export async function getUserPlan(userId: string): Promise<PlanType> {
@@ -178,7 +181,10 @@ export async function ensureUserSubscription(userId: string): Promise<UserSubscr
       .single();
     
     if (error) throw error;
-    subscription = data;
+    subscription = {
+      ...data,
+      plan_type: data.plan_type as PlanType
+    };
   }
   
   return subscription;
