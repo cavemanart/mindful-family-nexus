@@ -66,9 +66,10 @@ export function getFeatureLimits(planType: PlanType, isTrialActive: boolean = fa
   
   // During trial, free users get enhanced limits
   if (planType === 'free' && isTrialActive) {
+    const freePlan = SUBSCRIPTION_PLANS.free;
     return {
       ...plan,
-      household_members: plan.trial_household_members,
+      household_members: freePlan.trial_household_members,
       vent_tasks: SUBSCRIPTION_PLANS.pro.vent_tasks,
       recurring_vent_tasks: SUBSCRIPTION_PLANS.pro.recurring_vent_tasks,
       bills_per_month: SUBSCRIPTION_PLANS.pro.bills_per_month,
