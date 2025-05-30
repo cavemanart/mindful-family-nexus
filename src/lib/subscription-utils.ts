@@ -90,7 +90,8 @@ export async function canCreateHousehold(userId: string): Promise<boolean> {
     .eq('user_id', userId);
   
   const currentCount = count || 0;
-  return plan.households === -1 || currentCount < plan.households;
+  const householdLimit = plan.households;
+  return householdLimit === -1 || currentCount < householdLimit;
 }
 
 export async function canInviteHouseholdMember(userId: string, householdId: string): Promise<boolean> {
@@ -99,7 +100,8 @@ export async function canInviteHouseholdMember(userId: string, householdId: stri
   const trialActive = isTrialActive(subscription);
   const limits = getFeatureLimits(planType, trialActive);
   
-  if (limits.household_members === -1) return true;
+  const memberLimit = limits.household_members;
+  if (memberLimit === -1) return true;
   
   // Check current member count for this household
   const { count } = await supabase
@@ -108,7 +110,7 @@ export async function canInviteHouseholdMember(userId: string, householdId: stri
     .eq('household_id', householdId);
   
   const currentCount = count || 0;
-  return currentCount < limits.household_members;
+  return currentCount < memberLimit;
 }
 
 export async function canCreateBill(userId: string): Promise<boolean> {
@@ -117,7 +119,8 @@ export async function canCreateBill(userId: string): Promise<boolean> {
   const trialActive = isTrialActive(subscription);
   const limits = getFeatureLimits(planType, trialActive);
   
-  if (limits.bills_per_month === -1) return true;
+  const billLimit = limits.bills_per_month;
+  if (billLimit === -1) return true;
   
   // Check bills created this month
   const startOfMonth = new Date();
@@ -137,7 +140,7 @@ export async function canCreateBill(userId: string): Promise<boolean> {
     );
   
   const currentCount = count || 0;
-  return currentCount < limits.bills_per_month;
+  return currentCount < billLimit;
 }
 
 export async function canCreateVentTask(userId: string, isRecurring: boolean = false): Promise<boolean> {
