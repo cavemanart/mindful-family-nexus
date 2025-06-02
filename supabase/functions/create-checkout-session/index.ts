@@ -62,12 +62,16 @@ serve(async (req) => {
       recurring: { interval: "month" },
     };
 
+    // Get origin from request or use fallback
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.split('/').slice(0, 3).join('/') || "http://localhost:3000";
+    logStep("Using origin", { origin });
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ price_data: priceData, quantity: 1 }],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/`,
+      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/subscription`,
       metadata: { 
         user_id: user.id,
         plan_type: plan_type 

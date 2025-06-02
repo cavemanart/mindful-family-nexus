@@ -12,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import HomePage from "./components/HomePage";
 import NannyAccess from "./pages/NannyAccess";
 import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
+import Success from "./pages/Success";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -33,6 +35,8 @@ const App = () => {
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/subscription" element={<Subscription />} />
+                <Route path="/success" element={<Success />} />
                 <Route path="/nanny" element={<NannyAccess />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

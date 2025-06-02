@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -48,14 +47,13 @@ serve(async (req) => {
       .single();
 
     if (!subscription) {
-      logStep("Creating initial subscription record");
+      logStep("Creating initial subscription record - FREE PLAN ONLY");
       const { data: newSub, error } = await supabaseClient
         .from("user_subscriptions")
         .insert({
           user_id: user.id,
-          plan_type: 'free',
-          trial_start_date: new Date().toISOString(),
-          trial_end_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+          plan_type: 'free'
+          // NO automatic trial - users must opt-in
         })
         .select()
         .single();
@@ -123,22 +121,18 @@ serve(async (req) => {
         })
         .eq("user_id", user.id);
     } else {
-      logStep("No active subscription found, reverting to free");
+      logStep("No active subscription found, keeping current plan");
       
-      // Update to free plan
+      // Update customer ID but keep current plan
       await supabaseClient
         .from("user_subscriptions")
         .update({
-          plan_type: 'free',
           stripe_customer_id: customerId,
           stripe_subscription_id: null,
-          is_active: true,
           subscription_start_date: null,
           subscription_end_date: null
         })
         .eq("user_id", user.id);
-      
-      planType = 'free';
     }
 
     return new Response(JSON.stringify({
