@@ -199,29 +199,50 @@ export type Database = {
       }
       calendar_events: {
         Row: {
+          assigned_to: string[] | null
+          category: string | null
+          color: string | null
           created_at: string
           creator_id: string
           description: string | null
+          end_datetime: string | null
           household_id: string
           id: string
+          is_recurring: boolean | null
+          recurrence_end: string | null
+          recurrence_pattern: string | null
           start_datetime: string
           title: string
         }
         Insert: {
+          assigned_to?: string[] | null
+          category?: string | null
+          color?: string | null
           created_at?: string
           creator_id: string
           description?: string | null
+          end_datetime?: string | null
           household_id: string
           id?: string
+          is_recurring?: boolean | null
+          recurrence_end?: string | null
+          recurrence_pattern?: string | null
           start_datetime: string
           title: string
         }
         Update: {
+          assigned_to?: string[] | null
+          category?: string | null
+          color?: string | null
           created_at?: string
           creator_id?: string
           description?: string | null
+          end_datetime?: string | null
           household_id?: string
           id?: string
+          is_recurring?: boolean | null
+          recurrence_end?: string | null
+          recurrence_pattern?: string | null
           start_datetime?: string
           title?: string
         }
@@ -323,6 +344,86 @@ export type Database = {
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_categories: {
+        Row: {
+          color: string
+          created_at: string | null
+          household_id: string
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          household_id: string
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          household_id?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_categories_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_reminders: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          is_sent: boolean | null
+          reminder_time: unknown
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          is_sent?: boolean | null
+          reminder_time: unknown
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          is_sent?: boolean | null
+          reminder_time?: unknown
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_reminders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

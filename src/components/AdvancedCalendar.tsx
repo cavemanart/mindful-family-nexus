@@ -1,0 +1,164 @@
+
+import React, { useState } from 'react';
+import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAdvancedCalendar } from '@/hooks/useAdvancedCalendar';
+import { useAuth } from '@/hooks/useAuth';
+import AdvancedEventForm from './AdvancedEventForm';
+import CalendarGrid from './CalendarGrid';
+import EventsList from './EventsList';
+import CategoryFilter from './CategoryFilter';
+import SubscriptionBadge from './SubscriptionBadge';
+import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
+import { CalendarView } from '@/types/calendar';
+
+interface Household {
+  id: string;
+  name: string;
+}
+
+interface AdvancedCalendarProps {
+  selectedHousehold: Household | null;
+}
+
+const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }) => {
+  const { userProfile } = useAuth();
+  const { events, categories, loading, error, createEvent, updateEvent, deleteEvent } = useAdvancedCalendar(selectedHousehold?.id || null);
+  const [view, setView] = useState<CalendarView>({ type: 'month', date: new Date() });
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isGridView, setIsGridView] = useState(true);
+
+  const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
+
+  const filteredEvents = selectedCategories.length > 0 
+    ? events.filter(event => selectedCategories.includes(event.category || 'general'))
+    : events;
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setView(prev => {
+      const newDate = new Date(prev.date);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      return { ...prev, date: newDate };
+    });
+  };
+
+  if (!selectedHousehold) {
+    return (
+      <div className="text-center py-8">
+        <CalendarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+        <p className="text-gray-600">Please select a household to view calendar</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  const currentMonth = view.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Advanced Family Calendar</h2>
+          <p className="text-gray-600">{selectedHousehold.name}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsGridView(!isGridView)}
+          >
+            {isGridView ? <List className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
+            {isGridView ? 'List View' : 'Grid View'}
+          </Button>
+          {canCreateEvents && (
+            <Button onClick={() => setShowEventForm(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add Event
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Navigation and Filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="text-lg font-semibold min-w-48 text-center">{currentMonth}</h3>
+          <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <CategoryFilter
+          categories={categories}
+          selectedCategories={selectedCategories}
+          onCategoryChange={setSelectedCategories}
+        />
+      </div>
+
+      {/* Calendar Content */}
+      {isGridView ? (
+        <CalendarGrid
+          events={filteredEvents}
+          categories={categories}
+          view={view}
+          onEventClick={(event) => console.log('Event clicked:', event)}
+          onDateClick={(date) => console.log('Date clicked:', date)}
+        />
+      ) : (
+        <EventsList
+          events={filteredEvents}
+          categories={categories}
+          onEventEdit={updateEvent}
+          onEventDelete={deleteEvent}
+          loading={loading}
+          canEdit={canCreateEvents}
+        />
+      )}
+
+      {/* Event Creation Form */}
+      {showEventForm && (
+        <AdvancedEventForm
+          onEventCreated={(event) => {
+            createEvent(event);
+            setShowEventForm(false);
+          }}
+          onCancel={() => setShowEventForm(false)}
+          categories={categories}
+          householdId={selectedHousehold.id}
+        />
+      )}
+
+      {!canCreateEvents && (
+        <Alert>
+          <AlertDescription>
+            Only parents and grandparents can create events. You can view family events above.
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+};
+
+export default AdvancedCalendar;

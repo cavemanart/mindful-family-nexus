@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Info } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useSimpleCalendarEvents } from '@/hooks/useSimpleCalendarEvents';
 import { useAuth } from '@/hooks/useAuth';
+import AdvancedCalendar from './AdvancedCalendar';
 import SimpleEventForm from './SimpleEventForm';
 import SimpleEventsList from './SimpleEventsList';
 import SubscriptionBadge from './SubscriptionBadge';
 import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
+import { useSimpleCalendarEvents } from '@/hooks/useSimpleCalendarEvents';
 
 interface Household {
   id: string;
@@ -68,6 +69,12 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
   const planType = subscription?.plan_type || 'free';
   const hasAdvancedCalendar = checkFeatureAccess(planType, 'advanced_calendar', trialActive);
 
+  // Show Advanced Calendar for Pro users, Simple Calendar for free users
+  if (hasAdvancedCalendar) {
+    return <AdvancedCalendar selectedHousehold={selectedHousehold} />;
+  }
+
+  // Fallback to simple calendar for free users
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -89,10 +96,7 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          {hasAdvancedCalendar 
-            ? "🎉 Advanced calendar features available! Enjoy shared views, reminders, and event categories."
-            : "📅 Simple calendar view available. Upgrade to Pro for advanced features like shared views, reminders, and event categories."
-          }
+          📅 Simple calendar view available. Upgrade to Pro for advanced features like visual calendar grid, color-coded categories, family member assignments, and recurring events.
         </AlertDescription>
       </Alert>
 
