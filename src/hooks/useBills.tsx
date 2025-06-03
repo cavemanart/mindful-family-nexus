@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { canCreateBill } from '@/lib/subscription-utils';
 
 export interface Bill {
   id: string;
@@ -23,7 +25,9 @@ export interface Bill {
 export const useBills = (householdId: string | null) => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billsThisMonth, setBillsThisMonth] = useState(0);
   const { toast } = useToast();
+  const { userProfile } = useAuth();
 
   const fetchBills = async () => {
     if (!householdId) {
@@ -51,6 +55,18 @@ export const useBills = (householdId: string | null) => {
       }));
       
       setBills(typedBills);
+
+      // Count bills created this month for limit tracking
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const billsThisMonthCount = typedBills.filter(bill => 
+        new Date(bill.created_at) >= startOfMonth
+      ).length;
+      
+      setBillsThisMonth(billsThisMonthCount);
+      
     } catch (error: any) {
       toast({
         title: "Error fetching bills",
@@ -63,9 +79,20 @@ export const useBills = (householdId: string | null) => {
   };
 
   const addBill = async (billData: Omit<Bill, 'id' | 'created_at' | 'updated_at' | 'household_id'>) => {
-    if (!householdId) return false;
+    if (!householdId || !userProfile?.id) return false;
 
     try {
+      // Check subscription limits before creating
+      const canCreate = await canCreateBill(userProfile.id);
+      if (!canCreate) {
+        toast({
+          title: "Bill limit reached",
+          description: "You've reached the maximum number of bills for your plan. Upgrade to Pro for unlimited bills.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
       const newBill = {
         ...billData,
         household_id: householdId,
@@ -88,6 +115,32 @@ export const useBills = (householdId: string | null) => {
     } catch (error: any) {
       toast({
         title: "Error adding bill",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const deleteBill = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('bills')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Bill deleted successfully!",
+      });
+      
+      fetchBills();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error deleting bill",
         description: error.message,
         variant: "destructive"
       });
@@ -190,7 +243,9 @@ export const useBills = (householdId: string | null) => {
   return {
     bills,
     loading,
+    billsThisMonth,
     addBill,
+    deleteBill,
     togglePaid,
     generateNextInstance,
     processRecurringBills,

@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock, HelpCircle, Info } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock, HelpCircle, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,15 +10,29 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useBills } from '@/hooks/useBills';
 import { Household } from '@/hooks/useHouseholds';
+import { useAuth } from '@/hooks/useAuth';
+import { getUserSubscription, isTrialActive, getFeatureLimits } from '@/lib/subscription-utils';
+import BillUsageIndicator from './BillUsageIndicator';
+import BillDeleteDialog from './BillDeleteDialog';
+import SubscriptionLimitAlert from './SubscriptionLimitAlert';
 
 interface BillsTrackerProps {
   selectedHousehold: Household;
 }
 
 const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
-  const { bills, loading, addBill, togglePaid, generateNextInstance, processRecurringBills } = useBills(selectedHousehold?.id);
+  const { userProfile } = useAuth();
+  const { bills, loading, billsThisMonth, addBill, deleteBill, togglePaid, generateNextInstance, processRecurringBills } = useBills(selectedHousehold?.id);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [showRecurringHelp, setShowRecurringHelp] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, billId: string, billName: string}>({
+    isOpen: false,
+    billId: '',
+    billName: ''
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [newBill, setNewBill] = useState({
     name: '',
     amount: '',
@@ -31,8 +44,31 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     is_template: false,
   });
 
+  useEffect(() => {
+    const loadSubscription = async () => {
+      if (userProfile?.id) {
+        try {
+          const sub = await getUserSubscription(userProfile.id);
+          setSubscription(sub);
+        } catch (error) {
+          console.error('Error loading subscription:', error);
+        } finally {
+          setSubscriptionLoading(false);
+        }
+      }
+    };
+
+    loadSubscription();
+  }, [userProfile?.id]);
+
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
   const categories = ['Utilities', 'Insurance', 'Housing', 'Healthcare', 'Transportation', 'Entertainment', 'Other'];
+
+  const planType = subscription?.plan_type || 'free';
+  const trialActive = subscription ? isTrialActive(subscription) : false;
+  const limits = getFeatureLimits(planType, trialActive);
+  const billLimit = limits.bills_per_month;
+  const canCreateMoreBills = billsThisMonth < billLimit;
 
   const handleAddBill = async () => {
     if (newBill.name.trim() && newBill.amount && newBill.due_date && newBill.category && newBill.assigned_to) {
@@ -62,6 +98,26 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         setIsAddingBill(false);
       }
     }
+  };
+
+  const handleDeleteBill = async () => {
+    if (!deleteDialog.billId) return;
+    
+    setIsDeleting(true);
+    const success = await deleteBill(deleteDialog.billId);
+    setIsDeleting(false);
+    
+    if (success) {
+      setDeleteDialog({ isOpen: false, billId: '', billName: '' });
+    }
+  };
+
+  const openDeleteDialog = (billId: string, billName: string) => {
+    setDeleteDialog({ isOpen: true, billId, billName });
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialog({ isOpen: false, billId: '', billName: '' });
   };
 
   const handleTogglePaid = async (id: string) => {
@@ -105,7 +161,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     return colors[category] || colors['Other'];
   };
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
@@ -136,12 +192,30 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           <Button 
             onClick={() => setIsAddingBill(true)} 
             className="bg-green-600 hover:bg-green-700"
+            disabled={!canCreateMoreBills}
           >
             <Plus size={16} className="mr-2" />
             Add Bill
           </Button>
         </div>
       </div>
+
+      {/* Usage Indicator */}
+      <BillUsageIndicator 
+        currentCount={billsThisMonth}
+        maxCount={billLimit}
+        planType={planType}
+        isTrialActive={trialActive}
+      />
+
+      {/* Subscription Limit Alert */}
+      {!canCreateMoreBills && (
+        <SubscriptionLimitAlert 
+          feature="bills per month"
+          currentPlan={planType}
+          isTrialActive={trialActive}
+        />
+      )}
 
       {/* Help Section */}
       {showRecurringHelp && (
@@ -286,7 +360,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
       )}
 
       {/* Add Bill Form */}
-      {isAddingBill && (
+      {isAddingBill && canCreateMoreBills && (
         <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50">
           <CardHeader>
             <CardTitle className="text-green-800">Add New Bill</CardTitle>
@@ -481,6 +555,14 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                               Next Bill
                             </Button>
                           )}
+                          <Button
+                            onClick={() => openDeleteDialog(bill.id, bill.name)}
+                            size="sm"
+                            variant="outline"
+                            className="border-red-600 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -527,14 +609,24 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600">${bill.amount.toFixed(2)}</p>
                       <p className="text-sm text-green-600">✓ Paid</p>
-                      <Button
-                        onClick={() => handleTogglePaid(bill.id)}
-                        variant="outline"
-                        size="sm"
-                        className="mt-2 border-green-600 text-green-600 hover:bg-green-100"
-                      >
-                        Undo Payment
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          onClick={() => handleTogglePaid(bill.id)}
+                          variant="outline"
+                          size="sm"
+                          className="border-green-600 text-green-600 hover:bg-green-100"
+                        >
+                          Undo Payment
+                        </Button>
+                        <Button
+                          onClick={() => openDeleteDialog(bill.id, bill.name)}
+                          size="sm"
+                          variant="outline"
+                          className="border-red-600 text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -553,12 +645,22 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           <Button 
             onClick={() => setIsAddingBill(true)}
             className="bg-green-600 hover:bg-green-700"
+            disabled={!canCreateMoreBills}
           >
             <Plus size={16} className="mr-2" />
             Add Your First Bill
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <BillDeleteDialog 
+        isOpen={deleteDialog.isOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleDeleteBill}
+        billName={deleteDialog.billName}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };
