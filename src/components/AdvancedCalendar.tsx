@@ -53,8 +53,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   if (!selectedHousehold) {
     return (
       <div className="text-center py-8">
-        <CalendarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-600">Please select a household to view calendar</p>
+        <CalendarIcon className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+        <p className="text-gray-600 dark:text-gray-400">Please select a household to view calendar</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600 mb-4">{error}</p>
+        <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
         <Button onClick={() => window.location.reload()} variant="outline">
           Try Again
         </Button>
@@ -77,8 +77,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Advanced Family Calendar</h2>
-          <p className="text-gray-600">{selectedHousehold.name}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Advanced Family Calendar</h2>
+          <p className="text-gray-600 dark:text-gray-400">{selectedHousehold.name}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -104,7 +104,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h3 className="text-lg font-semibold min-w-48 text-center">{currentMonth}</h3>
+          <h3 className="text-lg font-semibold min-w-48 text-center text-gray-900 dark:text-gray-100">{currentMonth}</h3>
           <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -151,8 +151,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
       )}
 
       {!canCreateEvents && (
-        <Alert>
-          <AlertDescription>
+        <Alert className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
             Only parents and grandparents can create events. You can view family events above.
           </AlertDescription>
         </Alert>

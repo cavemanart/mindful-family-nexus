@@ -39,11 +39,11 @@ const EventsList: React.FC<EventsListProps> = ({
 
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-card dark:bg-card border-border dark:border-border">
         <CardContent className="p-6">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading events...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading events...</p>
           </div>
         </CardContent>
       </Card>
@@ -52,12 +52,12 @@ const EventsList: React.FC<EventsListProps> = ({
 
   if (events.length === 0) {
     return (
-      <Card>
+      <Card className="bg-card dark:bg-card border-border dark:border-border">
         <CardContent className="p-6">
           <div className="text-center">
-            <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600">No events found</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <Calendar className="h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">No events found</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
               Create your first event to get started
             </p>
           </div>
@@ -72,12 +72,12 @@ const EventsList: React.FC<EventsListProps> = ({
         const categoryInfo = getCategoryInfo(event.category || 'general');
         
         return (
-          <Card key={event.id} className="hover:shadow-md transition-shadow">
+          <Card key={event.id} className="hover:shadow-md transition-shadow bg-card dark:bg-card border-border dark:border-border">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-gray-900">{event.title}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{event.title}</h3>
                     <Badge 
                       variant="secondary" 
                       className="text-white"
@@ -87,17 +87,17 @@ const EventsList: React.FC<EventsListProps> = ({
                       {categoryInfo.name}
                     </Badge>
                     {event.is_recurring && (
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300">
                         Recurring
                       </Badge>
                     )}
                   </div>
                   
                   {event.description && (
-                    <p className="text-gray-600 mb-3">{event.description}</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-3">{event.description}</p>
                   )}
                   
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       {formatEventDate(event.start_datetime)}
@@ -124,6 +124,7 @@ const EventsList: React.FC<EventsListProps> = ({
                         // This would open edit modal in a real implementation
                         console.log('Edit event:', event.id);
                       }}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -131,7 +132,7 @@ const EventsList: React.FC<EventsListProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onEventDelete(event.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
