@@ -42,6 +42,7 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
   const houseRules = householdInfo.filter(info => info.info_type === 'house_rule');
   const emergencyNumbers = householdInfo.filter(info => info.info_type === 'emergency_number');
   const accessCodes = householdInfo.filter(info => info.info_type === 'access_code');
+  const childInfo = householdInfo.filter(info => info.info_type === 'child_info');
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -132,33 +133,35 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
                 Medications & Health
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 max-h-96 overflow-y-auto">
+            <CardContent className="space-y-4">
               {medications.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400">No medications listed</p>
               ) : (
-                medications.map((medication) => (
-                  <div key={medication.id} className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950/30">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-blue-900 dark:text-blue-100">
-                        {medication.child_name} - {medication.medication_name}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-white dark:bg-gray-700">
-                          {medication.dosage}
-                        </Badge>
-                        <Badge variant="outline" className="bg-white dark:bg-gray-700">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {medication.frequency}
-                        </Badge>
-                      </div>
-                      {medication.instructions && (
-                        <div className="bg-white dark:bg-gray-700 p-3 rounded border text-sm">
-                          <strong>Instructions:</strong> {medication.instructions}
+                <div className="max-h-96 overflow-y-auto space-y-4">
+                  {medications.map((medication) => (
+                    <div key={medication.id} className="border rounded-lg p-4 bg-blue-50 dark:bg-blue-950/30">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-100">
+                          {medication.child_name} - {medication.medication_name}
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className="bg-white dark:bg-gray-700">
+                            {medication.dosage}
+                          </Badge>
+                          <Badge variant="outline" className="bg-white dark:bg-gray-700">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {medication.frequency}
+                          </Badge>
                         </div>
-                      )}
+                        {medication.instructions && (
+                          <div className="bg-white dark:bg-gray-700 p-3 rounded border text-sm">
+                            <strong>Instructions:</strong> {medication.instructions}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -181,23 +184,58 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+            <CardContent className="space-y-3">
               {accessCodes.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400">No access codes available</p>
               ) : (
-                accessCodes.map((info) => (
-                  <div key={info.id} className="border rounded-lg p-4 bg-white dark:bg-gray-700">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{info.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{info.description}</p>
-                    <div className="bg-gray-100 dark:bg-gray-600 p-2 rounded font-mono text-sm">
-                      {showCodes ? info.value : '••••••••'}
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {accessCodes.map((info) => (
+                    <div key={info.id} className="border rounded-lg p-4 bg-white dark:bg-gray-700">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{info.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{info.description}</p>
+                      <div className="bg-gray-100 dark:bg-gray-600 p-2 rounded font-mono text-sm">
+                        {showCodes ? info.value : '••••••••'}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
         </div>
+
+        {/* Child Information */}
+        {childInfo.length > 0 && (
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Utensils className="h-5 w-5 text-purple-500" />
+                Child Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {childInfo.map((info) => (
+                  <div key={info.id} className="border rounded-lg p-4 bg-purple-50 dark:bg-purple-950/30">
+                    <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                      {info.title}
+                    </h4>
+                    {info.description && (
+                      <div className="text-xs text-purple-600 dark:text-purple-300 mb-2">
+                        {info.description}
+                      </div>
+                    )}
+                    <div className="text-sm text-purple-800 dark:text-purple-200 whitespace-pre-wrap">
+                      {info.value.split('\n').map((line, index) => (
+                        <div key={index}>• {line}</div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Family Notes & Routines */}
         <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">

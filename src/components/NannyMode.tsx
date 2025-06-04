@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const NannyMode = () => {
   const [showEmergencyForm, setShowEmergencyForm] = useState(false);
   const [showMedicationForm, setShowMedicationForm] = useState(false);
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
+  const [showChildInfoForm, setShowChildInfoForm] = useState(false);
   const { userProfile } = useAuth();
   const { households } = useHouseholds();
   
@@ -58,6 +60,13 @@ const NannyMode = () => {
     value: '',
     description: '',
     info_type: 'access_code'
+  });
+
+  const [childInfoForm, setChildInfoForm] = useState({
+    title: '',
+    value: '',
+    description: '',
+    info_type: 'child_info'
   });
 
   const isParent = userProfile?.role === 'parent';
@@ -121,6 +130,22 @@ const NannyMode = () => {
     setAccessCodeForm({ title: '', value: '', description: '', info_type: 'access_code' });
     setShowAccessCodeForm(false);
   };
+
+  const handleAddChildInfo = async () => {
+    if (!selectedHousehold) return;
+    
+    await addHouseholdInfo({
+      household_id: selectedHousehold.id,
+      ...childInfoForm
+    });
+    
+    setChildInfoForm({ title: '', value: '', description: '', info_type: 'child_info' });
+    setShowChildInfoForm(false);
+  };
+
+  // Filter household info by type
+  const accessCodes = householdInfo.filter(info => info.info_type === 'access_code');
+  const childInfo = householdInfo.filter(info => info.info_type === 'child_info');
 
   if (isLocked) {
     return (
@@ -204,14 +229,24 @@ const NannyMode = () => {
       )}
 
       <Tabs defaultValue="contacts" className="space-y-4">
-        <div className="overflow-x-auto">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 min-w-max">
-            <TabsTrigger value="contacts" className="text-xs sm:text-sm">Contacts</TabsTrigger>
-            <TabsTrigger value="medications" className="text-xs sm:text-sm">Meds</TabsTrigger>
-            <TabsTrigger value="codes" className="text-xs sm:text-sm">Codes</TabsTrigger>
-            <TabsTrigger value="info" className="text-xs sm:text-sm">Info</TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger value="contacts" className="text-sm py-3">
+            <Phone className="h-4 w-4 mr-2" />
+            Contacts
+          </TabsTrigger>
+          <TabsTrigger value="medications" className="text-sm py-3">
+            <Pill className="h-4 w-4 mr-2" />
+            Meds
+          </TabsTrigger>
+          <TabsTrigger value="codes" className="text-sm py-3">
+            <Eye className="h-4 w-4 mr-2" />
+            Codes
+          </TabsTrigger>
+          <TabsTrigger value="info" className="text-sm py-3">
+            <Utensils className="h-4 w-4 mr-2" />
+            Info
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="contacts" className="space-y-4">
           <div className="flex justify-between items-center">
@@ -402,65 +437,69 @@ const NannyMode = () => {
             )}
           </div>
 
-          {medications.length === 0 ? (
-            <div className="text-center py-12">
-              <Pill size={48} className="text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground text-lg">No medications to track</p>
-              {isParent && (
-                <p className="text-sm text-muted-foreground mt-2">Add medications to help caregivers manage health needs</p>
-              )}
-            </div>
-          ) : (
-            medications.map((medication) => (
-              <Card key={medication.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Pill className="text-blue-500 mt-1 flex-shrink-0" size={20} />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-foreground">
-                            {medication.child_name} - {medication.medication_name}
-                          </h4>
-                          {isParent && (
-                            <Button
-                              onClick={() => deleteMedication(medication.id)}
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+          <div className="min-h-[300px]">
+            {medications.length === 0 ? (
+              <div className="text-center py-12">
+                <Pill size={48} className="text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground text-lg">No medications to track</p>
+                {isParent && (
+                  <p className="text-sm text-muted-foreground mt-2">Add medications to help caregivers manage health needs</p>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {medications.map((medication) => (
+                  <Card key={medication.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <Pill className="text-blue-500 mt-1 flex-shrink-0" size={20} />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-foreground">
+                                {medication.child_name} - {medication.medication_name}
+                              </h4>
+                              {isParent && (
+                                <Button
+                                  onClick={() => deleteMedication(medication.id)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
+                              Dosage: {medication.dosage}
+                            </Badge>
+                            <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
+                              <Clock size={12} className="mr-1" />
+                              {medication.frequency}
+                            </Badge>
+                          </div>
+                          {medication.instructions && (
+                            <div className="bg-muted p-3 rounded-lg">
+                              <strong>Notes:</strong> {medication.instructions}
+                            </div>
+                          )}
+                          {medication.prescribing_doctor && (
+                            <div className="text-sm text-muted-foreground">
+                              <strong>Doctor:</strong> {medication.prescribing_doctor}
+                            </div>
                           )}
                         </div>
                       </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30">
-                          Dosage: {medication.dosage}
-                        </Badge>
-                        <Badge variant="outline" className="bg-green-50 dark:bg-green-950/30">
-                          <Clock size={12} className="mr-1" />
-                          {medication.frequency}
-                        </Badge>
-                      </div>
-                      {medication.instructions && (
-                        <div className="bg-muted p-3 rounded-lg">
-                          <strong>Notes:</strong> {medication.instructions}
-                        </div>
-                      )}
-                      {medication.prescribing_doctor && (
-                        <div className="text-sm text-muted-foreground">
-                          <strong>Doctor:</strong> {medication.prescribing_doctor}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="codes" className="space-y-4">
@@ -525,8 +564,8 @@ const NannyMode = () => {
             )}
           </div>
           
-          <div className="grid gap-4">
-            {householdInfo.length === 0 ? (
+          <div className="min-h-[300px]">
+            {accessCodes.length === 0 ? (
               <div className="text-center py-8">
                 <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">No access codes added yet</p>
@@ -535,16 +574,148 @@ const NannyMode = () => {
                 )}
               </div>
             ) : (
-              householdInfo.map((item) => (
-                <Card key={item.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold text-foreground">{item.title}</h4>
+              <div className="grid gap-4">
+                {accessCodes.map((item) => (
+                  <Card key={item.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-foreground">{item.title}</h4>
+                            {isParent && (
+                              <Button
+                                onClick={() => deleteHouseholdInfo(item.id)}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+                          <p className={`text-lg font-mono break-all ${showCodes ? 'text-foreground' : 'text-transparent bg-muted rounded select-none'}`}>
+                            {showCodes ? item.value : '••••••••'}
+                          </p>
+                        </div>
+                        {showCodes && (
+                          <Button
+                            onClick={() => navigator.clipboard.writeText(item.value)}
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                          >
+                            Copy
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="info" className="space-y-4">
+          <div className="space-y-6">
+            <HouseRulesManager 
+              householdId={selectedHousehold?.id || ''} 
+              canEdit={isParent}
+            />
+
+            {/* Child Information */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Utensils className="h-5 w-5 text-purple-500" />
+                    Child Information
+                  </CardTitle>
+                  {isParent && (
+                    <Dialog open={showChildInfoForm} onOpenChange={setShowChildInfoForm}>
+                      <DialogTrigger asChild>
+                        <Button size="sm">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Info
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add Child Information</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="info_title">Title</Label>
+                            <Input
+                              id="info_title"
+                              value={childInfoForm.title}
+                              onChange={(e) => setChildInfoForm(prev => ({ ...prev, title: e.target.value }))}
+                              placeholder="e.g., Emma (Age 8), Jack's Allergies"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="info_value">Information</Label>
+                            <Textarea
+                              id="info_value"
+                              value={childInfoForm.value}
+                              onChange={(e) => setChildInfoForm(prev => ({ ...prev, value: e.target.value }))}
+                              placeholder="e.g., Allergic to peanuts and tree nuts, Loves pasta and chicken"
+                              rows={4}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="info_description">Category (Optional)</Label>
+                            <Input
+                              id="info_description"
+                              value={childInfoForm.description}
+                              onChange={(e) => setChildInfoForm(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="e.g., Allergies, Preferences, Medical"
+                            />
+                          </div>
+                          <Button onClick={handleAddChildInfo} className="w-full">
+                            Add Information
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {childInfo.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Utensils className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">No child information added yet</p>
+                    {isParent && (
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                        Add information about children's preferences, allergies, and important details
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {childInfo.map((info) => (
+                      <div key={info.id} className="border rounded-lg p-4 bg-purple-50 dark:bg-purple-950/30">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                              {info.title}
+                            </h4>
+                            {info.description && (
+                              <div className="text-xs text-purple-600 dark:text-purple-300 mb-2">
+                                {info.description}
+                              </div>
+                            )}
+                            <div className="text-sm text-purple-800 dark:text-purple-200 whitespace-pre-wrap">
+                              {info.value.split('\n').map((line, index) => (
+                                <div key={index}>• {line}</div>
+                              ))}
+                            </div>
+                          </div>
                           {isParent && (
                             <Button
-                              onClick={() => deleteHouseholdInfo(item.id)}
+                              onClick={() => deleteHouseholdInfo(info.id)}
                               variant="outline"
                               size="sm"
                               className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
@@ -553,77 +724,56 @@ const NannyMode = () => {
                             </Button>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
-                        <p className={`text-lg font-mono break-all ${showCodes ? 'text-foreground' : 'text-transparent bg-muted rounded select-none'}`}>
-                          {showCodes ? item.value : '••••••••'}
-                        </p>
                       </div>
-                      {showCodes && (
-                        <Button
-                          onClick={() => navigator.clipboard.writeText(item.value)}
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto"
-                        >
-                          Copy
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Daily Schedule from Family Notes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock className="text-blue-500" size={20} />
+                  Daily Schedule & Routines
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notes.filter(note => 
+                  note.title.toLowerCase().includes('schedule') || 
+                  note.title.toLowerCase().includes('routine') ||
+                  note.content.toLowerCase().includes('schedule')
+                ).length > 0 ? (
+                  <div className="grid gap-4">
+                    {notes.filter(note => 
+                      note.title.toLowerCase().includes('schedule') || 
+                      note.title.toLowerCase().includes('routine') ||
+                      note.content.toLowerCase().includes('schedule')
+                    ).map(note => (
+                      <div key={note.id} className={`${note.color} p-4 rounded-lg`}>
+                        <h4 className="font-semibold text-gray-800 mb-2">{note.title}</h4>
+                        <div className="text-gray-700 text-sm whitespace-pre-wrap">{note.content}</div>
+                        <div className="mt-3 text-xs text-gray-500">
+                          By {note.author} • {new Date(note.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Clock className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-2">No schedules or routines added yet</p>
+                    {isParent && (
+                      <p className="text-sm text-gray-400 dark:text-gray-500">
+                        Add family notes with "schedule" or "routine" in the title to display them here
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="info" className="space-y-4">
-          <HouseRulesManager 
-            householdId={selectedHousehold?.id || ''} 
-            canEdit={isParent}
-          />
-
-          {/* Daily Schedule from Family Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="text-blue-500" size={20} />
-                Daily Schedule & Routines
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {notes.filter(note => 
-                note.title.toLowerCase().includes('schedule') || 
-                note.title.toLowerCase().includes('routine') ||
-                note.content.toLowerCase().includes('schedule')
-              ).length > 0 ? (
-                <div className="grid gap-4">
-                  {notes.filter(note => 
-                    note.title.toLowerCase().includes('schedule') || 
-                    note.title.toLowerCase().includes('routine') ||
-                    note.content.toLowerCase().includes('schedule')
-                  ).map(note => (
-                    <div key={note.id} className={`${note.color} p-4 rounded-lg`}>
-                      <h4 className="font-semibold text-gray-800 mb-2">{note.title}</h4>
-                      <div className="text-gray-700 text-sm whitespace-pre-wrap">{note.content}</div>
-                      <div className="mt-3 text-xs text-gray-500">
-                        By {note.author} • {new Date(note.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">No schedules or routines added yet</p>
-                  {isParent && (
-                    <p className="text-sm text-gray-400">
-                      Add family notes with "schedule" or "routine" in the title to display them here
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>
