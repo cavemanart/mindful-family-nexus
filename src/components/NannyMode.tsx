@@ -11,11 +11,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import NannyTokenGenerator from './NannyTokenGenerator';
+import NannyTokenManager from './NannyTokenManager';
+import HouseRulesManager from './HouseRulesManager';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
 import { useMedications } from '@/hooks/useMedications';
 import { useHouseholdInfo } from '@/hooks/useHouseholdInfo';
+import { useFamilyNotes } from '@/hooks/useFamilyNotes';
 
 const NannyMode = () => {
   const [isLocked, setIsLocked] = useState(true);
@@ -27,12 +30,12 @@ const NannyMode = () => {
   const { userProfile } = useAuth();
   const { households } = useHouseholds();
   
-  const correctPin = '1234';
   const selectedHousehold = households[0];
 
   const { contacts, addContact, deleteContact } = useEmergencyContacts(selectedHousehold?.id);
   const { medications, addMedication, deleteMedication } = useMedications(selectedHousehold?.id);
   const { householdInfo, addHouseholdInfo, deleteHouseholdInfo } = useHouseholdInfo(selectedHousehold?.id);
+  const { notes } = useFamilyNotes(selectedHousehold?.id);
 
   const [emergencyForm, setEmergencyForm] = useState({
     name: '',
@@ -59,8 +62,11 @@ const NannyMode = () => {
 
   const isParent = userProfile?.role === 'parent';
 
+  // Get dynamic PIN from household info or default to 1234
+  const storedPin = householdInfo.find(info => info.info_type === 'nanny_pin')?.value || '1234';
+
   const handlePinSubmit = () => {
-    if (accessPin === correctPin) {
+    if (accessPin === storedPin) {
       setIsLocked(false);
       setAccessPin('');
     } else {
@@ -118,7 +124,7 @@ const NannyMode = () => {
 
   if (isLocked) {
     return (
-      <div className="space-y-6 px-4 sm:px-6">
+      <div className="space-y-6 px-4 sm:px-6 max-w-2xl mx-auto">
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center justify-center gap-2 mb-2">
             <Shield className="text-blue-500" size={28} />
@@ -148,9 +154,11 @@ const NannyMode = () => {
               <Shield size={16} className="mr-2" />
               Access Nanny Mode
             </Button>
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              Demo PIN: 1234 (In real use, this would be set by parents)
-            </p>
+            {!isParent && (
+              <p className="text-xs text-center text-muted-foreground mt-4">
+                Contact the family if you need the access PIN
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -158,7 +166,7 @@ const NannyMode = () => {
   }
 
   return (
-    <div className="space-y-6 px-4 sm:px-6">
+    <div className="space-y-6 px-4 sm:px-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
@@ -184,11 +192,14 @@ const NannyMode = () => {
         </AlertDescription>
       </Alert>
 
-      {/* Token Generator for authenticated users */}
-      {userProfile && selectedHousehold && (
-        <div className="bg-card rounded-2xl border shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Nanny Access</h2>
-          <NannyTokenGenerator householdId={selectedHousehold.id} />
+      {/* Token Management for authenticated users */}
+      {userProfile && selectedHousehold && isParent && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-foreground">Parent Controls</h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <NannyTokenGenerator householdId={selectedHousehold.id} />
+            <NannyTokenManager householdId={selectedHousehold.id} />
+          </div>
         </div>
       )}
 
@@ -566,86 +577,53 @@ const NannyMode = () => {
         </TabsContent>
 
         <TabsContent value="info" className="space-y-4">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Utensils className="text-green-500" size={20} />
-                  Sample Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <h5 className="font-medium text-foreground">Emma (Age 8)</h5>
-                  <p className="text-sm text-muted-foreground">
-                    • Allergic to peanuts and tree nuts<br/>
-                    • Loves pasta and chicken<br/>
-                    • No sugar after 6 PM
-                  </p>
-                </div>
-                <div>
-                  <h5 className="font-medium text-foreground">Jack (Age 6)</h5>
-                  <p className="text-sm text-muted-foreground">
-                    • Has mild asthma - avoid dusty areas<br/>
-                    • Loves pizza and fruit<br/>
-                    • Needs to drink water regularly
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+          <HouseRulesManager 
+            householdId={selectedHousehold?.id || ''} 
+            canEdit={isParent}
+          />
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Clock className="text-blue-500" size={20} />
-                  Daily Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <span className="font-medium">3:30 PM</span>
-                    <span className="text-muted-foreground">Kids arrive home from school</span>
-                  </div>
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <span className="font-medium">4:00 PM</span>
-                    <span className="text-muted-foreground">Snack time</span>
-                  </div>
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <span className="font-medium">4:30 PM</span>
-                    <span className="text-muted-foreground">Homework time</span>
-                  </div>
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <span className="font-medium">5:30 PM</span>
-                    <span className="text-muted-foreground">Play time / Activities</span>
-                  </div>
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <span className="font-medium">6:30 PM</span>
-                    <span className="text-muted-foreground">Dinner preparation</span>
-                  </div>
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <span className="font-medium">8:00 PM</span>
-                    <span className="text-muted-foreground">Bath time & bedtime routine</span>
-                  </div>
+          {/* Daily Schedule from Family Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="text-blue-500" size={20} />
+                Daily Schedule & Routines
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {notes.filter(note => 
+                note.title.toLowerCase().includes('schedule') || 
+                note.title.toLowerCase().includes('routine') ||
+                note.content.toLowerCase().includes('schedule')
+              ).length > 0 ? (
+                <div className="grid gap-4">
+                  {notes.filter(note => 
+                    note.title.toLowerCase().includes('schedule') || 
+                    note.title.toLowerCase().includes('routine') ||
+                    note.content.toLowerCase().includes('schedule')
+                  ).map(note => (
+                    <div key={note.id} className={`${note.color} p-4 rounded-lg`}>
+                      <h4 className="font-semibold text-gray-800 mb-2">{note.title}</h4>
+                      <div className="text-gray-700 text-sm whitespace-pre-wrap">{note.content}</div>
+                      <div className="mt-3 text-xs text-gray-500">
+                        By {note.author} • {new Date(note.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">House Rules</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• No TV/screens until homework is done</li>
-                  <li>• Wash hands before snacks and meals</li>
-                  <li>• Clean up toys before getting new ones out</li>
-                  <li>• Be kind to each other and use indoor voices</li>
-                  <li>• Ask permission before going outside</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500 mb-2">No schedules or routines added yet</p>
+                  {isParent && (
+                    <p className="text-sm text-gray-400">
+                      Add family notes with "schedule" or "routine" in the title to display them here
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
