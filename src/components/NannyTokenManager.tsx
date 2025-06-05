@@ -104,11 +104,11 @@ const NannyTokenManager: React.FC<NannyTokenManagerProps> = ({ householdId }) =>
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
+      <Card className="overflow-x-hidden">
+        <CardContent className="p-4 sm:p-6">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading tokens...</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Loading tokens...</p>
           </div>
         </CardContent>
       </Card>
@@ -116,18 +116,19 @@ const NannyTokenManager: React.FC<NannyTokenManagerProps> = ({ householdId }) =>
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-blue-500" />
-            Nanny Access Management
+    <Card className="overflow-x-hidden">
+      <CardHeader className="pb-3 sm:pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl min-w-0">
+            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 flex-shrink-0" />
+            <span className="truncate">Nanny Access Management</span>
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               onClick={() => setShowTokens(!showTokens)}
               variant="outline"
               size="sm"
+              className="min-h-[44px] px-3"
             >
               {showTokens ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               <span className="ml-2">{showTokens ? 'Hide' : 'Show'} Tokens</span>
@@ -136,53 +137,55 @@ const NannyTokenManager: React.FC<NannyTokenManagerProps> = ({ householdId }) =>
               onClick={handleGenerateNew}
               disabled={generating}
               size="sm"
+              className="min-h-[44px] px-3"
             >
               {generating ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Shield className="h-4 w-4 mr-2" />
               )}
-              Generate New
+              <span className="hidden sm:inline">Generate New</span>
+              <span className="sm:hidden">New</span>
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 overflow-x-hidden">
         {activeTokens.length === 0 ? (
           <Alert>
             <Shield className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription className="text-sm sm:text-base leading-relaxed">
               No active access tokens. Generate a new token to give your nanny secure access.
             </AlertDescription>
           </Alert>
         ) : (
           <div className="space-y-3">
             {activeTokens.map((token) => (
-              <div key={token.id} className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <code className="bg-white dark:bg-gray-700 px-2 py-1 rounded text-sm font-mono">
+              <div key={token.id} className="border rounded-lg p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 overflow-x-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-2 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <code className="bg-white dark:bg-gray-700 px-2 py-1 rounded text-sm font-mono break-all">
                         {showTokens ? `${token.token.slice(0, 4)}-${token.token.slice(4)}` : '••••-••••'}
                       </code>
                       {token.used_at ? (
-                        <Badge variant="secondary">Used</Badge>
+                        <Badge variant="secondary" className="text-xs">Used</Badge>
                       ) : (
-                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
                           Active
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatTimeRemaining(token.expires_at)}
+                        <Clock className="h-3 w-3 flex-shrink-0" />
+                        <span className="break-words">{formatTimeRemaining(token.expires_at)}</span>
                       </div>
-                      <div>
+                      <div className="break-words">
                         Created: {new Date(token.created_at).toLocaleDateString()}
                       </div>
                       {token.used_at && (
-                        <div>
+                        <div className="break-words">
                           Used: {new Date(token.used_at).toLocaleDateString()}
                         </div>
                       )}
@@ -192,7 +195,7 @@ const NannyTokenManager: React.FC<NannyTokenManagerProps> = ({ householdId }) =>
                     onClick={() => revokeToken(token.id)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 min-h-[44px] px-3 flex-shrink-0"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Revoke
@@ -204,8 +207,8 @@ const NannyTokenManager: React.FC<NannyTokenManagerProps> = ({ householdId }) =>
         )}
         
         <Alert className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
-          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm sm:text-base leading-relaxed break-words">
             <strong>Share tokens securely:</strong> Send access codes directly to your nanny via text or secure messaging. 
             Tokens expire after 24 hours and can only be used once.
           </AlertDescription>
