@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Search, Pin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,8 @@ interface FamilyNotesProps {
 const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
   const { notes, loading, addNote, updateNote, deleteNote } = useFamilyNotes(selectedHousehold?.id);
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNote, setEditingNote] = useState({ title: '', content: '' });
   const [newNote, setNewNote] = useState({ title: '', content: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -51,6 +52,103 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
   const handleDeleteNote = async (id: string) => {
     await deleteNote(id);
   };
+
+  const handleEditNote = (note: any) => {
+    setEditingNoteId(note.id);
+    setEditingNote({ title: note.title, content: note.content });
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingNoteId && editingNote.title.trim() && editingNote.content.trim()) {
+      await updateNote(editingNoteId, editingNote);
+      setEditingNoteId(null);
+      setEditingNote({ title: '', content: '' });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNoteId(null);
+    setEditingNote({ title: '', content: '' });
+  };
+
+  const renderNoteCard = (note: any) => (
+    <Card 
+      key={note.id} 
+      className={`${note.color} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer`}
+      onClick={() => !editingNoteId ? handleEditNote(note) : undefined}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          {editingNoteId === note.id ? (
+            <Input
+              value={editingNote.title}
+              onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
+              className="font-semibold bg-transparent border-none p-0 focus:ring-0"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <CardTitle className="text-lg font-semibold text-foreground">{note.title}</CardTitle>
+          )}
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTogglePin(note.id, note.is_pinned);
+              }}
+              className={`${note.is_pinned ? 'text-yellow-600 hover:bg-yellow-200 dark:hover:bg-yellow-900/50' : 'text-muted-foreground hover:bg-muted'} p-1`}
+            >
+              <Pin size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteNote(note.id);
+              }}
+              className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 p-1"
+            >
+              <Trash2 size={14} />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {editingNoteId === note.id ? (
+          <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+            <Textarea
+              value={editingNote.content}
+              onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
+              rows={4}
+              className="resize-none bg-transparent border-gray-300 dark:border-gray-600"
+            />
+            <div className="flex gap-2">
+              <Button onClick={handleSaveEdit} size="sm" className="bg-green-600 hover:bg-green-700">
+                Save
+              </Button>
+              <Button onClick={handleCancelEdit} variant="outline" size="sm">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-foreground text-sm mb-3">{note.content}</p>
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary" className="text-xs">
+                by {note.author}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {new Date(note.created_at).toLocaleDateString()}
+              </span>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   const filteredNotes = notes.filter(note =>
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,44 +223,7 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
             Pinned Notes
           </h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pinnedNotes.map((note) => (
-              <Card key={note.id} className={`${note.color} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-foreground">{note.title}</CardTitle>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTogglePin(note.id, note.is_pinned)}
-                        className="text-yellow-600 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 p-1"
-                      >
-                        <Pin size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteNote(note.id)}
-                        className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 p-1"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-foreground text-sm mb-3">{note.content}</p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      by {note.author}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(note.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {pinnedNotes.map(renderNoteCard)}
           </div>
         </div>
       )}
@@ -171,44 +232,7 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-3">All Notes</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {regularNotes.map((note) => (
-              <Card key={note.id} className={`${note.color} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg font-semibold text-foreground">{note.title}</CardTitle>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTogglePin(note.id, note.is_pinned)}
-                        className="text-muted-foreground hover:bg-muted p-1"
-                      >
-                        <Pin size={14} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteNote(note.id)}
-                        className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 p-1"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-foreground text-sm mb-3">{note.content}</p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-xs">
-                      by {note.author}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(note.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {regularNotes.map(renderNoteCard)}
           </div>
         </div>
       )}

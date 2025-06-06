@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +15,19 @@ import DayEventsModal from './DayEventsModal';
 import SubscriptionBadge from './SubscriptionBadge';
 import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
 import { CalendarView } from '@/types/calendar';
+import EventDetailsModal from './EventDetailsModal';
 
 interface Household {
   id: string;
   name: string;
+}
+
+interface AdvancedCalendarEvent {
+  id: string;
+  title: string;
+  description: string;
+  start_datetime: string;
+  category: string;
 }
 
 interface AdvancedCalendarProps {
@@ -36,6 +44,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   const [isGridView, setIsGridView] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayModal, setShowDayModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<AdvancedCalendarEvent | null>(null);
+  const [showEventDetails, setShowEventDetails] = useState(false);
 
   const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
 
@@ -88,6 +98,11 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   const handleCreateEventForDate = () => {
     setShowDayModal(false);
     setShowEventForm(true);
+  };
+
+  const handleEventClick = (event: AdvancedCalendarEvent) => {
+    setSelectedEvent(event);
+    setShowEventDetails(true);
   };
 
   if (!selectedHousehold) {
@@ -203,7 +218,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           events={filteredEvents}
           categories={categories}
           view={view}
-          onEventClick={(event) => console.log('Event clicked:', event)}
+          onEventClick={handleEventClick}
           onDateClick={handleDateClick}
         />
       ) : (
@@ -217,6 +232,17 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         />
       )}
 
+      {/* Event Details Modal */}
+      <EventDetailsModal
+        isOpen={showEventDetails}
+        onClose={() => setShowEventDetails(false)}
+        event={selectedEvent}
+        categories={categories}
+        onEventUpdate={updateEvent}
+        onEventDelete={deleteEvent}
+        canEdit={canCreateEvents}
+      />
+
       {/* Day Events Modal */}
       <DayEventsModal
         isOpen={showDayModal}
@@ -224,7 +250,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         selectedDate={selectedDate}
         events={selectedDateEvents}
         categories={categories}
-        onEventClick={(event) => console.log('Event clicked:', event)}
+        onEventClick={handleEventClick}
         onCreateEvent={canCreateEvents ? handleCreateEventForDate : undefined}
         onNavigateDate={handleDayNavigation}
         canCreateEvents={canCreateEvents}

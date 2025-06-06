@@ -12,6 +12,7 @@ interface EventsListProps {
   categories: EventCategory[];
   onEventEdit: (eventId: string, updates: Partial<AdvancedCalendarEvent>) => void;
   onEventDelete: (eventId: string) => void;
+  onEventClick?: (event: AdvancedCalendarEvent) => void;
   loading: boolean;
   canEdit: boolean;
 }
@@ -21,6 +22,7 @@ const EventsList: React.FC<EventsListProps> = ({
   categories,
   onEventEdit,
   onEventDelete,
+  onEventClick,
   loading,
   canEdit,
 }) => {
@@ -72,12 +74,16 @@ const EventsList: React.FC<EventsListProps> = ({
         const categoryInfo = getCategoryInfo(event.category || 'general');
         
         return (
-          <Card key={event.id} className="hover:shadow-md transition-shadow bg-card dark:bg-card border-border dark:border-border">
+          <Card 
+            key={event.id} 
+            className="hover:shadow-md transition-all bg-card dark:bg-card border-border dark:border-border cursor-pointer hover:scale-[1.01]"
+            onClick={() => onEventClick?.(event)}
+          >
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{event.title}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{event.title}</h3>
                     <Badge 
                       variant="secondary" 
                       className="text-white"
@@ -120,9 +126,9 @@ const EventsList: React.FC<EventsListProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        // This would open edit modal in a real implementation
-                        console.log('Edit event:', event.id);
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick?.(event);
                       }}
                       className="hover:bg-gray-100 dark:hover:bg-gray-800"
                     >
@@ -131,7 +137,10 @@ const EventsList: React.FC<EventsListProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onEventDelete(event.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventDelete(event.id);
+                      }}
                       className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                       <Trash2 className="h-4 w-4" />

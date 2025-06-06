@@ -136,7 +136,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     }}
                   >
                     <div
-                      className="text-xs p-1.5 rounded-md shadow-sm border-l-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-shadow"
+                      className="text-xs p-1.5 rounded-md shadow-sm border-l-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-all hover:bg-white dark:hover:bg-gray-800"
                       style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}
                     >
                       <div className="flex items-center gap-1 mb-0.5">
@@ -145,7 +145,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           {formatEventTime(event.start_datetime)}
                         </span>
                       </div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                      <div className="font-medium text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400">
                         {event.title}
                       </div>
                       {event.category && (
@@ -161,7 +161,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 ))}
                 
                 {dayEvents.length > 3 && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 px-1.5 py-1 bg-gray-100 dark:bg-gray-800 rounded flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                  <div 
+                    className="text-xs text-gray-500 dark:text-gray-400 px-1.5 py-1 bg-gray-100 dark:bg-gray-800 rounded flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDateClick(date);
+                    }}
+                  >
                     <MoreHorizontal className="h-3 w-3" />
                     <span>+{dayEvents.length - 3} more</span>
                   </div>
