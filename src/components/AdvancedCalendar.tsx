@@ -11,6 +11,8 @@ import AdvancedEventForm from './AdvancedEventForm';
 import CalendarGrid from './CalendarGrid';
 import EventsList from './EventsList';
 import CategoryFilter from './CategoryFilter';
+import KeywordSearch from './KeywordSearch';
+import DayEventsModal from './DayEventsModal';
 import SubscriptionBadge from './SubscriptionBadge';
 import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
 import { CalendarView } from '@/types/calendar';
@@ -30,13 +32,29 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   const [view, setView] = useState<CalendarView>({ type: 'month', date: new Date() });
   const [showEventForm, setShowEventForm] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState('');
   const [isGridView, setIsGridView] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showDayModal, setShowDayModal] = useState(false);
 
   const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
 
-  const filteredEvents = selectedCategories.length > 0 
-    ? events.filter(event => selectedCategories.includes(event.category || 'general'))
-    : events;
+  // Filter events by categories and keywords
+  const filteredEvents = events.filter(event => {
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(event.category || 'general');
+    const matchesKeyword = searchKeyword === '' || 
+      event.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      event.description?.toLowerCase().includes(searchKeyword.toLowerCase());
+    
+    return matchesCategory && matchesKeyword;
+  });
+
+  // Get events for selected date in day modal
+  const selectedDateEvents = selectedDate ? filteredEvents.filter(event => {
+    const eventDate = new Date(event.start_datetime).toISOString().split('T')[0];
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    return eventDate === selectedDateStr;
+  }) : [];
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setView(prev => {
@@ -48,6 +66,28 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
       }
       return { ...prev, date: newDate };
     });
+  };
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    setShowDayModal(true);
+  };
+
+  const handleDayNavigation = (direction: 'prev' | 'next') => {
+    if (!selectedDate) return;
+    
+    const newDate = new Date(selectedDate);
+    if (direction === 'prev') {
+      newDate.setDate(newDate.getDate() - 1);
+    } else {
+      newDate.setDate(newDate.getDate() + 1);
+    }
+    setSelectedDate(newDate);
+  };
+
+  const handleCreateEventForDate = () => {
+    setShowDayModal(false);
+    setShowEventForm(true);
   };
 
   if (!selectedHousehold) {
@@ -99,7 +139,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
       </div>
 
       {/* Navigation and Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
             <ChevronLeft className="h-4 w-4" />
@@ -110,12 +150,52 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           </Button>
         </div>
         
-        <CategoryFilter
-          categories={categories}
-          selectedCategories={selectedCategories}
-          onCategoryChange={setSelectedCategories}
-        />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+          <div className="w-full sm:w-64">
+            <KeywordSearch
+              searchKeyword={searchKeyword}
+              onSearchChange={setSearchKeyword}
+              placeholder="Search events..."
+            />
+          </div>
+          
+          <CategoryFilter
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onCategoryChange={setSelectedCategories}
+          />
+        </div>
       </div>
+
+      {/* Search/Filter Results Summary */}
+      {(searchKeyword || selectedCategories.length > 0) && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <span className="text-sm text-blue-800 dark:text-blue-200">
+            Showing {filteredEvents.length} {filteredEvents.length === 1 ? 'event' : 'events'}
+          </span>
+          {searchKeyword && (
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+              "{searchKeyword}"
+            </Badge>
+          )}
+          {selectedCategories.map(category => (
+            <Badge key={category} variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+              {category}
+            </Badge>
+          ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchKeyword('');
+              setSelectedCategories([]);
+            }}
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+          >
+            Clear filters
+          </Button>
+        </div>
+      )}
 
       {/* Calendar Content */}
       {isGridView ? (
@@ -124,7 +204,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           categories={categories}
           view={view}
           onEventClick={(event) => console.log('Event clicked:', event)}
-          onDateClick={(date) => console.log('Date clicked:', date)}
+          onDateClick={handleDateClick}
         />
       ) : (
         <EventsList
@@ -136,6 +216,19 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           canEdit={canCreateEvents}
         />
       )}
+
+      {/* Day Events Modal */}
+      <DayEventsModal
+        isOpen={showDayModal}
+        onClose={() => setShowDayModal(false)}
+        selectedDate={selectedDate}
+        events={selectedDateEvents}
+        categories={categories}
+        onEventClick={(event) => console.log('Event clicked:', event)}
+        onCreateEvent={canCreateEvents ? handleCreateEventForDate : undefined}
+        onNavigateDate={handleDayNavigation}
+        canCreateEvents={canCreateEvents}
+      />
 
       {/* Event Creation Form */}
       {showEventForm && (
