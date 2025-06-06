@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Crown, Info } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { isUnlimited } from '@/lib/subscription-config';
 
 interface BillUsageIndicatorProps {
   currentCount: number;
@@ -18,10 +19,7 @@ const BillUsageIndicator: React.FC<BillUsageIndicatorProps> = ({
   planType,
   isTrialActive
 }) => {
-  const percentage = (currentCount / maxCount) * 100;
-  const isNearLimit = percentage >= 80;
-  const isAtLimit = currentCount >= maxCount;
-
+  // Don't show usage indicator for pro plans (unlimited)
   if (planType === 'pro' || planType === 'pro_annual') {
     return (
       <Card className="border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20">
@@ -39,6 +37,15 @@ const BillUsageIndicator: React.FC<BillUsageIndicatorProps> = ({
       </Card>
     );
   }
+
+  // Don't show for unlimited limits (shouldn't happen for free plan, but safety check)
+  if (isUnlimited(maxCount)) {
+    return null;
+  }
+
+  const percentage = (currentCount / maxCount) * 100;
+  const isNearLimit = percentage >= 80;
+  const isAtLimit = currentCount >= maxCount;
 
   return (
     <Card className={`${isNearLimit ? 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20' : 'border-gray-200 dark:border-gray-700 bg-card dark:bg-card'}`}>

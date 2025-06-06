@@ -68,7 +68,10 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
   const trialActive = subscription ? isTrialActive(subscription) : false;
   const limits = getFeatureLimits(planType, trialActive);
   const billLimit = limits.bills_per_month;
-  const canCreateMoreBills = billsThisMonth < billLimit;
+  
+  // Proper unlimited check and bill creation permission
+  const isUnlimitedBills = billLimit === -1;
+  const canCreateMoreBills = isUnlimitedBills || billsThisMonth < billLimit;
 
   const handleAddBill = async () => {
     if (newBill.name.trim() && newBill.amount && newBill.due_date && newBill.category && newBill.assigned_to) {
@@ -200,13 +203,15 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </div>
       </div>
 
-      {/* Usage Indicator */}
-      <BillUsageIndicator 
-        currentCount={billsThisMonth}
-        maxCount={billLimit}
-        planType={planType}
-        isTrialActive={trialActive}
-      />
+      {/* Usage Indicator - only show for non-unlimited plans */}
+      {!isUnlimitedBills && (
+        <BillUsageIndicator 
+          currentCount={billsThisMonth}
+          maxCount={billLimit}
+          planType={planType}
+          isTrialActive={trialActive}
+        />
+      )}
 
       {/* Subscription Limit Alert */}
       {!canCreateMoreBills && (
