@@ -80,7 +80,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-foreground">
             <DollarSign className="h-5 w-5 text-green-600" />
             {isEditing ? 'Edit Bill' : 'Bill Details'}
           </DialogTitle>
@@ -92,7 +92,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
             {isEditing ? (
               <>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bill Name</label>
+                  <label className="text-sm font-medium text-foreground">Bill Name</label>
                   <Input
                     value={editedBill.name || ''}
                     onChange={(e) => setEditedBill({ ...editedBill, name: e.target.value })}
@@ -100,7 +100,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount</label>
+                  <label className="text-sm font-medium text-foreground">Amount</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -110,7 +110,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Assigned To</label>
+                  <label className="text-sm font-medium text-foreground">Assigned To</label>
                   <Input
                     value={editedBill.assigned_to || ''}
                     onChange={(e) => setEditedBill({ ...editedBill, assigned_to: e.target.value })}
@@ -121,20 +121,20 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
             ) : (
               <>
                 <div className="flex items-start justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{bill.name}</h3>
+                  <h3 className="text-xl font-semibold text-foreground">{bill.name}</h3>
                   <Badge variant={bill.is_paid ? 'default' : 'destructive'} className="ml-2">
                     {bill.is_paid ? 'Paid' : 'Pending'}
                   </Badge>
                 </div>
                 
-                <div className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
                   <DollarSign className="h-6 w-6" />
                   ${bill.amount.toFixed(2)}
                 </div>
               </>
             )}
 
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>Due: {format(new Date(bill.due_date), 'MMM dd, yyyy')}</span>
             </div>
@@ -152,7 +152,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
             </div>
 
             {bill.assigned_to && (
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
                 <span>Assigned to: {bill.assigned_to}</span>
               </div>
