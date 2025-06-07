@@ -86,13 +86,13 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <Card className={`border-l-4 ${bill.is_paid ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`} 
+        <Card className={`border-l-4 ${bill.is_paid ? 'bg-card border-green-500' : 'bg-card border-red-500'}`} 
               style={{ borderLeftColor: getCategoryColor(bill.category) }}>
           <CardContent className="p-6 space-y-4">
             {isEditing ? (
               <>
                 <div>
-                  <label className="text-sm font-medium text-foreground">Bill Name</label>
+                  <label className="text-sm font-medium text-card-foreground">Bill Name</label>
                   <Input
                     value={editedBill.name || ''}
                     onChange={(e) => setEditedBill({ ...editedBill, name: e.target.value })}
@@ -100,7 +100,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground">Amount</label>
+                  <label className="text-sm font-medium text-card-foreground">Amount</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -110,7 +110,7 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground">Assigned To</label>
+                  <label className="text-sm font-medium text-card-foreground">Assigned To</label>
                   <Input
                     value={editedBill.assigned_to || ''}
                     onChange={(e) => setEditedBill({ ...editedBill, assigned_to: e.target.value })}
@@ -121,13 +121,13 @@ const BillDetailsModal: React.FC<BillDetailsModalProps> = ({
             ) : (
               <>
                 <div className="flex items-start justify-between">
-                  <h3 className="text-xl font-semibold text-foreground">{bill.name}</h3>
+                  <h3 className="text-xl font-semibold text-card-foreground">{bill.name}</h3>
                   <Badge variant={bill.is_paid ? 'default' : 'destructive'} className="ml-2">
                     {bill.is_paid ? 'Paid' : 'Pending'}
                   </Badge>
                 </div>
                 
-                <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                <div className="flex items-center gap-2 text-2xl font-bold text-card-foreground">
                   <DollarSign className="h-6 w-6" />
                   ${bill.amount.toFixed(2)}
                 </div>
