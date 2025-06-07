@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppreciations } from '@/hooks/useAppreciations';
+import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
 import AppreciationCard from './AppreciationCard';
 
@@ -14,10 +15,12 @@ interface AppreciationsProps {
 }
 
 const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
+  const { user, userProfile } = useAuth();
   const { 
     appreciations, 
     comments, 
     reactions, 
+    householdMembers,
     loading, 
     addAppreciation, 
     updateAppreciation,
@@ -30,24 +33,21 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
   const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
   const [newAppreciation, setNewAppreciation] = useState({
     message: '',
-    from_member: '',
     to_member: '',
   });
 
-  const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
-  const currentUser = 'Mom'; // This should come from auth context in a real app
+  const currentUserName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Unknown User';
 
   const handleAddAppreciation = async () => {
-    if (newAppreciation.message.trim() && newAppreciation.from_member && newAppreciation.to_member) {
+    if (newAppreciation.message.trim() && newAppreciation.to_member) {
       const success = await addAppreciation({
         message: newAppreciation.message,
-        from_member: newAppreciation.from_member,
         to_member: newAppreciation.to_member,
         reactions: 0,
       });
       
       if (success) {
-        setNewAppreciation({ message: '', from_member: '', to_member: '' });
+        setNewAppreciation({ message: '', to_member: '' });
         setIsAddingAppreciation(false);
       }
     }
@@ -71,13 +71,15 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
           </h2>
           <p className="text-muted-foreground mt-1">Share love and gratitude with your family</p>
         </div>
-        <Button 
-          onClick={() => setIsAddingAppreciation(true)} 
-          className="bg-pink-600 hover:bg-pink-700"
-        >
-          <Plus size={16} className="mr-2" />
-          Add Appreciation
-        </Button>
+        {householdMembers.length > 1 && (
+          <Button 
+            onClick={() => setIsAddingAppreciation(true)} 
+            className="bg-pink-600 hover:bg-pink-700"
+          >
+            <Plus size={16} className="mr-2" />
+            Add Appreciation
+          </Button>
+        )}
       </div>
 
       {isAddingAppreciation && (
@@ -86,37 +88,24 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
             <CardTitle className="text-pink-800 dark:text-pink-200">Share an Appreciation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">From</label>
-                <Select value={newAppreciation.from_member} onValueChange={(value) => 
-                  setNewAppreciation({ ...newAppreciation, from_member: value })
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select who's giving appreciation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {familyMembers.map((member) => (
-                      <SelectItem key={member} value={member}>{member}</SelectItem>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">To</label>
+              <Select value={newAppreciation.to_member} onValueChange={(value) => 
+                setNewAppreciation({ ...newAppreciation, to_member: value })
+              }>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select who's receiving appreciation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {householdMembers
+                    .filter(member => member.id !== user?.id) // Exclude current user
+                    .map((member) => (
+                      <SelectItem key={member.id} value={`${member.first_name} ${member.last_name}`}>
+                        {member.first_name} {member.last_name}
+                      </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">To</label>
-                <Select value={newAppreciation.to_member} onValueChange={(value) => 
-                  setNewAppreciation({ ...newAppreciation, to_member: value })
-                }>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select who's receiving appreciation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {familyMembers.filter(member => member !== newAppreciation.from_member).map((member) => (
-                      <SelectItem key={member} value={member}>{member}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-2 block">Message</label>
@@ -148,7 +137,7 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
             appreciation={appreciation}
             comments={comments[appreciation.id] || []}
             reactions={reactions[appreciation.id] || []}
-            currentUser={currentUser}
+            currentUser={currentUserName}
             onToggleReaction={toggleReaction}
             onAddComment={addComment}
             onUpdateAppreciation={updateAppreciation}
@@ -161,8 +150,17 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
       {appreciations.length === 0 && (
         <div className="text-center py-12">
           <Heart size={48} className="text-pink-300 mx-auto mb-4" />
-          <p className="text-muted-foreground text-lg">No appreciations yet!</p>
-          <p className="text-muted-foreground text-sm mt-2">Start spreading love by sharing your first appreciation.</p>
+          {householdMembers.length <= 1 ? (
+            <>
+              <p className="text-muted-foreground text-lg">No family members to appreciate yet!</p>
+              <p className="text-muted-foreground text-sm mt-2">Invite family members to start sharing appreciations.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-muted-foreground text-lg">No appreciations yet!</p>
+              <p className="text-muted-foreground text-sm mt-2">Start spreading love by sharing your first appreciation.</p>
+            </>
+          )}
         </div>
       )}
     </div>

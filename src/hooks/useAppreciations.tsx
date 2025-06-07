@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -30,12 +29,57 @@ export interface AppreciationReaction {
   created_at: string;
 }
 
+export interface HouseholdMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+}
+
 export const useAppreciations = (householdId: string | null) => {
   const [appreciations, setAppreciations] = useState<Appreciation[]>([]);
   const [comments, setComments] = useState<{ [key: string]: AppreciationComment[] }>({});
   const [reactions, setReactions] = useState<{ [key: string]: AppreciationReaction[] }>({});
+  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const fetchHouseholdMembers = async () => {
+    if (!householdId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('household_members')
+        .select(`
+          id,
+          profiles:user_id (
+            id,
+            first_name,
+            last_name,
+            role
+          )
+        `)
+        .eq('household_id', householdId);
+
+      if (error) throw error;
+      
+      const members = data?.map(member => ({
+        id: member.profiles.id,
+        first_name: member.profiles.first_name || 'Unknown',
+        last_name: member.profiles.last_name || 'User',
+        role: member.profiles.role || 'member'
+      })) || [];
+      
+      setHouseholdMembers(members);
+    } catch (error: any) {
+      console.error('Error fetching household members:', error);
+      toast({
+        title: "Error fetching family members",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchAppreciations = async () => {
     if (!householdId) {
@@ -106,13 +150,17 @@ export const useAppreciations = (householdId: string | null) => {
     }
   };
 
-  const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id'>) => {
+  const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member'>) => {
     if (!householdId) return false;
 
     try {
       const { error } = await supabase
         .from('appreciations')
-        .insert([{ ...appreciationData, household_id: householdId }]);
+        .insert([{ 
+          ...appreciationData, 
+          household_id: householdId,
+          from_member: 'current_user' // This will be updated to use actual user name
+        }]);
 
       if (error) throw error;
       
@@ -228,12 +276,14 @@ export const useAppreciations = (householdId: string | null) => {
 
   useEffect(() => {
     fetchAppreciations();
+    fetchHouseholdMembers();
   }, [householdId]);
 
   return {
     appreciations,
     comments,
     reactions,
+    householdMembers,
     loading,
     addAppreciation,
     updateAppreciation,
