@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Users } from 'lucide-react';
+import { Eye, EyeOff, Users, LogOut } from 'lucide-react';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,15 +19,15 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, signOut, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, navigate, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +64,63 @@ const Auth = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: 'Success',
+        description: 'Signed out successfully!',
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to sign out',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // If user is logged in, show logout option
   if (user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
+              <Users className="h-6 w-6" />
+              Already Signed In
+            </CardTitle>
+            <CardDescription>
+              You are currently signed in as {user.email}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                You can go to your dashboard or sign out if you need to switch accounts.
+              </p>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => navigate('/dashboard')} 
+                  className="w-full"
+                >
+                  Go to Dashboard
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="w-full flex items-center justify-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
