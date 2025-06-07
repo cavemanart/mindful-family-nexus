@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,20 +15,12 @@ import KeywordSearch from './KeywordSearch';
 import DayEventsModal from './DayEventsModal';
 import SubscriptionBadge from './SubscriptionBadge';
 import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
-import { CalendarView } from '@/types/calendar';
+import { CalendarView, AdvancedCalendarEvent } from '@/types/calendar';
 import EventDetailsModal from './EventDetailsModal';
 
 interface Household {
   id: string;
   name: string;
-}
-
-interface AdvancedCalendarEvent {
-  id: string;
-  title: string;
-  description: string;
-  start_datetime: string;
-  category: string;
 }
 
 interface AdvancedCalendarProps {
@@ -227,6 +220,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           categories={categories}
           onEventEdit={updateEvent}
           onEventDelete={deleteEvent}
+          onEventClick={handleEventClick}
           loading={loading}
           canEdit={canCreateEvents}
         />
