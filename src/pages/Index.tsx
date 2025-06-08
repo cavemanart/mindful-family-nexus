@@ -206,7 +206,7 @@ const Index = () => {
   // Role-based dashboard rendering
   const renderDashboard = () => {
     if (!userProfile || !selectedHousehold) {
-      return <Dashboard selectedHousehold={selectedHousehold} />;
+      return <Dashboard />;
     }
 
     switch (userProfile.role) {
@@ -217,7 +217,7 @@ const Index = () => {
       case 'parent':
       case 'grandparent':
       default:
-        if (activeTab === 'dashboard') return <Dashboard selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'dashboard') return <Dashboard />;
         if (activeTab === 'appreciations' && isPageVisible('appreciations')) return <Appreciations selectedHousehold={selectedHousehold} />;
         if (activeTab === 'bills' && isPageVisible('bills')) return <BillsTracker selectedHousehold={selectedHousehold} />;
         if (activeTab === 'notes' && isPageVisible('notes')) return <FamilyNotes selectedHousehold={selectedHousehold} />;
@@ -226,7 +226,7 @@ const Index = () => {
         if (activeTab === 'nanny-mode' && isPageVisible('nanny-mode')) return <NannyMode />;
         if (activeTab === 'children' && isPageVisible('children')) return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
         if (activeTab === 'weekly-sync' && isPageVisible('weekly-sync')) return <WeeklySync selectedHousehold={selectedHousehold} />;
-        return <Dashboard selectedHousehold={selectedHousehold} />;
+        return <Dashboard />;
     }
   };
 
