@@ -1,84 +1,103 @@
-
 import React from 'react';
-import { Bell, LogOut, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
-import { Household } from '@/hooks/useHouseholds';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Calendar, ListChecks, MessageSquare, Settings, Users, Baby } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface NavigationProps {
-  activeSection: string;
-  setActiveSection: (section: string) => void;
-  selectedHousehold?: Household;
-  onHouseholdChange?: () => void;
+  currentPage: string;
+  onPageChange: (page: string) => void;
+  selectedHousehold: { id: string } | null;
+  userProfile: any;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ 
-  activeSection, 
-  setActiveSection, 
-  selectedHousehold,
-  onHouseholdChange 
-}) => {
-  const { signOut } = useAuth();
+const Navigation = ({ currentPage, onPageChange, selectedHousehold, userProfile }: NavigationProps) => {
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   const navigationItems = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'notes', label: 'Notes' },
-    { key: 'appreciations', label: 'Appreciations' },
-    { key: 'bills', label: 'Bills' },
-    { key: 'mental-load', label: 'Mental Load' },
-    { key: 'weekly-sync', label: 'Weekly Sync' },
-    { key: 'kids', label: 'Kids Dashboard' },
-    { key: 'nanny', label: 'Nanny Mode' },
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: Home,
+      roles: ['parent', 'nanny', 'child', 'grandparent'],
+      description: 'View household overview'
+    },
+    {
+      id: 'calendar',
+      label: 'Calendar',
+      icon: Calendar,
+      roles: ['parent', 'nanny', 'child', 'grandparent'],
+      description: 'Manage family events'
+    },
+    {
+      id: 'chores',
+      label: 'Chores',
+      icon: ListChecks,
+      roles: ['parent', 'nanny', 'child', 'grandparent'],
+      description: 'Assign and track tasks'
+    },
+    {
+      id: 'messages',
+      label: 'Messages',
+      icon: MessageSquare,
+      roles: ['parent', 'nanny', 'child', 'grandparent'],
+      description: 'Send family messages'
+    },
+    {
+      id: 'appreciations',
+      label: 'Appreciations',
+      icon: MessageSquare,
+      roles: ['parent', 'nanny', 'child', 'grandparent'],
+      description: 'Share love and gratitude'
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Settings,
+      roles: ['parent', 'nanny', 'grandparent'],
+      description: 'Manage household settings'
+    },
+    {
+      id: 'manage-children',
+      label: 'Manage Children',
+      icon: Baby,
+      roles: ['parent', 'grandparent'],
+      description: 'Create and manage child accounts'
+    },
   ];
 
+  const filteredNavigationItems = navigationItems.filter(item => {
+    if (!selectedHousehold) {
+      return false;
+    }
+    if (!userProfile) {
+      return false;
+    }
+    return item.roles.includes(userProfile.role);
+  });
+
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <h1 
-              className="text-xl font-bold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => setActiveSection('dashboard')}
-            >
-              Family Hub
-            </h1>
-            {selectedHousehold && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Users size={16} />
-                <span>{selectedHousehold.name}</span>
-              </div>
-            )}
-            <div className="hidden md:flex space-x-6">
-              {navigationItems.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => setActiveSection(item.key)}
-                  className={`text-sm font-medium transition-colors ${
-                    activeSection === item.key
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" className="text-gray-600">
-              <Bell size={20} />
-            </Button>
-            {onHouseholdChange && (
-              <Button variant="outline" size="sm" onClick={onHouseholdChange}>
-                Switch Household
-              </Button>
-            )}
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-gray-600">
-              <LogOut size={20} />
-            </Button>
-          </div>
-        </div>
-      </div>
+    <nav className="flex flex-col space-y-4">
+      {filteredNavigationItems.map((item) => (
+        <Link
+          key={item.id}
+          to={`/${item.id}`}
+          onClick={() => onPageChange(item.id)}
+          className={cn(
+            "group flex items-center space-x-3 rounded-md p-2 text-sm font-medium hover:bg-secondary hover:text-foreground",
+            currentPage === item.id
+              ? "bg-secondary text-foreground"
+              : "text-muted-foreground"
+          )}
+        >
+          <item.icon className="h-4 w-4" />
+          <span>{item.label}</span>
+        </Link>
+      ))}
     </nav>
   );
 };
