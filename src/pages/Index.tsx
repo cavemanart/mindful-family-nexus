@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -203,30 +204,68 @@ const Index = () => {
     return <HouseholdSelector onHouseholdSelect={handleHouseholdSelect} />;
   }
 
-  // Role-based dashboard rendering
+  // Role-based dashboard rendering with proper error handling
   const renderDashboard = () => {
-    if (!userProfile || !selectedHousehold) {
-      return <Dashboard />;
-    }
-
-    switch (userProfile.role) {
-      case 'child':
-        return <ChildDashboard selectedHousehold={selectedHousehold} />;
-      case 'nanny':
-        return <NannyDashboard selectedHousehold={selectedHousehold} />;
-      case 'parent':
-      case 'grandparent':
-      default:
-        if (activeTab === 'dashboard') return <Dashboard />;
-        if (activeTab === 'appreciations' && isPageVisible('appreciations')) return <Appreciations selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'bills' && isPageVisible('bills')) return <BillsTracker selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'notes' && isPageVisible('notes')) return <FamilyNotes selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'calendar' && isPageVisible('calendar')) return <FamilyCalendar selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'mental-load' && isPageVisible('mental-load')) return <MentalLoad />;
-        if (activeTab === 'nanny-mode' && isPageVisible('nanny-mode')) return <NannyMode />;
-        if (activeTab === 'children' && isPageVisible('children')) return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'weekly-sync' && isPageVisible('weekly-sync')) return <WeeklySync selectedHousehold={selectedHousehold} />;
+    try {
+      // For users without profile or household, show basic dashboard
+      if (!userProfile || !selectedHousehold) {
         return <Dashboard />;
+      }
+
+      // Role-based rendering
+      switch (userProfile.role) {
+        case 'child':
+          return <ChildDashboard selectedHousehold={selectedHousehold} />;
+        case 'nanny':
+          return <NannyDashboard selectedHousehold={selectedHousehold} />;
+        case 'parent':
+        case 'grandparent':
+        default:
+          // Handle different tabs for parent/grandparent roles
+          if (activeTab === 'dashboard') {
+            return <Dashboard />;
+          }
+          if (activeTab === 'appreciations' && isPageVisible('appreciations')) {
+            return <Appreciations selectedHousehold={selectedHousehold} />;
+          }
+          if (activeTab === 'bills' && isPageVisible('bills')) {
+            return <BillsTracker selectedHousehold={selectedHousehold} />;
+          }
+          if (activeTab === 'notes' && isPageVisible('notes')) {
+            return <FamilyNotes selectedHousehold={selectedHousehold} />;
+          }
+          if (activeTab === 'calendar' && isPageVisible('calendar')) {
+            return <FamilyCalendar selectedHousehold={selectedHousehold} />;
+          }
+          if (activeTab === 'mental-load' && isPageVisible('mental-load')) {
+            return <MentalLoad />;
+          }
+          if (activeTab === 'nanny-mode' && isPageVisible('nanny-mode')) {
+            return <NannyMode />;
+          }
+          if (activeTab === 'children' && isPageVisible('children')) {
+            return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
+          }
+          if (activeTab === 'weekly-sync' && isPageVisible('weekly-sync')) {
+            return <WeeklySync selectedHousehold={selectedHousehold} />;
+          }
+          // Default fallback
+          return <Dashboard />;
+      }
+    } catch (error) {
+      console.error('Error rendering dashboard:', error);
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-2">Dashboard Error</h2>
+            <p className="text-gray-600 mb-4">There was an error loading the dashboard</p>
+            <Button onClick={() => window.location.reload()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Page
+            </Button>
+          </div>
+        </div>
+      );
     }
   };
 
