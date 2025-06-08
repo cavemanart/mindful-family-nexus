@@ -40,6 +40,17 @@ export const useChildrenManagement = (householdId: string | null) => {
     }
 
     try {
+      // First get household member user IDs
+      const { data: householdMembers, error: membersError } = await supabase
+        .from('household_members')
+        .select('user_id')
+        .eq('household_id', householdId);
+
+      if (membersError) throw membersError;
+
+      const userIds = householdMembers.map(member => member.user_id);
+
+      // Then get child profiles for those user IDs
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -51,12 +62,7 @@ export const useChildrenManagement = (householdId: string | null) => {
           created_at
         `)
         .eq('is_child_account', true)
-        .in('id', 
-          supabase
-            .from('household_members')
-            .select('user_id')
-            .eq('household_id', householdId)
-        );
+        .in('id', userIds);
 
       if (error) throw error;
       setChildren(data || []);

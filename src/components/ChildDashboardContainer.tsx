@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut, Home } from 'lucide-react';
-import { ChildrenDashboard } from '@/components/ChildrenDashboard';
+import ChildrenDashboard from '@/components/ChildrenDashboard';
 
 interface ChildDashboardContainerProps {
   childData: {

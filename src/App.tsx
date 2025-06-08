@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from "@/components/theme-provider"
-import { QueryClientProvider as QueryClient } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -21,8 +22,8 @@ import ChildAccessHelp from '@/pages/ChildAccessHelp';
 
 function App() {
   return (
-    <ErrorBoundary>
-      <QueryClient client={queryClient}>
+    <ErrorBoundary fallback={<div>Something went wrong</div>}>
+      <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider defaultTheme="system" storageKey="hublie-theme">
             <BrowserRouter>
@@ -33,7 +34,7 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/subscription" element={<Subscription />} />
                   <Route path="/success" element={<Success />} />
-                  <Route path="/nanny-login" element={<NannyLogin />} />
+                  <Route path="/nanny-login" element={<NannyLogin onSuccess={() => {}} />} />
                   <Route path="/nanny-access/:householdId" element={<NannyAccess />} />
                   <Route path="/child-access/:householdId" element={<ChildAccess />} />
                   <Route path="/child-access-help" element={<ChildAccessHelp />} />
@@ -44,7 +45,7 @@ function App() {
             </BrowserRouter>
           </ThemeProvider>
         </AuthProvider>
-      </QueryClient>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }
