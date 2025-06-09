@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Appreciation {
   id: string;
@@ -10,6 +11,8 @@ export interface Appreciation {
   reactions: number;
   created_at: string;
   household_id: string;
+  archived: boolean;
+  archived_at?: string;
 }
 
 export interface AppreciationComment {
@@ -43,6 +46,9 @@ export const useAppreciations = (householdId: string | null) => {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, userProfile } = useAuth();
+
+  const currentUserName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Unknown User';
 
   const fetchHouseholdMembers = async () => {
     if (!householdId) return;
@@ -92,6 +98,7 @@ export const useAppreciations = (householdId: string | null) => {
         .from('appreciations')
         .select('*')
         .eq('household_id', householdId)
+        .eq('archived', false) // Only fetch non-archived appreciations
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -150,7 +157,7 @@ export const useAppreciations = (householdId: string | null) => {
     }
   };
 
-  const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member'>) => {
+  const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member' | 'archived' | 'archived_at'>) => {
     if (!householdId) return false;
 
     try {
@@ -159,7 +166,7 @@ export const useAppreciations = (householdId: string | null) => {
         .insert([{ 
           ...appreciationData, 
           household_id: householdId,
-          from_member: 'current_user' // This will be updated to use actual user name
+          from_member: currentUserName
         }]);
 
       if (error) throw error;
@@ -204,6 +211,53 @@ export const useAppreciations = (householdId: string | null) => {
         variant: "destructive"
       });
       return false;
+    }
+  };
+
+  const deleteAppreciation = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('appreciations')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Appreciation deleted successfully!",
+      });
+      
+      fetchAppreciations();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error deleting appreciation",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const archiveOldAppreciations = async () => {
+    try {
+      const { data, error } = await supabase.rpc('archive_old_appreciations');
+      
+      if (error) throw error;
+      
+      if (data > 0) {
+        toast({
+          title: "Appreciations archived",
+          description: `${data} old appreciation(s) have been archived.`,
+        });
+        fetchAppreciations();
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error archiving old appreciations:', error);
+      return 0;
     }
   };
 
@@ -277,6 +331,11 @@ export const useAppreciations = (householdId: string | null) => {
   useEffect(() => {
     fetchAppreciations();
     fetchHouseholdMembers();
+    
+    // Auto-archive old appreciations when hook initializes
+    if (householdId) {
+      archiveOldAppreciations();
+    }
   }, [householdId]);
 
   return {
@@ -287,10 +346,12 @@ export const useAppreciations = (householdId: string | null) => {
     loading,
     addAppreciation,
     updateAppreciation,
+    deleteAppreciation,
     toggleReaction,
     addComment,
     fetchComments,
     fetchReactions,
+    archiveOldAppreciations,
     refetch: fetchAppreciations
   };
 };

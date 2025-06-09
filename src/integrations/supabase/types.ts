@@ -92,6 +92,8 @@ export type Database = {
       }
       appreciations: {
         Row: {
+          archived: boolean
+          archived_at: string | null
           created_at: string
           from_member: string
           household_id: string
@@ -101,6 +103,8 @@ export type Database = {
           to_member: string
         }
         Insert: {
+          archived?: boolean
+          archived_at?: string | null
           created_at?: string
           from_member: string
           household_id: string
@@ -110,6 +114,8 @@ export type Database = {
           to_member: string
         }
         Update: {
+          archived?: boolean
+          archived_at?: string | null
           created_at?: string
           from_member?: string
           household_id?: string
@@ -1000,6 +1006,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_old_appreciations: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       can_edit_calendar_event: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
