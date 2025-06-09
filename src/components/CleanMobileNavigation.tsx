@@ -19,7 +19,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
 
   // Primary navigation items (shown in bottom bar) - now includes profile
   const primaryItems = [
-    { key: 'dashboard', label: 'Home', icon: Home, route: '/' },
+    { key: 'dashboard', label: 'Home', icon: Home, route: '/' }, // Fixed route
     { key: 'appreciations', label: 'Thanks', icon: Heart, route: '/appreciations' },
     { key: 'bills', label: 'Bills', icon: DollarSign, route: '/bills' },
     { key: 'notes', label: 'Notes', icon: StickyNote, route: '/notes' },
