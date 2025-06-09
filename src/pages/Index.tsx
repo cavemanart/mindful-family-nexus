@@ -3,31 +3,20 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
-import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { Loader2, RefreshCw, Wifi, WifiOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ErrorBoundary from '@/components/ErrorBoundary';
-import CleanMobileNavigation from '@/components/CleanMobileNavigation';
 import CleanTopBar from '@/components/CleanTopBar';
-import Appreciations from '@/components/Appreciations';
-import BillsTracker from '@/components/BillsTracker';
-import FamilyNotes from '@/components/FamilyNotes';
-import MentalLoad from '@/components/MentalLoad';
-import NannyMode from '@/components/NannyMode';
-import ChildrenDashboard from '@/components/ChildrenDashboard';
-import WeeklySync from '@/components/WeeklySync';
+import CleanMobileNavigation from '@/components/CleanMobileNavigation';
 import Dashboard from '@/components/Dashboard';
 import NannyDashboard from '@/components/NannyDashboard';
 import ChildDashboard from '@/components/ChildDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
-import FamilyCalendar from '@/components/FamilyCalendar';
 
 const Index = () => {
   const { user, userProfile, signOut, loading: authLoading, error: authError, retry: retryAuth } = useAuth();
   const { households, loading: householdsLoading, error: householdsError, retry: retryHouseholds } = useHouseholds();
-  const { isPageVisible, loading: preferencesLoading, error: preferencesError } = usePagePreferences();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [showHouseholdSelector, setShowHouseholdSelector] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -48,7 +37,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!user && !authLoading) {
-      navigate('/');
+      navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
@@ -76,13 +65,6 @@ const Index = () => {
     }
   }, [user, households, householdsLoading]);
 
-  // Redirect to dashboard if current tab is not visible (except profile which is always accessible)
-  useEffect(() => {
-    if (activeTab !== 'dashboard' && activeTab !== 'profile' && !isPageVisible(activeTab)) {
-      setActiveTab('dashboard');
-    }
-  }, [activeTab, isPageVisible]);
-
   const handleHouseholdSelect = (household: Household) => {
     setSelectedHousehold(household);
     setShowHouseholdSelector(false);
@@ -100,7 +82,7 @@ const Index = () => {
   const handleSignOut = async () => {
     localStorage.removeItem('selectedHouseholdId');
     await signOut();
-    navigate('/');
+    navigate('/auth');
   };
 
   const handleRetry = () => {
@@ -109,13 +91,8 @@ const Index = () => {
     retryHouseholds();
   };
 
-  // Handle tab changes including profile navigation
   const handleTabChange = (tab: string) => {
-    if (tab === 'profile') {
-      navigate('/profile');
-    } else {
-      setActiveTab(tab);
-    }
+    navigate(`/${tab === 'dashboard' ? '' : tab}`);
   };
 
   // Progressive loading messages
@@ -123,14 +100,13 @@ const Index = () => {
     if (!isOnline) return "Checking connection...";
     if (authLoading) return "Authenticating...";
     if (householdsLoading) return "Loading households...";
-    if (preferencesLoading) return "Loading preferences...";
     return "Loading your family hub...";
   };
 
   // Error handling with retry options
   const renderError = () => {
-    const hasError = authError || householdsError || preferencesError;
-    const errorMessage = authError || householdsError || preferencesError || "Something went wrong";
+    const hasError = authError || householdsError;
+    const errorMessage = authError || householdsError || "Something went wrong";
 
     if (!hasError) return null;
 
@@ -161,11 +137,11 @@ const Index = () => {
   };
 
   // Show error state if there are errors
-  if (authError || householdsError || preferencesError) {
+  if (authError || householdsError) {
     return renderError();
   }
 
-  // Show loading state with progressive messages and timeout handling
+  // Show loading state
   if (authLoading || (user && householdsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -175,7 +151,6 @@ const Index = () => {
           </div>
           <p className="text-gray-600 mb-4">{getLoadingMessage()}</p>
           
-          {/* Show retry option after some time */}
           {(authLoading || householdsLoading) && (
             <div className="mt-6 space-y-2">
               <p className="text-sm text-gray-500">Taking longer than expected?</p>
@@ -186,7 +161,6 @@ const Index = () => {
             </div>
           )}
           
-          {/* Connection status indicator */}
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
             <span>{isOnline ? "Connected" : "Offline"}</span>
@@ -204,15 +178,13 @@ const Index = () => {
     return <HouseholdSelector onHouseholdSelect={handleHouseholdSelect} />;
   }
 
-  // Role-based dashboard rendering with proper error handling
+  // Role-based dashboard rendering
   const renderDashboard = () => {
     try {
-      // For users without profile or household, show basic dashboard
       if (!userProfile || !selectedHousehold) {
         return <Dashboard />;
       }
 
-      // Role-based rendering
       switch (userProfile.role) {
         case 'child':
           return <ChildDashboard selectedHousehold={selectedHousehold} />;
@@ -221,35 +193,6 @@ const Index = () => {
         case 'parent':
         case 'grandparent':
         default:
-          // Handle different tabs for parent/grandparent roles
-          if (activeTab === 'dashboard') {
-            return <Dashboard />;
-          }
-          if (activeTab === 'appreciations' && isPageVisible('appreciations')) {
-            return <Appreciations selectedHousehold={selectedHousehold} />;
-          }
-          if (activeTab === 'bills' && isPageVisible('bills')) {
-            return <BillsTracker selectedHousehold={selectedHousehold} />;
-          }
-          if (activeTab === 'notes' && isPageVisible('notes')) {
-            return <FamilyNotes selectedHousehold={selectedHousehold} />;
-          }
-          if (activeTab === 'calendar' && isPageVisible('calendar')) {
-            return <FamilyCalendar selectedHousehold={selectedHousehold} />;
-          }
-          if (activeTab === 'mental-load' && isPageVisible('mental-load')) {
-            return <MentalLoad />;
-          }
-          if (activeTab === 'nanny-mode' && isPageVisible('nanny-mode')) {
-            return <NannyMode />;
-          }
-          if (activeTab === 'children' && isPageVisible('children')) {
-            return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
-          }
-          if (activeTab === 'weekly-sync' && isPageVisible('weekly-sync')) {
-            return <WeeklySync selectedHousehold={selectedHousehold} />;
-          }
-          // Default fallback
           return <Dashboard />;
       }
     } catch (error) {
@@ -300,7 +243,7 @@ const Index = () => {
         </main>
 
         {showMobileNav && (
-          <CleanMobileNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
+          <CleanMobileNavigation activeTab="dashboard" setActiveTab={handleTabChange} />
         )}
       </div>
     </ErrorBoundary>

@@ -4,6 +4,7 @@ import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar, More
 import { Button } from "@/components/ui/button";
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface CleanMobileNavigationProps {
   activeTab: string;
@@ -14,23 +15,24 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const { getVisiblePages } = usePagePreferences();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Primary navigation items (shown in bottom bar) - now includes profile
   const primaryItems = [
-    { key: 'dashboard', label: 'Home', icon: Home },
-    { key: 'appreciations', label: 'Thanks', icon: Heart },
-    { key: 'bills', label: 'Bills', icon: DollarSign },
-    { key: 'notes', label: 'Notes', icon: StickyNote },
-    { key: 'profile', label: 'Profile', icon: User, alwaysVisible: true },
+    { key: 'dashboard', label: 'Home', icon: Home, route: '/' },
+    { key: 'appreciations', label: 'Thanks', icon: Heart, route: '/appreciations' },
+    { key: 'bills', label: 'Bills', icon: DollarSign, route: '/bills' },
+    { key: 'notes', label: 'Notes', icon: StickyNote, route: '/notes' },
+    { key: 'profile', label: 'Profile', icon: User, alwaysVisible: true, route: '/profile' },
   ];
 
   // Secondary navigation items (shown in "More" menu)
   const secondaryItems = [
-    { key: 'calendar', label: 'Calendar', icon: Calendar },
-    { key: 'mental-load', label: 'Tasks', icon: Brain },
-    { key: 'nanny-mode', label: 'Nanny', icon: Baby },
-    { key: 'children', label: 'Kids', icon: Users },
-    { key: 'weekly-sync', label: 'Goals', icon: Calendar },
+    { key: 'calendar', label: 'Calendar', icon: Calendar, route: '/calendar' },
+    { key: 'mental-load', label: 'Tasks', icon: Brain, route: '/mental-load' },
+    { key: 'nanny-mode', label: 'Nanny', icon: Baby, route: '/nanny-mode' },
+    { key: 'children', label: 'Kids', icon: Users, route: '/children' },
+    { key: 'weekly-sync', label: 'Goals', icon: Calendar, route: '/weekly-sync' },
   ];
 
   // Filter items based on user preferences (except profile which is always visible)
@@ -40,7 +42,8 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const visibleSecondaryItems = getVisiblePages(secondaryItems);
   const allVisibleItems = [...visiblePrimaryItems.filter(item => item.key !== 'profile'), ...visibleSecondaryItems];
 
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: string, route: string) => {
+    navigate(route);
     setActiveTab(tab);
     setIsMoreMenuOpen(false);
   };
@@ -51,7 +54,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
     return (
       <button
         key="profile"
-        onClick={() => handleTabChange('profile')}
+        onClick={() => handleTabChange('profile', '/profile')}
         className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
           isActive
             ? 'bg-primary text-primary-foreground'
@@ -81,7 +84,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
               return (
                 <button
                   key={item.key}
-                  onClick={() => setActiveTab(item.key)}
+                  onClick={() => handleTabChange(item.key, item.route)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                     activeTab === item.key
                       ? 'bg-primary text-primary-foreground shadow-md'
@@ -106,7 +109,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
             return (
               <button
                 key={item.key}
-                onClick={() => handleTabChange(item.key)}
+                onClick={() => handleTabChange(item.key, item.route)}
                 className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all duration-200 ${
                   activeTab === item.key
                     ? 'bg-primary text-primary-foreground'
@@ -161,7 +164,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
                   return (
                     <button
                       key={item.key}
-                      onClick={() => handleTabChange(item.key)}
+                      onClick={() => handleTabChange(item.key, item.route)}
                       className={`flex items-center gap-3 p-4 rounded-lg text-left transition-all duration-200 ${
                         activeTab === item.key
                           ? 'bg-primary text-primary-foreground'
