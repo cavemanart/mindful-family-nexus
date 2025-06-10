@@ -37,6 +37,7 @@ function App() {
               <div className="min-h-screen bg-background">
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/subscription" element={<Subscription />} />
