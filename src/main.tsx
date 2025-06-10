@@ -11,7 +11,12 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Create root and render without StrictMode to avoid potential dispatcher issues
+// Create root and render with proper React initialization
 const root = createRoot(rootElement);
 
-root.render(<App />);
+// Wrap in StrictMode to ensure proper React behavior and hook initialization
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
