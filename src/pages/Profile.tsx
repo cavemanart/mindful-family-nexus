@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
@@ -12,9 +11,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye, EyeOff, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import ChildManagement from '@/components/ChildManagement';
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -39,6 +39,7 @@ const Profile = () => {
   const [isUpdatingHousehold, setIsUpdatingHousehold] = useState(false);
   
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
+  const canManageChildren = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
 
   // Update form values when userProfile loads
   useEffect(() => {
@@ -254,6 +255,24 @@ const Profile = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Children Management - Only show for parents and grandparents */}
+          {canManageChildren && selectedHousehold && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Manage Children
+                </CardTitle>
+                <CardDescription>
+                  Create and manage child accounts with PIN access for your household
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChildManagement selectedHousehold={selectedHousehold} />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Page Visibility Settings */}
           <Card>

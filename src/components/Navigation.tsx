@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, ListChecks, MessageSquare, Settings, Users, Baby } from 'lucide-react';
+import { Home, Calendar, ListChecks, MessageSquare, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -60,13 +61,6 @@ const Navigation = ({ currentPage, onPageChange, selectedHousehold, userProfile 
       icon: Settings,
       roles: ['parent', 'nanny', 'grandparent'],
       description: 'Manage household settings'
-    },
-    {
-      id: 'manage-children',
-      label: 'Manage Children',
-      icon: Baby,
-      roles: ['parent', 'grandparent'],
-      description: 'Create and manage child accounts'
     },
   ];
 

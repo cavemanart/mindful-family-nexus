@@ -25,7 +25,6 @@ import BillsPage from '@/pages/BillsPage';
 import NotesPage from '@/pages/NotesPage';
 import MentalLoadPage from '@/pages/MentalLoadPage';
 import NannyModePage from '@/pages/NannyModePage';
-import ChildrenPage from '@/pages/ChildrenPage';
 import WeeklySyncPage from '@/pages/WeeklySyncPage';
 
 function App() {
@@ -48,7 +47,6 @@ function App() {
                   <Route path="/notes" element={<NotesPage />} />
                   <Route path="/mental-load" element={<MentalLoadPage />} />
                   <Route path="/nanny-mode" element={<NannyModePage />} />
-                  <Route path="/children" element={<ChildrenPage />} />
                   <Route path="/weekly-sync" element={<WeeklySyncPage />} />
                   <Route path="/nanny-login" element={<NannyLogin onSuccess={() => {}} />} />
                   <Route path="/nanny-access/:householdId" element={<NannyAccess />} />

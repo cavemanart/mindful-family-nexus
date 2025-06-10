@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, CheckCircle, Heart, LayoutDashboard, Plus, TrendingUp, Users, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import Appreciations from './Appreciations';
 import ChoresDashboard from './ChoresDashboard';
-import ChildManagement from '@/components/ChildManagement';
 
 const Dashboard = () => {
   const { households, loading, error, createHousehold, joinHousehold, leaveHousehold } = useHouseholds();
