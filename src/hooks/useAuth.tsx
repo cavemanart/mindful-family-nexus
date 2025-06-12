@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Add initialization check
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Initialize states after component mount to prevent dispatcher errors
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -58,20 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('🚨 Error in fetchUserProfile:', error);
       setError('Failed to load user profile');
-    }
-  };
-
-  const checkSubscriptionStatus = async () => {
-    try {
-      console.log('💳 Checking subscription status');
-      const { data, error } = await supabase.functions.invoke('check-subscription-status');
-      if (error) {
-        console.error('❌ Subscription check error:', error);
-      } else {
-        console.log('✅ Subscription status checked:', data);
-      }
-    } catch (error) {
-      console.error('🚨 Error checking subscription:', error);
     }
   };
 
@@ -119,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       clearTimeout(authTimeout);
       setLoading(false);
+      setIsInitialized(true);
     } catch (error) {
       console.error('🚨 Auth initialization error:', error);
       setError('Failed to initialize authentication');
@@ -157,8 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Initialize auth
-    initializeAuth();
+    // Initialize auth only after component is mounted
+    const initTimer = setTimeout(() => {
+      initializeAuth();
+    }, 50);
 
     // Online/offline detection
     const handleOnline = () => {
@@ -178,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🧹 Cleaning up auth subscription');
+      clearTimeout(initTimer);
       subscription.unsubscribe();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -229,6 +224,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
   };
+
+  // Don't render children until React is properly initialized
+  if (!isInitialized && loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
