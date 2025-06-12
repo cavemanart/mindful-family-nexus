@@ -12,18 +12,13 @@ const ReactHealthCheck: React.FC<ReactHealthCheckProps> = ({ children, fallback 
 
   useEffect(() => {
     try {
-      // Check if React hooks are working properly
-      const testState = React.useState(true);
-      if (!testState) {
-        throw new Error('React hooks not available');
-      }
-
-      // Check React version
-      if (React.version) {
+      // Simple React version check without using hooks
+      if (React && React.version) {
         console.log('React version:', React.version);
+        setIsHealthy(true);
+      } else {
+        throw new Error('React not properly loaded');
       }
-
-      setIsHealthy(true);
     } catch (err) {
       console.error('React health check failed:', err);
       setError(err instanceof Error ? err.message : 'Unknown React error');

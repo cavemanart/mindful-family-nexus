@@ -9,6 +9,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -25,10 +26,20 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary details:', error, errorInfo);
     
     // Log specific React dispatcher errors for debugging
-    if (error.message.includes('dispatcher')) {
+    if (error.message.includes('dispatcher') || error.message.includes('useState')) {
       console.error('React dispatcher error detected. This usually happens when hooks are called outside of a React component or before React is fully mounted.');
     }
+
+    this.setState({ errorInfo });
   }
+
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  };
+
+  private handleRefresh = () => {
+    window.location.reload();
+  };
 
   public render() {
     if (this.state.hasError) {
@@ -37,19 +48,27 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
             <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
             <p className="text-gray-600 mb-4">
-              We encountered an unexpected error. Please refresh the page to try again.
+              We encountered an unexpected error. Please try refreshing the page.
             </p>
             {this.state.error?.message.includes('dispatcher') && (
               <p className="text-sm text-gray-500 mb-4">
                 React initialization error detected. This should be resolved on refresh.
               </p>
             )}
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Refresh Page
-            </button>
+            <div className="space-y-2">
+              <button 
+                onClick={this.handleRetry}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-2"
+              >
+                Try Again
+              </button>
+              <button 
+                onClick={this.handleRefresh}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       );

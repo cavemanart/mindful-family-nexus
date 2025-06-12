@@ -15,26 +15,23 @@ function initializeApp() {
   }
 
   try {
-    // Add a small delay to ensure React is fully loaded
-    setTimeout(() => {
-      const root = createRoot(rootElement);
+    const root = createRoot(rootElement);
 
-      // Render with health check wrapper
-      root.render(
-        <React.StrictMode>
-          <ReactHealthCheck fallback={
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-              <div className="text-center p-4">
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Loading Application...</h2>
-                <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-              </div>
+    // Render with health check wrapper
+    root.render(
+      <React.StrictMode>
+        <ReactHealthCheck fallback={
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center p-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Loading Application...</h2>
+              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
             </div>
-          }>
-            <App />
-          </ReactHealthCheck>
-        </React.StrictMode>
-      );
-    }, 100);
+          </div>
+        }>
+          <App />
+        </ReactHealthCheck>
+      </React.StrictMode>
+    );
   } catch (error) {
     console.error('Failed to initialize React app:', error);
     // Fallback display

@@ -21,15 +21,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Add initialization check
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  // Initialize states after component mount to prevent dispatcher errors
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error });
 
@@ -47,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(data);
         setError(null);
 
-        // Ensure subscription exists after profile is loaded
+        // Ensure subscription exists after profile is loaded - use setTimeout to prevent deadlocks
         setTimeout(async () => {
           try {
             await ensureUserSubscription(userId);
@@ -68,26 +65,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initializeAuth = async () => {
     try {
-      console.log('🚀 Initializing auth with timeout');
+      console.log('🚀 Initializing auth');
       setLoading(true);
       setError(null);
 
-      // Set a timeout for the entire auth initialization
-      const authTimeout = setTimeout(() => {
-        console.error('⏰ Auth initialization timeout');
-        setError('Authentication took too long. Please try again.');
-        setLoading(false);
-      }, 15000); // 15 second timeout
-
       // Check if we're online
       if (!navigator.onLine) {
-        clearTimeout(authTimeout);
         setError('You appear to be offline. Please check your connection.');
         setLoading(false);
         return;
       }
 
-      // Get initial session with timeout
+      // Get initial session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -95,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Clear potentially corrupted tokens
         await supabase.auth.signOut();
         setError('Session error. Please sign in again.');
-        clearTimeout(authTimeout);
         setLoading(false);
         return;
       }
@@ -105,10 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        await fetchUserProfile(session.user.id);
+        // Use setTimeout to prevent potential deadlocks
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 0);
       }
       
-      clearTimeout(authTimeout);
       setLoading(false);
       setIsInitialized(true);
     } catch (error) {
@@ -127,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🚀 Setting up auth state listener');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔄 Auth state changed:', event, !!session);
         setSession(session);
         setUser(session?.user ?? null);
@@ -149,10 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Initialize auth only after component is mounted
-    const initTimer = setTimeout(() => {
-      initializeAuth();
-    }, 50);
+    // Initialize auth
+    initializeAuth();
 
     // Online/offline detection
     const handleOnline = () => {
@@ -172,7 +160,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🧹 Cleaning up auth subscription');
-      clearTimeout(initTimer);
       subscription.unsubscribe();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
@@ -225,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
   };
 
-  // Don't render children until React is properly initialized
+  // Don't render children until initialization is complete
   if (!isInitialized && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

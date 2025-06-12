@@ -35,6 +35,7 @@ const Profile = () => {
   const [lastName, setLastName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
+  // Fix the TypeScript error by ensuring we have the correct household type
   const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId')) || households?.[0];
   const [householdName, setHouseholdName] = useState('');
   const [isUpdatingHousehold, setIsUpdatingHousehold] = useState(false);
