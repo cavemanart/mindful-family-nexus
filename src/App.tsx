@@ -12,6 +12,7 @@ import { queryClient } from '@/lib/queryClient';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import Profile from '@/pages/Profile';
+import ChildrenPage from '@/pages/ChildrenPage';
 import Subscription from '@/pages/Subscription';
 import Success from '@/pages/Success';
 import NotFound from '@/pages/NotFound';
@@ -54,6 +55,7 @@ function App() {
                     <Route path="/dashboard" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/children" element={<ChildrenPage />} />
                     <Route path="/subscription" element={<Subscription />} />
                     <Route path="/success" element={<Success />} />
                     <Route path="/calendar" element={<CalendarPage />} />

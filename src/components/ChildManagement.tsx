@@ -10,10 +10,13 @@ import { Plus, Edit2, Trash2, Users, Baby } from 'lucide-react';
 import { useChildrenManagement } from '@/hooks/useChildrenManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Household } from '@/hooks/useHouseholds';
 
 interface ChildManagementProps {
-  selectedHousehold: Household;
+  selectedHousehold: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
 const avatarOptions = [
@@ -29,7 +32,7 @@ const avatarOptions = [
 
 const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) => {
   const { user } = useAuth();
-  const { children, loading, createChild, updateChild, deleteChild } = useChildrenManagement(selectedHousehold.id);
+  const { children, loading, createChild, updateChild, deleteChild, refetch } = useChildrenManagement(selectedHousehold.id);
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<any>(null);
@@ -75,6 +78,12 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
       
       setIsCreateDialogOpen(false);
       resetForm();
+      
+      // Force refetch to show the new child immediately
+      setTimeout(() => {
+        refetch();
+      }, 500);
+      
     } catch (error: any) {
       toast.error(error.message || 'Failed to create child account');
     } finally {
@@ -104,6 +113,12 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
       
       setEditingChild(null);
       resetForm();
+      
+      // Force refetch to show updated data
+      setTimeout(() => {
+        refetch();
+      }, 500);
+      
     } catch (error: any) {
       toast.error(error.message || 'Failed to update child account');
     } finally {
@@ -115,6 +130,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
     if (window.confirm('Are you sure you want to delete this child account? This action cannot be undone.')) {
       try {
         await deleteChild(childId);
+        // Refetch will be called automatically by the deleteChild function
       } catch (error: any) {
         toast.error(error.message || 'Failed to delete child account');
       }

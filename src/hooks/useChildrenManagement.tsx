@@ -35,11 +35,15 @@ export const useChildrenManagement = (householdId: string | null) => {
 
   const fetchChildren = async () => {
     if (!householdId) {
+      setChildren([]);
       setLoading(false);
       return;
     }
 
     try {
+      console.log('🔄 Fetching children for household:', householdId);
+      setLoading(true);
+      
       // First get household member user IDs
       const { data: householdMembers, error: membersError } = await supabase
         .from('household_members')
@@ -48,7 +52,15 @@ export const useChildrenManagement = (householdId: string | null) => {
 
       if (membersError) throw membersError;
 
+      if (!householdMembers || householdMembers.length === 0) {
+        console.log('📝 No household members found');
+        setChildren([]);
+        setLoading(false);
+        return;
+      }
+
       const userIds = householdMembers.map(member => member.user_id);
+      console.log('👥 Found household member IDs:', userIds);
 
       // Then get child profiles for those user IDs
       const { data, error } = await supabase
@@ -65,14 +77,17 @@ export const useChildrenManagement = (householdId: string | null) => {
         .in('id', userIds);
 
       if (error) throw error;
+      
+      console.log('👶 Found children:', data);
       setChildren(data || []);
     } catch (error: any) {
-      console.error('Error fetching children:', error);
+      console.error('❌ Error fetching children:', error);
       toast({
         title: "Error fetching children",
         description: error.message,
         variant: "destructive"
       });
+      setChildren([]);
     } finally {
       setLoading(false);
     }
@@ -82,6 +97,8 @@ export const useChildrenManagement = (householdId: string | null) => {
     if (!householdId) throw new Error('No household selected');
 
     try {
+      console.log('👶 Creating child:', childData);
+      
       const { data, error } = await supabase.rpc('create_child_profile', {
         p_first_name: childData.firstName,
         p_last_name: childData.lastName,
@@ -93,15 +110,18 @@ export const useChildrenManagement = (householdId: string | null) => {
 
       if (error) throw error;
 
+      console.log('✅ Child created successfully:', data);
+      
       toast({
         title: "Success",
         description: "Child account created successfully!",
       });
 
-      fetchChildren();
+      // Immediately refetch children
+      await fetchChildren();
       return data;
     } catch (error: any) {
-      console.error('Error creating child:', error);
+      console.error('❌ Error creating child:', error);
       throw new Error(error.message || 'Failed to create child account');
     }
   };
@@ -131,9 +151,9 @@ export const useChildrenManagement = (householdId: string | null) => {
         description: "Child account updated successfully!",
       });
 
-      fetchChildren();
+      await fetchChildren();
     } catch (error: any) {
-      console.error('Error updating child:', error);
+      console.error('❌ Error updating child:', error);
       throw new Error(error.message || 'Failed to update child account');
     }
   };
@@ -159,9 +179,9 @@ export const useChildrenManagement = (householdId: string | null) => {
         description: "Child account deleted successfully!",
       });
 
-      fetchChildren();
+      await fetchChildren();
     } catch (error: any) {
-      console.error('Error deleting child:', error);
+      console.error('❌ Error deleting child:', error);
       toast({
         title: "Error deleting child",
         description: error.message,
