@@ -1,272 +1,380 @@
 
 import React, { useState } from 'react';
-import { Users, Plus, Edit, Trash2, User } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useChildrenManagement } from '@/hooks/useChildrenManagement';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useChildrenManagement } from '@/hooks/useChildrenManagement';
-import { useAuth } from '@/hooks/useAuth';
-import { Household } from '@/hooks/useHouseholds';
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trash2, Edit, Plus, Users, Baby } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ChildManagementProps {
-  selectedHousehold: Household;
+  selectedHousehold: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
-const avatarOptions = [
-  { id: 'child-1', emoji: '😊', name: 'Happy Kid' },
-  { id: 'child-2', emoji: '🌟', name: 'Star Child' },
-  { id: 'child-3', emoji: '🦄', name: 'Unicorn' },
-  { id: 'child-4', emoji: '🎈', name: 'Balloon' },
-  { id: 'child-5', emoji: '🚀', name: 'Rocket' },
-  { id: 'child-6', emoji: '🎨', name: 'Artist' },
-  { id: 'child-7', emoji: '⚽', name: 'Soccer' },
-  { id: 'child-8', emoji: '🎵', name: 'Music' },
-];
-
 const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) => {
-  const { user, userProfile } = useAuth();
-  const { children, loading, createChild, updateChild, deleteChild } = useChildrenManagement(selectedHousehold?.id);
-  const { toast } = useToast();
+  const { userProfile } = useAuth();
+  const { children, loading, createChild, updateChild, deleteChild } = useChildrenManagement(selectedHousehold.id);
   
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    pin: '',
-    avatarSelection: 'child-1'
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Form states
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [pin, setPin] = useState('');
+  const [avatarSelection, setAvatarSelection] = useState('child-1');
+
+  const avatarOptions = [
+    { value: 'child-1', label: '👶 Baby', emoji: '👶' },
+    { value: 'child-2', label: '👧 Girl', emoji: '👧' },
+    { value: 'child-3', label: '👦 Boy', emoji: '👦' },
+    { value: 'child-4', label: '🧒 Child', emoji: '🧒' },
+    { value: 'child-5', label: '👨‍🦱 Teen Boy', emoji: '👨‍🦱' },
+    { value: 'child-6', label: '👩‍🦱 Teen Girl', emoji: '👩‍🦱' },
+  ];
+
+  const resetForm = () => {
+    setFirstName('');
+    setLastName('');
+    setPin('');
+    setAvatarSelection('child-1');
+    setEditingChild(null);
+  };
+
+  const handleCreateChild = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.pin.trim()) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all fields",
-        variant: "destructive"
-      });
+    if (!userProfile?.id) {
+      toast.error('User profile not found. Please refresh and try again.');
       return;
     }
 
-    if (formData.pin.length < 4 || formData.pin.length > 6) {
-      toast({
-        title: "Invalid PIN",
-        description: "PIN must be 4-6 digits",
-        variant: "destructive"
+    setIsSubmitting(true);
+    try {
+      await createChild({
+        firstName,
+        lastName,
+        pin,
+        avatarSelection,
+        parentId: userProfile.id,
+        householdId: selectedHousehold.id
       });
-      return;
-    }
 
-    if (!/^\d+$/.test(formData.pin)) {
-      toast({
-        title: "Invalid PIN",
-        description: "PIN must contain only numbers",
-        variant: "destructive"
+      resetForm();
+      setIsCreateDialogOpen(false);
+      toast.success(`${firstName} has been added to your family! 🎉`);
+    } catch (error: any) {
+      console.error('Error creating child:', error);
+      toast.error(error.message || 'Failed to create child account');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditChild = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingChild) return;
+
+    setIsSubmitting(true);
+    try {
+      await updateChild(editingChild.id, {
+        firstName,
+        lastName,
+        pin: pin || undefined, // Only update PIN if provided
+        avatarSelection
       });
+
+      resetForm();
+      setIsEditDialogOpen(false);
+      toast.success(`${firstName}'s profile has been updated! ✨`);
+    } catch (error: any) {
+      console.error('Error updating child:', error);
+      toast.error(error.message || 'Failed to update child account');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteChild = async (childId: string, childName: string) => {
+    if (!confirm(`Are you sure you want to remove ${childName} from your household? This action cannot be undone.`)) {
       return;
     }
 
     try {
-      if (editingChild) {
-        await updateChild(editingChild.id, formData);
-      } else {
-        await createChild({
-          ...formData,
-          parentId: user!.id,
-          householdId: selectedHousehold.id
-        });
-      }
-      
-      setFormData({ firstName: '', lastName: '', pin: '', avatarSelection: 'child-1' });
-      setEditingChild(null);
-      setIsDialogOpen(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save child profile",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEdit = (child: any) => {
-    setEditingChild(child);
-    setFormData({
-      firstName: child.first_name,
-      lastName: child.last_name,
-      pin: '', // Don't pre-fill PIN for security
-      avatarSelection: child.avatar_selection || 'child-1'
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (childId: string) => {
-    if (window.confirm('Are you sure you want to delete this child profile?')) {
       await deleteChild(childId);
+      toast.success(`${childName} has been removed from your household.`);
+    } catch (error: any) {
+      console.error('Error deleting child:', error);
+      toast.error(error.message || 'Failed to delete child account');
     }
+  };
+
+  const openEditDialog = (child: any) => {
+    setEditingChild(child);
+    setFirstName(child.first_name);
+    setLastName(child.last_name);
+    setAvatarSelection(child.avatar_selection);
+    setPin(''); // Don't pre-fill PIN for security
+    setIsEditDialogOpen(true);
+  };
+
+  const getAvatarEmoji = (selection: string) => {
+    return avatarOptions.find(option => option.value === selection)?.emoji || '👶';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="text-center">
+          <Baby className="h-8 w-8 animate-pulse mx-auto mb-2 text-blue-500" />
+          <p className="text-sm text-muted-foreground">Loading children...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header and Add Button */}
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="text-purple-500" size={28} />
-            Manage Children
-          </h2>
-          <p className="text-muted-foreground mt-1">Create and manage child accounts with PIN access</p>
+          <h3 className="text-lg font-semibold">Children in {selectedHousehold.name}</h3>
+          <p className="text-sm text-muted-foreground">
+            {children.length === 0 ? 'No children added yet' : `${children.length} child${children.length === 1 ? '' : 'ren'} in your household`}
+          </p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
-              onClick={() => {
-                setEditingChild(null);
-                setFormData({ firstName: '', lastName: '', pin: '', avatarSelection: 'child-1' });
-              }}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Plus size={16} className="mr-2" />
+            <Button onClick={resetForm}>
+              <Plus className="h-4 w-4 mr-2" />
               Add Child
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingChild ? 'Edit Child' : 'Add New Child'}</DialogTitle>
+              <DialogTitle>Add New Child</DialogTitle>
+              <DialogDescription>
+                Create a child account with PIN access for your household.
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
+            <form onSubmit={handleCreateChild}>
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Child's first name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Child's last name"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="pin">PIN (4 digits)</Label>
                   <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="Enter first name"
+                    id="pin"
+                    type="password"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="0000"
+                    maxLength={4}
+                    required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    This PIN will be used for the child to access their account
+                  </p>
                 </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="Enter last name"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="pin">PIN (4-6 digits)</Label>
-                <Input
-                  id="pin"
-                  type="password"
-                  value={formData.pin}
-                  onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
-                  placeholder="Enter 4-6 digit PIN"
-                  maxLength={6}
-                />
-              </div>
-              
-              <div>
-                <Label>Choose Avatar</Label>
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {avatarOptions.map((avatar) => (
-                    <button
-                      key={avatar.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, avatarSelection: avatar.id })}
-                      className={`p-3 rounded-lg border-2 text-center transition-colors ${
-                        formData.avatarSelection === avatar.id
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="text-2xl mb-1">{avatar.emoji}</div>
-                      <div className="text-xs text-muted-foreground">{avatar.name}</div>
-                    </button>
-                  ))}
+
+                <div className="space-y-2">
+                  <Label htmlFor="avatar">Avatar</Label>
+                  <Select value={avatarSelection} onValueChange={setAvatarSelection}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {avatarOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          <span className="flex items-center gap-2">
+                            <span>{option.emoji}</span>
+                            <span>{option.label}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700">
-                  {editingChild ? 'Update Child' : 'Create Child'}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-              </div>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Child Account'}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {children.length === 0 ? (
-          <Card className="bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-700">
-            <CardContent className="p-8 text-center">
-              <User className="text-purple-300 mx-auto mb-4" size={48} />
-              <p className="text-muted-foreground text-lg">No children added yet!</p>
-              <p className="text-muted-foreground text-sm mt-2">Create child accounts so they can access the family dashboard with a PIN.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          children.map((child) => {
-            const avatar = avatarOptions.find(a => a.id === child.avatar_selection) || avatarOptions[0];
-            return (
-              <Card key={child.id} className="border-purple-200 dark:border-purple-700">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-950/50 flex items-center justify-center text-2xl">
-                        {avatar.emoji}
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">
-                          {child.first_name} {child.last_name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Avatar: {avatar.name} • PIN: Set
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(child)}
-                      >
-                        <Edit size={16} />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(child.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
+      {/* Children List */}
+      {children.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Users className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No children added yet</h3>
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Add your first child to get started with family management features.
+            </p>
+            <Button onClick={() => {resetForm(); setIsCreateDialogOpen(true);}}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Your First Child
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {children.map((child) => (
+            <Card key={child.id}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback className="text-2xl">
+                      {getAvatarEmoji(child.avatar_selection)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-medium">{child.first_name} {child.last_name}</h4>
+                    <p className="text-sm text-muted-foreground">Child Account</p>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditDialog(child)}
+                    className="flex-1"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteChild(child.id, child.first_name)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Child Profile</DialogTitle>
+            <DialogDescription>
+              Update {editingChild?.first_name}'s information.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditChild}>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editFirstName">First Name</Label>
+                  <Input
+                    id="editFirstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editLastName">Last Name</Label>
+                  <Input
+                    id="editLastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="editPin">New PIN (optional)</Label>
+                <Input
+                  id="editPin"
+                  type="password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="Leave blank to keep current PIN"
+                  maxLength={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only enter a new PIN if you want to change it
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editAvatar">Avatar</Label>
+                <Select value={avatarSelection} onValueChange={setAvatarSelection}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {avatarOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <span className="flex items-center gap-2">
+                          <span>{option.emoji}</span>
+                          <span>{option.label}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Updating...' : 'Update Profile'}
+              </Button>
+            </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
