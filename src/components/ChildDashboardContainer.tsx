@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import ChildrenDashboard from '@/components/ChildrenDashboard';
 
 interface ChildDashboardContainerProps {
@@ -15,20 +15,20 @@ interface ChildDashboardContainerProps {
 }
 
 const avatarOptions = [
-  { id: 'child-1', emoji: '😊', name: 'Happy Kid' },
-  { id: 'child-2', emoji: '🌟', name: 'Star Child' },
-  { id: 'child-3', emoji: '🦄', name: 'Unicorn' },
-  { id: 'child-4', emoji: '🎈', name: 'Balloon' },
-  { id: 'child-5', emoji: '🚀', name: 'Rocket' },
-  { id: 'child-6', emoji: '🎨', name: 'Artist' },
-  { id: 'child-7', emoji: '⚽', name: 'Soccer' },
-  { id: 'child-8', emoji: '🎵', name: 'Music' },
+  { id: 'bear', emoji: '🧸', name: 'Bear' },
+  { id: 'cat', emoji: '🐱', name: 'Cat' },
+  { id: 'dog', emoji: '🐶', name: 'Dog' },
+  { id: 'rabbit', emoji: '🐰', name: 'Rabbit' },
+  { id: 'lion', emoji: '🦁', name: 'Lion' },
+  { id: 'elephant', emoji: '🐘', name: 'Elephant' },
+  { id: 'penguin', emoji: '🐧', name: 'Penguin' },
+  { id: 'owl', emoji: '🦉', name: 'Owl' },
 ];
 
 const ChildDashboardContainer: React.FC<ChildDashboardContainerProps> = ({ childData, onLogout }) => {
   const avatar = avatarOptions.find(a => a.id === childData.avatar_selection) || avatarOptions[0];
 
-  // Create a mock household object for the ChildrenDashboard
+  // Create a proper household object for the ChildrenDashboard
   const selectedHousehold = {
     id: childData.household_id
   };

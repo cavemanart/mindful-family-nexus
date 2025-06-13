@@ -103,12 +103,12 @@ const Index = () => {
     return "Loading your family hub...";
   };
 
-  // Error handling with retry options
+  // Only show critical errors that actually prevent app function
+  const hasCriticalError = authError && (authError.includes('authentication') || authError.includes('offline'));
+  
+  // Error handling with retry options - only for critical errors
   const renderError = () => {
-    const hasError = authError || householdsError;
-    const errorMessage = authError || householdsError || "Something went wrong";
-
-    if (!hasError) return null;
+    if (!hasCriticalError) return null;
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
@@ -120,7 +120,7 @@ const Index = () => {
             {!isOnline ? "Connection Issue" : "Loading Error"}
           </h2>
           <p className="text-gray-600 mb-4">
-            {!isOnline ? "Please check your internet connection and try again." : errorMessage}
+            {!isOnline ? "Please check your internet connection and try again." : authError}
           </p>
           <div className="space-y-2">
             <Button onClick={handleRetry} className="w-full">
@@ -136,8 +136,8 @@ const Index = () => {
     );
   };
 
-  // Show error state if there are errors
-  if (authError || householdsError) {
+  // Show error state only for critical errors
+  if (hasCriticalError) {
     return renderError();
   }
 

@@ -13,9 +13,23 @@ interface ChildrenDashboardProps {
 }
 
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
-  const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold?.id || null);
-  const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold?.id || null);
-  const { householdMembers, loading: membersLoading } = useAppreciations(selectedHousehold?.id || null);
+  // Early return if no household is selected
+  if (!selectedHousehold || !selectedHousehold.id) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
+          <h2 className="text-3xl font-bold text-foreground mb-4">
+            Kid's Dashboard 🎈
+          </h2>
+          <p className="text-muted-foreground">Please select a household to view children's activities.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold.id);
+  const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold.id);
+  const { householdMembers, loading: membersLoading } = useAppreciations(selectedHousehold.id);
   
   // Filter for children only
   const children = householdMembers.filter(member => member.role === 'child');
