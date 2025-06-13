@@ -3,7 +3,6 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import ReactHealthCheck from '@/components/ReactHealthCheck';
 
 // Ensure DOM is ready before initializing React
 function initializeApp() {
@@ -17,19 +16,10 @@ function initializeApp() {
   try {
     const root = createRoot(rootElement);
 
-    // Render with health check wrapper
+    // Simple render without health check wrapper to avoid hook issues during initialization
     root.render(
       <React.StrictMode>
-        <ReactHealthCheck fallback={
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="text-center p-4">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Loading Application...</h2>
-              <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-            </div>
-          </div>
-        }>
-          <App />
-        </ReactHealthCheck>
+        <App />
       </React.StrictMode>
     );
   } catch (error) {
