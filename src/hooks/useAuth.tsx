@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error });
 
@@ -44,15 +43,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(data);
         setError(null);
 
-        // Ensure subscription exists after profile is loaded - use setTimeout to prevent deadlocks
-        setTimeout(async () => {
-          try {
-            await ensureUserSubscription(userId);
-            console.log('✅ Subscription ensured');
-          } catch (error) {
-            console.error('❌ Error ensuring subscription:', error);
-          }
-        }, 0);
+        // Ensure subscription exists
+        try {
+          await ensureUserSubscription(userId);
+          console.log('✅ Subscription ensured');
+        } catch (subError) {
+          console.error('❌ Error ensuring subscription:', subError);
+        }
       } else {
         console.log('❌ Error fetching user profile:', error);
         setError('Failed to load user profile');
@@ -69,19 +66,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setError(null);
 
-      // Check if we're online
       if (!navigator.onLine) {
         setError('You appear to be offline. Please check your connection.');
         setLoading(false);
         return;
       }
 
-      // Get initial session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
         console.error('❌ Session error:', sessionError);
-        // Clear potentially corrupted tokens
         await supabase.auth.signOut();
         setError('Session error. Please sign in again.');
         setLoading(false);
@@ -93,14 +87,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Use setTimeout to prevent potential deadlocks
-        setTimeout(() => {
-          fetchUserProfile(session.user.id);
-        }, 0);
+        await fetchUserProfile(session.user.id);
       }
       
       setLoading(false);
-      setIsInitialized(true);
     } catch (error) {
       console.error('🚨 Auth initialization error:', error);
       setError('Failed to initialize authentication');
@@ -117,17 +107,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🚀 Setting up auth state listener');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('🔄 Auth state changed:', event, !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           console.log('👤 User authenticated, fetching profile');
-          // Use setTimeout to prevent potential deadlocks
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
+          await fetchUserProfile(session.user.id);
         } else {
           console.log('👤 User not authenticated, clearing profile');
           setUserProfile(null);
@@ -211,15 +198,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
   };
-
-  // Don't render children until initialization is complete
-  if (!isInitialized && loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
