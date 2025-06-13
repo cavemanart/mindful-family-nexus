@@ -103,8 +103,13 @@ const Index = () => {
     return "Loading your family hub...";
   };
 
-  // Only show critical errors that actually prevent app function
-  const hasCriticalError = authError && (authError.includes('authentication') || authError.includes('offline'));
+  // Only show critical errors that actually prevent app function - be more specific
+  const hasCriticalError = authError && (
+    authError.includes('authentication') || 
+    authError.includes('offline') ||
+    authError.includes('network') ||
+    authError.includes('connection')
+  );
   
   // Error handling with retry options - only for critical errors
   const renderError = () => {
@@ -117,7 +122,7 @@ const Index = () => {
             {!isOnline ? <WifiOff className="h-12 w-12 mx-auto text-red-500" /> : <RefreshCw className="h-12 w-12 mx-auto text-red-500" />}
           </div>
           <h2 className="text-2xl font-bold text-red-600 mb-4">
-            {!isOnline ? "Connection Issue" : "Loading Error"}
+            {!isOnline ? "Connection Issue" : "Authentication Error"}
           </h2>
           <p className="text-gray-600 mb-4">
             {!isOnline ? "Please check your internet connection and try again." : authError}
@@ -178,30 +183,42 @@ const Index = () => {
     return <HouseholdSelector onHouseholdSelect={handleHouseholdSelect} />;
   }
 
-  // Role-based dashboard rendering
+  // Role-based dashboard rendering with better error handling
   const renderDashboard = () => {
     try {
+      console.log('🎯 Rendering dashboard for user:', userProfile?.role, 'household:', selectedHousehold?.id);
+      
+      // Log any non-critical errors for debugging but don't crash
+      if (householdsError) {
+        console.warn('⚠️ Non-critical households error:', householdsError);
+      }
+      
       if (!userProfile || !selectedHousehold) {
+        console.log('📋 Using default dashboard - no userProfile or selectedHousehold');
         return <Dashboard />;
       }
 
       switch (userProfile.role) {
         case 'child':
+          console.log('👶 Rendering child dashboard');
           return <ChildDashboard selectedHousehold={selectedHousehold} />;
         case 'nanny':
+          console.log('👩‍🍼 Rendering nanny dashboard');
           return <NannyDashboard selectedHousehold={selectedHousehold} />;
         case 'parent':
         case 'grandparent':
         default:
+          console.log('👨‍👩‍👧‍👦 Rendering parent/default dashboard');
           return <Dashboard />;
       }
     } catch (error) {
-      console.error('Error rendering dashboard:', error);
+      console.error('❌ Error rendering dashboard:', error);
+      // Don't crash the app, show a graceful fallback
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-red-600 mb-2">Dashboard Error</h2>
-            <p className="text-gray-600 mb-4">There was an error loading the dashboard</p>
+            <h2 className="text-xl font-bold text-orange-600 mb-2">Dashboard Loading Issue</h2>
+            <p className="text-gray-600 mb-4">There was a minor issue loading some data</p>
             <Button onClick={() => window.location.reload()}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Page

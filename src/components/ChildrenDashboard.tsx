@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ interface ChildrenDashboardProps {
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   // Early return if no household is selected
   if (!selectedHousehold || !selectedHousehold.id) {
+    console.log('❌ ChildrenDashboard: No household selected');
     return (
       <div className="space-y-6">
         <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
@@ -27,42 +27,89 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     );
   }
 
+  console.log('✅ ChildrenDashboard: Using household:', selectedHousehold.id);
+
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold.id);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold.id);
   const { householdMembers, loading: membersLoading } = useAppreciations(selectedHousehold.id);
   
-  // Filter for children only
-  const children = householdMembers.filter(member => member.role === 'child');
-  const [selectedChild, setSelectedChild] = useState(children[0]?.first_name || '');
+  // Filter for children only with better error handling
+  const children = React.useMemo(() => {
+    if (!householdMembers || householdMembers.length === 0) {
+      console.log('📝 No household members available yet');
+      return [];
+    }
+    
+    const kids = householdMembers.filter(member => {
+      if (!member || typeof member.role !== 'string') {
+        console.warn('⚠️ Invalid member data:', member);
+        return false;
+      }
+      return member.role === 'child';
+    });
+    
+    console.log('👶 Found children:', kids.length, kids.map(c => c.first_name));
+    return kids;
+  }, [householdMembers]);
+
+  const [selectedChild, setSelectedChild] = useState(() => {
+    return children.length > 0 ? children[0].first_name : '';
+  });
 
   // Update selected child when children list changes
   React.useEffect(() => {
     if (children.length > 0 && !selectedChild) {
+      console.log('🔄 Setting default selected child:', children[0].first_name);
       setSelectedChild(children[0].first_name);
     }
   }, [children, selectedChild]);
 
-  // Get the selected child's full name for matching
-  const selectedChildFullName = children.find(child => child.first_name === selectedChild);
-  const childFullName = selectedChildFullName ? `${selectedChildFullName.first_name} ${selectedChildFullName.last_name}` : selectedChild;
+  // Get the selected child's full name for matching with better null safety
+  const selectedChildFullName = React.useMemo(() => {
+    const child = children.find(child => child?.first_name === selectedChild);
+    if (!child) {
+      console.log('❌ No child found for selectedChild:', selectedChild);
+      return selectedChild;
+    }
+    const fullName = `${child.first_name} ${child.last_name}`;
+    console.log('👤 Selected child full name:', fullName);
+    return fullName;
+  }, [children, selectedChild]);
 
-  const childChores = chores.filter(chore => 
-    chore.assigned_to === selectedChild || 
-    chore.assigned_to === childFullName ||
-    chore.assigned_to.toLowerCase() === selectedChild.toLowerCase()
-  );
+  const childChores = React.useMemo(() => {
+    if (!chores || !selectedChild) return [];
+    
+    return chores.filter(chore => {
+      if (!chore || !chore.assigned_to) return false;
+      
+      return chore.assigned_to === selectedChild || 
+             chore.assigned_to === selectedChildFullName ||
+             chore.assigned_to.toLowerCase() === selectedChild.toLowerCase();
+    });
+  }, [chores, selectedChild, selectedChildFullName]);
 
-  const childMessages = messages.filter(message => 
-    message.to_member === selectedChild || 
-    message.to_member === childFullName ||
-    message.to_member === null // General messages
-  );
+  const childMessages = React.useMemo(() => {
+    if (!messages || !selectedChild) return [];
+    
+    return messages.filter(message => {
+      if (!message) return false;
+      
+      return message.to_member === selectedChild || 
+             message.to_member === selectedChildFullName ||
+             message.to_member === null; // General messages
+    });
+  }, [messages, selectedChild, selectedChildFullName]);
 
-  const completedChores = childChores.filter(chore => chore.completed);
-  const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
+  const completedChores = childChores.filter(chore => chore?.completed);
+  const totalPoints = completedChores.reduce((sum, chore) => sum + (chore?.points || 0), 0);
 
   const handleCompleteChore = async (choreId: string) => {
-    await toggleChore(choreId);
+    if (!choreId) return;
+    try {
+      await toggleChore(choreId);
+    } catch (error) {
+      console.error('Error completing chore:', error);
+    }
   };
 
   const getRewardLevel = (points: number) => {
