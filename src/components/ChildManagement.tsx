@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +9,10 @@ import { Plus, Edit2, Trash2, Users, Baby } from 'lucide-react';
 import { useChildrenManagement } from '@/hooks/useChildrenManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { Household } from '@/hooks/useHouseholds';
 
 interface ChildManagementProps {
-  selectedHousehold: {
-    id: string;
-    name: string;
-    role: string;
-  };
+  selectedHousehold: Household;
 }
 
 const avatarOptions = [
