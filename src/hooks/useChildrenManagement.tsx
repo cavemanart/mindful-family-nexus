@@ -45,7 +45,29 @@ export const useChildrenManagement = (householdId: string | null) => {
       console.log('🔄 Fetching children for household:', householdId);
       setLoading(true);
       
-      // Simplified query: Join profiles directly with household_members
+      // First get all user IDs that are members of the household
+      const { data: memberIds, error: memberError } = await supabase
+        .from('household_members')
+        .select('user_id')
+        .eq('household_id', householdId);
+
+      if (memberError) {
+        console.error('❌ Error fetching household members:', memberError);
+        throw memberError;
+      }
+
+      if (!memberIds || memberIds.length === 0) {
+        console.log('📊 No members found for household:', householdId);
+        setChildren([]);
+        setLoading(false);
+        return;
+      }
+
+      // Extract the user IDs into an array
+      const userIds = memberIds.map(member => member.user_id);
+      console.log('👥 Household member IDs:', userIds);
+
+      // Now query profiles for child accounts that are household members
       const { data: childrenData, error } = await supabase
         .from('profiles')
         .select(`
@@ -59,12 +81,7 @@ export const useChildrenManagement = (householdId: string | null) => {
           role
         `)
         .eq('is_child_account', true)
-        .in('id', 
-          supabase
-            .from('household_members')
-            .select('user_id')
-            .eq('household_id', householdId)
-        );
+        .in('id', userIds);
 
       if (error) {
         console.error('❌ Error fetching children:', error);
