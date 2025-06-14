@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock, HelpCircle, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ interface BillsTrackerProps {
 
 const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
-  const { bills, loading, billsThisMonth, addBill, deleteBill, togglePaid, generateNextInstance, processRecurringBills } = useBills(selectedHousehold?.id);
+  const { bills, loading, billsThisMonth, error, addBill, deleteBill, togglePaid, generateNextInstance, processRecurringBills } = useBills(selectedHousehold?.id);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [showRecurringHelp, setShowRecurringHelp] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{isOpen: boolean, billId: string, billName: string}>({
@@ -45,22 +44,65 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     is_template: false,
   });
 
+  console.log('🧾 BillsTracker render:', { 
+    selectedHousehold: selectedHousehold?.id, 
+    billsCount: bills.length, 
+    loading, 
+    error,
+    userProfile: !!userProfile 
+  });
+
   useEffect(() => {
     const loadSubscription = async () => {
       if (userProfile?.id) {
         try {
+          console.log('🧾 Loading subscription for user:', userProfile.id);
           const sub = await getUserSubscription(userProfile.id);
           setSubscription(sub);
+          console.log('🧾 Subscription loaded:', sub?.plan_type);
         } catch (error) {
-          console.error('Error loading subscription:', error);
+          console.error('🧾 Error loading subscription:', error);
         } finally {
           setSubscriptionLoading(false);
         }
+      } else {
+        setSubscriptionLoading(false);
       }
     };
 
     loadSubscription();
   }, [userProfile?.id]);
+
+  // Safety checks
+  if (!selectedHousehold) {
+    return (
+      <Card className="m-6">
+        <CardContent className="p-6 text-center">
+          <Receipt size={48} className="text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">Please select a household to view bills.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="m-6">
+        <CardHeader>
+          <CardTitle className="text-red-600 flex items-center gap-2">
+            <AlertCircle size={24} />
+            Bills Error
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            Refresh Page
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
   const categories = ['Utilities', 'Insurance', 'Housing', 'Healthcare', 'Transportation', 'Entertainment', 'Other'];
@@ -143,14 +185,6 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
-
-  const upcomingBills = bills.filter(bill => !bill.is_paid);
-  const paidBills = bills.filter(bill => bill.is_paid);
-  const recurringBills = bills.filter(bill => bill.recurrence_type !== 'none');
-
-  const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
-  const paidAmount = paidBills.reduce((sum, bill) => sum + bill.amount, 0);
-  const progressPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {

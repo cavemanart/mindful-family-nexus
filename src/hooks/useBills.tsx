@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -27,23 +26,37 @@ export const useBills = (householdId: string | null) => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [loading, setLoading] = useState(true);
   const [billsThisMonth, setBillsThisMonth] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { userProfile } = useAuth();
 
+  console.log('🧾 useBills hook initialized:', { householdId, userProfileId: userProfile?.id });
+
   const fetchBills = async () => {
     if (!householdId) {
+      console.log('🧾 No household ID provided, skipping bills fetch');
       setLoading(false);
+      setBills([]);
       return;
     }
 
     try {
+      console.log('🧾 Fetching bills for household:', householdId);
+      setError(null);
+      setLoading(true);
+
       const { data, error } = await supabase
         .from('bills')
         .select('*')
         .eq('household_id', householdId)
         .order('due_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('🧾 Error fetching bills:', error);
+        throw error;
+      }
+      
+      console.log('🧾 Bills fetched successfully:', data?.length || 0);
       
       // Transform the data to ensure proper typing
       const typedBills: Bill[] = (data || []).map(bill => ({
@@ -69,9 +82,12 @@ export const useBills = (householdId: string | null) => {
       setBillsThisMonth(billsThisMonthCount);
       
     } catch (error: any) {
+      console.error('🧾 Error in fetchBills:', error);
+      const errorMessage = error.message || 'Failed to fetch bills';
+      setError(errorMessage);
       toast({
         title: "Error fetching bills",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -80,9 +96,14 @@ export const useBills = (householdId: string | null) => {
   };
 
   const addBill = async (billData: Omit<Bill, 'id' | 'created_at' | 'updated_at' | 'household_id'>) => {
-    if (!householdId || !userProfile?.id) return false;
+    if (!householdId || !userProfile?.id) {
+      console.error('🧾 Cannot add bill: missing household ID or user profile');
+      return false;
+    }
 
     try {
+      console.log('🧾 Adding new bill:', billData.name);
+      
       // Check subscription limits before creating
       const canCreate = await canCreateBill(userProfile.id);
       if (!canCreate) {
@@ -107,6 +128,7 @@ export const useBills = (householdId: string | null) => {
 
       if (error) throw error;
       
+      console.log('🧾 Bill added successfully');
       toast({
         title: "Success",
         description: "Bill added successfully!",
@@ -115,6 +137,7 @@ export const useBills = (householdId: string | null) => {
       fetchBills();
       return true;
     } catch (error: any) {
+      console.error('🧾 Error adding bill:', error);
       toast({
         title: "Error adding bill",
         description: error.message,
@@ -239,6 +262,7 @@ export const useBills = (householdId: string | null) => {
   };
 
   useEffect(() => {
+    console.log('🧾 useBills effect triggered, householdId:', householdId);
     fetchBills();
   }, [householdId]);
 
@@ -246,6 +270,7 @@ export const useBills = (householdId: string | null) => {
     bills,
     loading,
     billsThisMonth,
+    error,
     addBill,
     deleteBill,
     togglePaid,
