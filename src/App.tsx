@@ -18,10 +18,29 @@ import Success from "./pages/Success";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        console.log('Query retry attempt:', failureCount, error);
+        return failureCount < 3;
+      },
+    },
+  },
+});
 
 const App = () => {
   console.log('🚀 App component rendering');
+  
+  // Add safety check for React
+  if (typeof React === 'undefined') {
+    console.error('React is not properly initialized');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
   
   return (
     <ErrorBoundary>

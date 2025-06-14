@@ -9,6 +9,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorType?: 'dispatcher' | 'theme' | 'general';
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -18,7 +19,17 @@ class ErrorBoundary extends Component<Props, State> {
 
   public static getDerivedStateFromError(error: Error): State {
     console.error('ErrorBoundary caught an error:', error);
-    return { hasError: true, error };
+    
+    // Determine error type for better handling
+    let errorType: 'dispatcher' | 'theme' | 'general' = 'general';
+    
+    if (error.message.includes('dispatcher') || error.message.includes('useState')) {
+      errorType = 'dispatcher';
+    } else if (error.message.includes('theme') || error.message.includes('ThemeProvider')) {
+      errorType = 'theme';
+    }
+    
+    return { hasError: true, error, errorType };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -28,7 +39,20 @@ class ErrorBoundary extends Component<Props, State> {
     if (error.message.includes('dispatcher')) {
       console.error('React dispatcher error detected. This usually happens when hooks are called outside of a React component or before React is fully mounted.');
     }
+    
+    // Log theme-related errors
+    if (error.message.includes('theme') || error.message.includes('ThemeProvider')) {
+      console.error('Theme-related error detected. This might be due to localStorage access or component mounting issues.');
+    }
   }
+
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: undefined, errorType: undefined });
+  };
+
+  private handleRefresh = () => {
+    window.location.reload();
+  };
 
   public render() {
     if (this.state.hasError) {
@@ -36,20 +60,49 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
           <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
             <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">
-              We encountered an unexpected error. Please refresh the page to try again.
-            </p>
-            {this.state.error?.message.includes('dispatcher') && (
-              <p className="text-sm text-gray-500 mb-4">
-                React initialization error detected. This should be resolved on refresh.
+            
+            {this.state.errorType === 'dispatcher' && (
+              <div className="mb-4">
+                <p className="text-gray-600 mb-2">
+                  React initialization error detected.
+                </p>
+                <p className="text-sm text-gray-500">
+                  This usually resolves itself on refresh.
+                </p>
+              </div>
+            )}
+            
+            {this.state.errorType === 'theme' && (
+              <div className="mb-4">
+                <p className="text-gray-600 mb-2">
+                  Theme system error detected.
+                </p>
+                <p className="text-sm text-gray-500">
+                  This might be due to localStorage access issues.
+                </p>
+              </div>
+            )}
+            
+            {this.state.errorType === 'general' && (
+              <p className="text-gray-600 mb-4">
+                We encountered an unexpected error. Please try again.
               </p>
             )}
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Refresh Page
-            </button>
+            
+            <div className="space-y-2">
+              <button 
+                onClick={this.handleRetry}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-2"
+              >
+                Try Again
+              </button>
+              <button 
+                onClick={this.handleRefresh}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       );
