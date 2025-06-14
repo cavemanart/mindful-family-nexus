@@ -5,9 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, Users, Baby, RefreshCw, AlertCircle } from 'lucide-react';
-import { useHouseholdChildren } from '@/hooks/useHouseholdChildren';
+import { Plus, Edit2, Trash2, Baby, RefreshCw, AlertCircle } from 'lucide-react';
+import { useChildren } from '@/hooks/useChildren';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Household } from '@/hooks/useHouseholds';
@@ -29,7 +28,7 @@ const avatarOptions = [
 
 const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) => {
   const { user } = useAuth();
-  const { children, loading, createChild, updateChild, deleteChild, refetch } = useHouseholdChildren(selectedHousehold.id);
+  const { children, loading, createChild, updateChild, deleteChild, refetch } = useChildren(selectedHousehold.id);
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<any>(null);
@@ -150,7 +149,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
 
   return (
     <div className="space-y-6">
-      {/* Header with Create Button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Baby className="h-5 w-5 text-purple-500" />
@@ -253,7 +251,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
         </div>
       </div>
 
-      {/* Debug Information */}
       {debugMode && (
         <Card className="bg-gray-50">
           <CardHeader>
@@ -273,7 +270,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
         </Card>
       )}
 
-      {/* Children List */}
       {children.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
@@ -333,7 +329,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
         </div>
       )}
 
-      {/* Edit Dialog */}
       <Dialog open={!!editingChild} onOpenChange={(open) => !open && closeEditDialog()}>
         <DialogContent>
           <DialogHeader>

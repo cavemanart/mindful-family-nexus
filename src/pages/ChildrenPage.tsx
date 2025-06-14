@@ -3,13 +3,14 @@ import React from 'react';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import PageLayout from '@/components/PageLayout';
 import ChildrenDashboard from '@/components/ChildrenDashboard';
+import ChildManagement from '@/components/ChildManagement';
 import { Card, CardContent } from '@/components/ui/card';
 import { Baby } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ChildrenPage = () => {
   const { households, loading } = useHouseholds();
   
-  // Get the first available household or use saved preference
   const savedHouseholdId = localStorage.getItem('selectedHouseholdId');
   const selectedHousehold = savedHouseholdId 
     ? households.find(h => h.id === savedHouseholdId) || households[0] || null
@@ -20,7 +21,7 @@ const ChildrenPage = () => {
       <PageLayout currentPage="children">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-foreground">Children Dashboard</h1>
+            <h1 className="text-3xl font-bold text-foreground">Children Management</h1>
           </div>
           <div className="text-center py-8">
             <div className="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
@@ -35,10 +36,23 @@ const ChildrenPage = () => {
     <PageLayout currentPage="children">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Children Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Children Management</h1>
         </div>
         {selectedHousehold ? (
-          <ChildrenDashboard selectedHousehold={selectedHousehold} />
+          <Tabs defaultValue="dashboard" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="dashboard">Kids Dashboard</TabsTrigger>
+              <TabsTrigger value="management">Manage Children</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="dashboard" className="space-y-6">
+              <ChildrenDashboard selectedHousehold={selectedHousehold} />
+            </TabsContent>
+            
+            <TabsContent value="management" className="space-y-6">
+              <ChildManagement selectedHousehold={selectedHousehold} />
+            </TabsContent>
+          </Tabs>
         ) : (
           <Card>
             <CardContent className="p-8 text-center">

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useChores } from '@/hooks/useChores';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
-import { useHouseholdChildren } from '@/hooks/useHouseholdChildren';
+import { useChildren } from '@/hooks/useChildren';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface ChildrenDashboardProps {
@@ -14,9 +14,7 @@ interface ChildrenDashboardProps {
 }
 
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
-  // Early return if no household is selected
   if (!selectedHousehold || !selectedHousehold.id) {
-    console.log('❌ ChildrenDashboard: No household selected');
     return (
       <div className="space-y-6">
         <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
@@ -29,32 +27,22 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     );
   }
 
-  console.log('✅ ChildrenDashboard: Using household:', selectedHousehold.id);
-
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold.id);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold.id);
-  const { children, loading: childrenLoading, refetch: refetchChildren } = useHouseholdChildren(selectedHousehold.id);
+  const { children, loading: childrenLoading, refetch: refetchChildren } = useChildren(selectedHousehold.id);
   
   const [selectedChild, setSelectedChild] = useState('');
 
-  // Update selected child when children list changes
   React.useEffect(() => {
     if (children.length > 0 && !selectedChild) {
-      console.log('🔄 Setting default selected child:', children[0].first_name);
       setSelectedChild(children[0].first_name);
     }
   }, [children, selectedChild]);
 
-  // Get the selected child's full name for matching with better null safety
   const selectedChildFullName = useMemo(() => {
     const child = children.find(child => child?.first_name === selectedChild);
-    if (!child) {
-      console.log('❌ No child found for selectedChild:', selectedChild);
-      return selectedChild;
-    }
-    const fullName = `${child.first_name} ${child.last_name}`;
-    console.log('👤 Selected child full name:', fullName);
-    return fullName;
+    if (!child) return selectedChild;
+    return `${child.first_name} ${child.last_name}`;
   }, [children, selectedChild]);
 
   const childChores = useMemo(() => {
@@ -77,7 +65,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
       
       return message.to_member === selectedChild || 
              message.to_member === selectedChildFullName ||
-             message.to_member === null; // General messages
+             message.to_member === null;
     });
   }, [messages, selectedChild, selectedChildFullName]);
 
@@ -94,7 +82,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   };
 
   const handleRefresh = () => {
-    console.log('🔄 Manual refresh triggered');
     refetchChildren();
   };
 
@@ -137,7 +124,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   return (
     <ErrorBoundary>
       <div className="space-y-6">
-        {/* Child Selector */}
         <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Kid's Dashboard 🎈
@@ -160,7 +146,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           </Button>
         </div>
 
-        {/* Points and Rewards */}
         <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200 dark:border-yellow-700">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
@@ -179,19 +164,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
                 <Badge className={`${reward.color} font-semibold bg-white dark:bg-gray-800 border`}>
                   {reward.level}
                 </Badge>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm text-foreground">
-                <span>Next reward at 30 points</span>
-                <span>{Math.max(0, 30 - totalPoints)} points to go!</span>
-              </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-yellow-500 dark:bg-yellow-400 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(100, (totalPoints / 30) * 100)}%` }}
-                ></div>
               </div>
             </div>
           </CardContent>

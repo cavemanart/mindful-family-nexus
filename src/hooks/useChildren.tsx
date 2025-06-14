@@ -30,7 +30,7 @@ interface UpdateChildData {
   avatarSelection: string;
 }
 
-export const useSimpleChildren = (householdId: string | null) => {
+export const useChildren = (householdId: string | null) => {
   const [children, setChildren] = useState<HouseholdChild[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();

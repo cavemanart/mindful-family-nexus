@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import SimpleChildrenDashboard from '@/components/SimpleChildrenDashboard';
+import ChildrenDashboard from '@/components/ChildrenDashboard';
 
 interface SimpleChildDashboardContainerProps {
   childData: {
@@ -60,7 +60,7 @@ const SimpleChildDashboardContainer: React.FC<SimpleChildDashboardContainerProps
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <SimpleChildrenDashboard selectedHousehold={selectedHousehold} />
+        <ChildrenDashboard selectedHousehold={selectedHousehold} />
       </div>
     </div>
   );
