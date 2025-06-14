@@ -21,55 +21,39 @@ import ErrorBoundary from "./components/ErrorBoundary";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: (failureCount, error) => {
-        console.log('Query retry attempt:', failureCount, error);
-        return failureCount < 2; // Reduce retries to prevent loops
-      },
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
     },
   },
 });
 
-// Safety check for React hooks availability
-const ReactSafetyCheck = ({ children }: { children: React.ReactNode }) => {
-  if (typeof React === 'undefined' || !React.useState) {
-    console.error('React hooks not available, falling back to basic render');
-    return <div>{children}</div>;
-  }
-  return <>{children}</>;
-};
-
 const App = () => {
-  console.log('🚀 App component rendering');
-  
   return (
-    <ReactSafetyCheck>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-              <AuthProvider>
-                <ChildSessionProvider>
-                  <Toaster />
-                  <Sonner />
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/dashboard" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/subscription" element={<Subscription />} />
-                    <Route path="/success" element={<Success />} />
-                    <Route path="/nanny" element={<NannyAccess />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  <PWAInstallPrompt />
-                </ChildSessionProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </ErrorBoundary>
-    </ReactSafetyCheck>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+            <AuthProvider>
+              <ChildSessionProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/dashboard" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/subscription" element={<Subscription />} />
+                  <Route path="/success" element={<Success />} />
+                  <Route path="/nanny" element={<NannyAccess />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <PWAInstallPrompt />
+              </ChildSessionProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

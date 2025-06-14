@@ -27,28 +27,10 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        return (localStorage.getItem(storageKey) as Theme) || defaultTheme
-      }
-    } catch (error) {
-      console.warn("Failed to access localStorage for theme:", error)
-    }
-    return defaultTheme
-  })
-
-  const [mounted, setMounted] = useState(false)
+  const [theme, setTheme] = useState<Theme>(defaultTheme)
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-
     const root = window.document.documentElement
-
     root.classList.remove("light", "dark")
 
     if (theme === "system") {
@@ -56,31 +38,18 @@ export function ThemeProvider({
         .matches
         ? "dark"
         : "light"
-
       root.classList.add(systemTheme)
       return
     }
 
     root.classList.add(theme)
-  }, [theme, mounted])
+  }, [theme])
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      try {
-        if (typeof window !== "undefined" && window.localStorage) {
-          localStorage.setItem(storageKey, theme)
-        }
-      } catch (error) {
-        console.warn("Failed to save theme to localStorage:", error)
-      }
       setTheme(theme)
     },
-  }
-
-  // Show a minimal fallback until mounted to prevent hydration mismatch
-  if (!mounted) {
-    return <div className="min-h-screen bg-background text-foreground">{children}</div>
   }
 
   return (
@@ -94,8 +63,6 @@ export const useTheme = () => {
   const context = useContext(ThemeProviderContext)
 
   if (context === undefined) {
-    console.error("useTheme must be used within a ThemeProvider")
-    // Return a safe fallback
     return {
       theme: "light" as Theme,
       setTheme: () => {}

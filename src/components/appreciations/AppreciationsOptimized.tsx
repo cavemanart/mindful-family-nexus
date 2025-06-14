@@ -32,7 +32,6 @@ const AppreciationsOptimized: React.FC<AppreciationsOptimizedProps> = ({ selecte
     currentUserName
   } = useAppreciationsOptimized(selectedHousehold?.id);
 
-  // Memoize available members to prevent unnecessary re-renders
   const availableMembers = useMemo(() => 
     householdMembers.filter(member => member.full_name !== currentUserName),
     [householdMembers, currentUserName]
@@ -46,7 +45,6 @@ const AppreciationsOptimized: React.FC<AppreciationsOptimizedProps> = ({ selecte
     return success;
   };
 
-  // Early return conditions - but only after all hooks are called
   if (!user) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -72,7 +70,6 @@ const AppreciationsOptimized: React.FC<AppreciationsOptimizedProps> = ({ selecte
     );
   }
 
-  // Loading skeleton component
   if (loading) {
     return (
       <div className="space-y-6">
@@ -96,7 +93,6 @@ const AppreciationsOptimized: React.FC<AppreciationsOptimizedProps> = ({ selecte
     );
   }
 
-  // Error state component
   if (error) {
     return (
       <div className="space-y-6">
