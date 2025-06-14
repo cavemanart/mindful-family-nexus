@@ -25,9 +25,9 @@ class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary details:', error, errorInfo);
     
-    // Log specific React dispatcher errors for debugging
+    // Log specific React errors for debugging
     if (error.message.includes('dispatcher') || error.message.includes('useState')) {
-      console.error('React dispatcher error detected. This usually happens when hooks are called outside of a React component or before React is fully mounted.');
+      console.error('React dispatcher error detected. This usually happens when hooks are called outside of a React component.');
     }
 
     this.setState({ errorInfo });
@@ -48,7 +48,7 @@ class ErrorBoundary extends Component<Props, State> {
           <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
             <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
             <p className="text-gray-600 mb-4">
-              We encountered an unexpected error. Please try refreshing the page.
+              We encountered an unexpected error. Most issues can be resolved by refreshing the page.
             </p>
             {this.state.error?.message.includes('dispatcher') && (
               <p className="text-sm text-gray-500 mb-4">

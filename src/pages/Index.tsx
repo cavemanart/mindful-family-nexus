@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
-import { Loader2, RefreshCw, Wifi, WifiOff } from "lucide-react"
+import { Loader2, RefreshCw, Wifi, WifiOff, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ErrorBoundary from '@/components/ErrorBoundary';
 import CleanTopBar from '@/components/CleanTopBar';
@@ -19,20 +19,22 @@ const Index = () => {
   const navigate = useNavigate();
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [showHouseholdSelector, setShowHouseholdSelector] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
 
   // Track online/offline status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
   }, []);
 
   useEffect(() => {
@@ -42,11 +44,8 @@ const Index = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user && !householdsLoading) {
-      if (households.length === 0) {
-        setShowHouseholdSelector(true);
-        setSelectedHousehold(null);
-      } else if (households.length === 1) {
+    if (user && !householdsLoading && households.length > 0) {
+      if (households.length === 1) {
         setSelectedHousehold(households[0]);
         setShowHouseholdSelector(false);
       } else {
@@ -62,6 +61,9 @@ const Index = () => {
           localStorage.setItem('selectedHouseholdId', households[0].id);
         }
       }
+    } else if (user && !householdsLoading && households.length === 0) {
+      setShowHouseholdSelector(true);
+      setSelectedHousehold(null);
     }
   }, [user, households, householdsLoading]);
 
@@ -103,15 +105,15 @@ const Index = () => {
     return "Loading your family hub...";
   };
 
-  // Only show critical errors that actually prevent app function - be more specific
+  // Critical errors that prevent app function
   const hasCriticalError = authError && (
-    authError.includes('authentication') || 
+    authError.includes('Failed to initialize') || 
     authError.includes('offline') ||
-    authError.includes('network') ||
-    authError.includes('connection')
+    authError.includes('Session fetch timeout') ||
+    authError.includes('Failed to load session')
   );
   
-  // Error handling with retry options - only for critical errors
+  // Error handling with retry options
   const renderError = () => {
     if (!hasCriticalError) return null;
 
@@ -119,13 +121,11 @@ const Index = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
         <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-lg">
           <div className="mb-4">
-            {!isOnline ? <WifiOff className="h-12 w-12 mx-auto text-red-500" /> : <RefreshCw className="h-12 w-12 mx-auto text-red-500" />}
+            <AlertCircle className="h-12 w-12 mx-auto text-red-500" />
           </div>
-          <h2 className="text-2xl font-bold text-red-600 mb-4">
-            {!isOnline ? "Connection Issue" : "Authentication Error"}
-          </h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Connection Issue</h2>
           <p className="text-gray-600 mb-4">
-            {!isOnline ? "Please check your internet connection and try again." : authError}
+            {!isOnline ? "Please check your internet connection and try again." : "Unable to connect to the server. Please try again."}
           </p>
           <div className="space-y-2">
             <Button onClick={handleRetry} className="w-full">
@@ -146,7 +146,7 @@ const Index = () => {
     return renderError();
   }
 
-  // Show loading state
+  // Show loading state with timeout protection
   if (authLoading || (user && householdsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -156,15 +156,13 @@ const Index = () => {
           </div>
           <p className="text-gray-600 mb-4">{getLoadingMessage()}</p>
           
-          {(authLoading || householdsLoading) && (
-            <div className="mt-6 space-y-2">
-              <p className="text-sm text-gray-500">Taking longer than expected?</p>
-              <Button variant="outline" onClick={handleRetry} size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-            </div>
-          )}
+          <div className="mt-6 space-y-2">
+            <p className="text-sm text-gray-500">Taking longer than expected?</p>
+            <Button variant="outline" onClick={handleRetry} size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
           
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
@@ -193,8 +191,13 @@ const Index = () => {
         console.warn('⚠️ Non-critical households error:', householdsError);
       }
       
-      if (!userProfile || !selectedHousehold) {
-        console.log('📋 Using default dashboard - no userProfile or selectedHousehold');
+      if (!userProfile) {
+        console.log('📋 Using default dashboard - no userProfile');
+        return <Dashboard />;
+      }
+
+      if (!selectedHousehold) {
+        console.log('📋 No selected household, showing default dashboard');
         return <Dashboard />;
       }
 
@@ -213,12 +216,12 @@ const Index = () => {
       }
     } catch (error) {
       console.error('❌ Error rendering dashboard:', error);
-      // Don't crash the app, show a graceful fallback
+      // Show graceful fallback instead of crashing
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-orange-600 mb-2">Dashboard Loading Issue</h2>
-            <p className="text-gray-600 mb-4">There was a minor issue loading some data</p>
+            <h2 className="text-xl font-bold text-orange-600 mb-2">Loading Issue</h2>
+            <p className="text-gray-600 mb-4">Having trouble loading some data</p>
             <Button onClick={() => window.location.reload()}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Page
@@ -235,7 +238,7 @@ const Index = () => {
     <ErrorBoundary fallback={
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Dashboard Error</h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">Something went wrong</h2>
           <p className="text-gray-600 mb-4">Please refresh to try again</p>
           <Button onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4 mr-2" />
