@@ -32,20 +32,20 @@ const queryClient = new QueryClient({
 const App = () => {
   console.log('🚀 App component rendering');
   
-  // Add safety check for React
-  if (typeof React === 'undefined') {
-    console.error('React is not properly initialized');
+  // Add safety check for React dispatcher
+  if (typeof React === 'undefined' || !React.useState) {
+    console.error('React or React hooks not properly initialized');
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+        <p>Initializing application...</p>
       </div>
     );
   }
   
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+      <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+        <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <ChildSessionProvider>
               <Toaster />
@@ -65,8 +65,8 @@ const App = () => {
               </BrowserRouter>
             </ChildSessionProvider>
           </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 };

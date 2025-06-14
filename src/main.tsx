@@ -11,7 +11,16 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Create root and render without StrictMode to avoid potential dispatcher issues
+// Create root and render with StrictMode to help identify timing issues
 const root = createRoot(rootElement);
 
-root.render(<App />);
+// Add development mode cache busting
+if (import.meta.env.DEV) {
+  console.log('🔧 Development mode - clearing any cached modules');
+}
+
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

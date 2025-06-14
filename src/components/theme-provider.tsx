@@ -27,6 +27,13 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
+  // Add React hooks safety check before using useState
+  if (!React.useState) {
+    console.error('ThemeProvider: React hooks not available, falling back to basic render');
+    return <div>{children}</div>;
+  }
+
+  const [isReactReady, setIsReactReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   // Safe localStorage access with comprehensive error handling
@@ -54,12 +61,12 @@ export function ThemeProvider({
     return defaultTheme;
   };
 
-  // Initialize theme state with safety checks
+  // Initialize theme state with maximum safety
   const [theme, setThemeState] = useState<Theme>(() => {
     try {
       // Ensure React is properly initialized before using hooks
-      if (typeof React === 'undefined') {
-        console.error('ThemeProvider: React not properly initialized');
+      if (!React.useState || !isReactReady) {
+        console.warn('ThemeProvider: React not ready, using default theme');
         return defaultTheme;
       }
       return getStoredTheme();
@@ -69,10 +76,27 @@ export function ThemeProvider({
     }
   });
 
-  // Component mount guard - defer theme operations until fully mounted
+  // React readiness check - ensure hooks are available
   useEffect(() => {
     try {
+      console.log('ThemeProvider: Checking React readiness');
+      if (React.useState && React.useEffect && React.useContext) {
+        setIsReactReady(true);
+        console.log('ThemeProvider: React is ready');
+      }
+    } catch (error) {
+      console.error('ThemeProvider: React readiness check failed:', error);
+    }
+  }, []);
+
+  // Component mount guard - defer theme operations until fully mounted
+  useEffect(() => {
+    if (!isReactReady) return;
+    
+    try {
       setIsMounted(true);
+      console.log('ThemeProvider: Component mounted, initializing theme');
+      
       // Re-check stored theme after mount to ensure consistency
       const storedTheme = getStoredTheme();
       if (storedTheme !== theme) {
@@ -81,10 +105,11 @@ export function ThemeProvider({
     } catch (error) {
       console.error('ThemeProvider: Error during mount:', error);
     }
-  }, []);
+  }, [isReactReady]);
 
+  // Apply theme to DOM
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || !isReactReady) return;
 
     try {
       const root = window.document.documentElement
@@ -102,15 +127,16 @@ export function ThemeProvider({
       }
 
       root.classList.add(theme)
+      console.log('ThemeProvider: Applied theme:', theme);
     } catch (error) {
       console.error('ThemeProvider: Error applying theme:', error);
     }
-  }, [theme, isMounted])
+  }, [theme, isMounted, isReactReady])
 
   const setTheme = (newTheme: Theme) => {
     try {
-      if (!isMounted) {
-        console.warn('ThemeProvider: Attempting to set theme before component is mounted');
+      if (!isMounted || !isReactReady) {
+        console.warn('ThemeProvider: Attempting to set theme before component is ready');
         return;
       }
 
@@ -128,6 +154,11 @@ export function ThemeProvider({
       console.error('ThemeProvider: Error setting theme:', error);
     }
   };
+
+  // Don't render children until React is ready
+  if (!isReactReady) {
+    return <div>{children}</div>;
+  }
 
   const value = {
     theme,
