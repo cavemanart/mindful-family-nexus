@@ -1,9 +1,8 @@
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { ensureUserSubscription } from '@/lib/subscription-utils';
-import { useReactReadiness } from '@/components/ReactReadinessProvider';
 
 export type UserRole = 'parent' | 'nanny' | 'child' | 'grandparent';
 
@@ -22,13 +21,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isReady } = useReactReadiness();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const initializingRef = useRef(false);
 
   console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error });
 
@@ -61,20 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const initializeAuth = async () => {
-    // Prevent multiple simultaneous initializations
-    if (initializingRef.current) {
-      console.log('🔄 Auth initialization already in progress, skipping');
-      return;
-    }
-
-    if (!isReady) {
-      console.log('⏳ Waiting for React to be ready before initializing auth');
-      return;
-    }
-
     try {
       console.log('🚀 Initializing auth');
-      initializingRef.current = true;
       setLoading(true);
       setError(null);
 
@@ -109,8 +94,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('🚨 Auth initialization error:', error);
       setError('Failed to initialize authentication');
       setLoading(false);
-    } finally {
-      initializingRef.current = false;
     }
   };
 
@@ -120,19 +103,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    if (!isReady) return;
-
     console.log('🚀 Setting up auth state listener');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔄 Auth state changed:', event, !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           console.log('👤 User authenticated, fetching profile');
-          fetchUserProfile(session.user.id);
+          // Use setTimeout to prevent hook call issues during auth state change
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           console.log('👤 User not authenticated, clearing profile');
           setUserProfile(null);
@@ -144,8 +128,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Initialize auth
-    initializeAuth();
+    // Initialize auth after a small delay to ensure React is fully ready
+    setTimeout(() => {
+      initializeAuth();
+    }, 100);
 
     // Online/offline detection
     const handleOnline = () => {
@@ -169,7 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [isReady]);
+  }, []);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
     console.log('📝 Signing up user:', email, role);

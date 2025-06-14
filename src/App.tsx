@@ -7,8 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ChildSessionProvider } from "@/hooks/useChildSession";
-import { ReactReadinessProvider } from "@/components/ReactReadinessProvider";
-import ReactHealthCheck from "@/components/ReactHealthCheck";
+import SimpleReactCheck from "@/components/SimpleReactCheck";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -34,37 +33,31 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <ReactReadinessProvider>
-        <ReactHealthCheck>
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-                <ErrorBoundary>
-                  <AuthProvider>
-                    <ErrorBoundary>
-                      <ChildSessionProvider>
-                        <Toaster />
-                        <Sonner />
-                        <Routes>
-                          <Route path="/" element={<HomePage />} />
-                          <Route path="/dashboard" element={<Index />} />
-                          <Route path="/auth" element={<Auth />} />
-                          <Route path="/profile" element={<Profile />} />
-                          <Route path="/subscription" element={<Subscription />} />
-                          <Route path="/success" element={<Success />} />
-                          <Route path="/nanny" element={<NannyAccess />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                        <PWAInstallPrompt />
-                      </ChildSessionProvider>
-                    </ErrorBoundary>
-                  </AuthProvider>
-                </ErrorBoundary>
-              </ThemeProvider>
-            </BrowserRouter>
-          </QueryClientProvider>
-        </ReactHealthCheck>
-      </ReactReadinessProvider>
+      <SimpleReactCheck>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+              <AuthProvider>
+                <ChildSessionProvider>
+                  <Toaster />
+                  <Sonner />
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/dashboard" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/subscription" element={<Subscription />} />
+                    <Route path="/success" element={<Success />} />
+                    <Route path="/nanny" element={<NannyAccess />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  <PWAInstallPrompt />
+                </ChildSessionProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </SimpleReactCheck>
     </ErrorBoundary>
   );
 };

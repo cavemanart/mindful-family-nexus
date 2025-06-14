@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react"
-import { useReactReadiness } from "./ReactReadinessProvider"
 
 type Theme = "dark" | "light" | "system"
 
@@ -28,14 +27,11 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const { isReady } = useReactReadiness();
   const [theme, setTheme] = useState<Theme>(defaultTheme);
   const [mounted, setMounted] = useState(false);
 
-  // Only initialize theme after React is ready
+  // Simple initialization without complex React readiness checks
   useEffect(() => {
-    if (!isReady) return;
-
     try {
       console.log('🎨 Initializing theme provider');
       
@@ -56,11 +52,11 @@ export function ThemeProvider({
       setTheme(defaultTheme);
       setMounted(true);
     }
-  }, [isReady, defaultTheme, storageKey]);
+  }, [defaultTheme, storageKey]);
 
-  // Apply theme to DOM only after mounted and React is ready
+  // Apply theme to DOM
   useEffect(() => {
-    if (!mounted || !isReady) return;
+    if (!mounted) return;
 
     try {
       const root = window.document.documentElement;
@@ -80,11 +76,11 @@ export function ThemeProvider({
     } catch (error) {
       console.warn("Failed to apply theme to DOM:", error);
     }
-  }, [theme, mounted, isReady]);
+  }, [theme, mounted]);
 
-  // Save theme to localStorage with error handling
+  // Save theme to localStorage
   useEffect(() => {
-    if (!mounted || !isReady) return;
+    if (!mounted) return;
     
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -93,21 +89,21 @@ export function ThemeProvider({
     } catch (error) {
       console.warn("Failed to save theme to localStorage:", error);
     }
-  }, [theme, storageKey, mounted, isReady]);
+  }, [theme, storageKey, mounted]);
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
-      if (mounted && isReady) {
+      if (mounted) {
         setTheme(theme);
       }
     },
   };
 
-  // Show loading state until React is ready and theme is mounted
-  if (!isReady || !mounted) {
+  // Simple loading state without complex visibility handling
+  if (!mounted) {
     return (
-      <div style={{ visibility: 'hidden' }}>
+      <div className="opacity-0">
         {children}
       </div>
     );
