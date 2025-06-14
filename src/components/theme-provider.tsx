@@ -27,29 +27,78 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Safe localStorage access during initialization
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const stored = localStorage.getItem(storageKey)
+        if (stored && (stored === "dark" || stored === "light" || stored === "system")) {
+          return stored as Theme
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to read theme from localStorage:", error)
+    }
+    return defaultTheme
+  })
+
+  const [mounted, setMounted] = useState(false)
+
+  // Mark component as mounted after React is ready
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
-    const root = window.document.documentElement
-    root.classList.remove("light", "dark")
+    // Only run DOM manipulation after component is mounted
+    if (!mounted) return
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-      root.classList.add(systemTheme)
-      return
+    try {
+      const root = window.document.documentElement
+      root.classList.remove("light", "dark")
+
+      if (theme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
+          ? "dark"
+          : "light"
+        root.classList.add(systemTheme)
+        return
+      }
+
+      root.classList.add(theme)
+    } catch (error) {
+      console.warn("Failed to apply theme to DOM:", error)
     }
+  }, [theme, mounted])
 
-    root.classList.add(theme)
-  }, [theme])
+  // Save theme to localStorage with error handling
+  useEffect(() => {
+    if (!mounted) return
+    
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        localStorage.setItem(storageKey, theme)
+      }
+    } catch (error) {
+      console.warn("Failed to save theme to localStorage:", error)
+    }
+  }, [theme, storageKey, mounted])
 
   const value = {
     theme,
     setTheme: (theme: Theme) => {
       setTheme(theme)
     },
+  }
+
+  // Don't render children until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <div style={{ visibility: 'hidden' }}>
+        {children}
+      </div>
+    )
   }
 
   return (
@@ -63,9 +112,13 @@ export const useTheme = () => {
   const context = useContext(ThemeProviderContext)
 
   if (context === undefined) {
+    // Provide safe fallback instead of throwing
+    console.warn("useTheme must be used within a ThemeProvider, using fallback")
     return {
       theme: "light" as Theme,
-      setTheme: () => {}
+      setTheme: () => {
+        console.warn("setTheme called outside of ThemeProvider context")
+      }
     }
   }
 

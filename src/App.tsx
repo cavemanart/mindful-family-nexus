@@ -28,28 +28,34 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  console.log('🚀 App component rendering');
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-            <AuthProvider>
-              <ChildSessionProvider>
-                <Toaster />
-                <Sonner />
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/dashboard" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/subscription" element={<Subscription />} />
-                  <Route path="/success" element={<Success />} />
-                  <Route path="/nanny" element={<NannyAccess />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <PWAInstallPrompt />
-              </ChildSessionProvider>
-            </AuthProvider>
+            <ErrorBoundary>
+              <AuthProvider>
+                <ErrorBoundary>
+                  <ChildSessionProvider>
+                    <Toaster />
+                    <Sonner />
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/dashboard" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/subscription" element={<Subscription />} />
+                      <Route path="/success" element={<Success />} />
+                      <Route path="/nanny" element={<NannyAccess />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                    <PWAInstallPrompt />
+                  </ChildSessionProvider>
+                </ErrorBoundary>
+              </AuthProvider>
+            </ErrorBoundary>
           </ThemeProvider>
         </BrowserRouter>
       </QueryClientProvider>
