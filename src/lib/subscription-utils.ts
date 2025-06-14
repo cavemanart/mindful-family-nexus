@@ -115,7 +115,7 @@ export const getFeatureLimits = (planType: string, isTrialActive: boolean = fals
   };
 };
 
-export const canCreateBill = async (userId: string) => {
+export const canCreateBill = async (userId: string, householdId?: string) => {
   try {
     const subscription = await getUserSubscription(userId);
     const planType = subscription?.plan_type || 'free';
@@ -125,15 +125,22 @@ export const canCreateBill = async (userId: string) => {
     // If unlimited bills, always return true
     if (limits.bills_per_month === -1) return true;
     
-    // Check current month's bill count
+    // Check current month's bill count for the specific household
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
     
-    const { count, error } = await supabase
+    let query = supabase
       .from('bills')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startOfMonth.toISOString());
+    
+    // Filter by household if provided
+    if (householdId) {
+      query = query.eq('household_id', householdId);
+    }
+    
+    const { count, error } = await query;
     
     if (error) {
       console.error('Error checking bill count:', error);
