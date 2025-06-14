@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -75,7 +76,7 @@ const Index = () => {
         />
         <div className="max-w-4xl mx-auto pt-20 px-4">
           <HouseholdSelector 
-            onSelectHousehold={selectHousehold}
+            onHouseholdSelect={selectHousehold}
           />
         </div>
       </div>
@@ -144,3 +145,4 @@ const Index = () => {
 };
 
 export default Index;
+
