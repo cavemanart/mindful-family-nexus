@@ -3,22 +3,13 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useChildren } from '@/hooks/useChildren';
+import { useChildren, Child } from '@/hooks/useChildren';
 import { useChildSession } from '@/hooks/useChildSession';
 import { ArrowLeft } from 'lucide-react';
 
-interface ChildProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  avatar_selection: string;
-  pin?: string;
-  created_at: string;
-}
-
 interface ChildPinLoginProps {
   householdId: string;
-  onLoginSuccess?: (child: ChildProfile) => void;
+  onLoginSuccess?: (child: Child) => void;
   onBack?: () => void;
 }
 
@@ -49,13 +40,15 @@ const ChildPinLogin: React.FC<ChildPinLoginProps> = ({ householdId, onLoginSucce
         return;
       }
 
-      // Create a proper ChildProfile object
-      const childProfile: ChildProfile = {
+      // Create a proper Child object with proper typing
+      const childProfile: Child = {
         id: matchingChild.id,
         first_name: matchingChild.first_name,
         last_name: matchingChild.last_name,
         avatar_selection: matchingChild.avatar_selection,
+        is_child_account: matchingChild.is_child_account,
         pin: matchingChild.pin,
+        parent_id: matchingChild.parent_id,
         created_at: matchingChild.created_at || new Date().toISOString()
       };
 

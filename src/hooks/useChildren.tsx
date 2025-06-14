@@ -62,6 +62,7 @@ export const useChildren = (householdId: string | undefined) => {
 
       console.log('📊 useChildren: Raw data from query:', data);
 
+      // Remove the type predicate and use a simple filter with explicit type checking
       const childrenData = data
         ?.map(member => member.profiles)
         .filter((profile): profile is Child => {

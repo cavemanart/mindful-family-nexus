@@ -2,20 +2,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
-
-interface ChildProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  avatar_selection: string;
-  pin?: string;
-  created_at: string;
-}
+import { Child } from './useChildren';
 
 interface ChildSessionContextType {
-  activeChild: ChildProfile | null;
+  activeChild: Child | null;
   isChildMode: boolean;
-  setActiveChild: (child: ChildProfile | null) => void;
+  setActiveChild: (child: Child | null) => void;
   clearChildSession: () => void;
   childFullName: string | null;
   loginWithPin: (pin: string, householdId: string) => Promise<boolean>;
@@ -24,7 +16,7 @@ interface ChildSessionContextType {
 const ChildSessionContext = createContext<ChildSessionContextType | undefined>(undefined);
 
 export const ChildSessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeChild, setActiveChildState] = useState<ChildProfile | null>(null);
+  const [activeChild, setActiveChildState] = useState<Child | null>(null);
   const { user } = useAuth();
 
   // Clear child session if parent logs out
@@ -34,7 +26,7 @@ export const ChildSessionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [user]);
 
-  const setActiveChild = (child: ChildProfile | null) => {
+  const setActiveChild = (child: Child | null) => {
     console.log('👶 Setting active child:', child?.first_name || 'none');
     setActiveChildState(child);
   };
@@ -60,12 +52,14 @@ export const ChildSessionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       if (data && data.length > 0) {
         const childData = data[0];
-        const childProfile: ChildProfile = {
+        const childProfile: Child = {
           id: childData.child_id,
           first_name: childData.child_name.split(' ')[0],
           last_name: childData.child_name.split(' ').slice(1).join(' '),
           avatar_selection: childData.avatar_selection,
+          is_child_account: true,
           pin: pin,
+          parent_id: undefined, // This is optional in our Child interface
           created_at: new Date().toISOString()
         };
         

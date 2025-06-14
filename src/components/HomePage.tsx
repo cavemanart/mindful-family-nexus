@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { useChildSession } from '@/hooks/useChildSession';
+import { Child } from '@/hooks/useChildren';
 import ChildPinLogin from './ChildPinLogin';
 import { 
   Calendar, 
@@ -46,7 +47,7 @@ export default function HomePage() {
     }
   }, [user, loading, navigate]);
 
-  const handleChildLoginSuccess = (child: ChildProfile) => {
+  const handleChildLoginSuccess = (child: Child) => {
     console.log('👶 Child login successful:', child.first_name);
     setActiveChild(child);
     navigate('/dashboard');
