@@ -63,16 +63,13 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
         <CleanTopBar 
-          userProfile={userProfile}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           preferences={preferences}
         />
         <div className="max-w-4xl mx-auto pt-20 px-4">
           <HouseholdSelector 
-            households={households} 
             onSelectHousehold={selectHousehold}
-            userProfile={userProfile}
           />
         </div>
       </div>
@@ -87,7 +84,7 @@ const Index = () => {
 
     switch (currentPage) {
       case 'overview':
-        return <Dashboard selectedHousehold={selectedHousehold} />;
+        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={() => {}} />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':
@@ -99,7 +96,7 @@ const Index = () => {
       case 'notes':
         return isVisible('notes') ? <FamilyNotes selectedHousehold={selectedHousehold} /> : null;
       case 'rules':
-        return isVisible('rules') ? <HouseRulesManager selectedHousehold={selectedHousehold} /> : null;
+        return isVisible('rules') ? <HouseRulesManager /> : null;
       case 'weekly':
         return isVisible('weekly') ? <WeeklySync selectedHousehold={selectedHousehold} /> : null;
       case 'children':
@@ -111,14 +108,13 @@ const Index = () => {
       case 'nanny':
         return isVisible('nanny') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
       default:
-        return <Dashboard selectedHousehold={selectedHousehold} />;
+        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={() => {}} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       <CleanTopBar 
-        userProfile={userProfile}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         preferences={preferences}
@@ -129,7 +125,6 @@ const Index = () => {
       </main>
 
       <CleanMobileNavigation 
-        currentPage={currentPage}
         onPageChange={setCurrentPage}
         preferences={preferences}
       />

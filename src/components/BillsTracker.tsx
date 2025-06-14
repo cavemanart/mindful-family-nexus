@@ -207,6 +207,15 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     );
   }
 
+  // Calculate derived data from bills
+  const recurringBills = bills.filter(bill => bill.recurrence_type !== 'none');
+  const upcomingBills = bills.filter(bill => !bill.is_paid);
+  const paidBills = bills.filter(bill => bill.is_paid);
+  
+  const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
+  const paidAmount = paidBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const progressPercentage = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
+
   return (
     <div className="space-y-6">
       {/* Header Section */}

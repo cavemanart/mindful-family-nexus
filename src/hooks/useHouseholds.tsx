@@ -16,6 +16,7 @@ export interface Household {
 
 export const useHouseholds = () => {
   const [households, setHouseholds] = useState<Household[]>([]);
+  const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -73,6 +74,12 @@ export const useHouseholds = () => {
         }));
         console.log('✅ Households loaded:', formatted.length);
         setHouseholds(formatted);
+        
+        // Auto-select first household if none selected
+        if (formatted.length > 0 && !selectedHousehold) {
+          setSelectedHousehold(formatted[0]);
+        }
+        
         setError(null);
       }
     } catch (err: any) {
@@ -87,6 +94,11 @@ export const useHouseholds = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const selectHousehold = (household: Household) => {
+    console.log('🏠 Selecting household:', household.name);
+    setSelectedHousehold(household);
   };
 
   const createHousehold = async (name: string, description: string) => {
@@ -324,6 +336,7 @@ export const useHouseholds = () => {
       fetchHouseholds();
     } else {
       setHouseholds([]);
+      setSelectedHousehold(null);
       setLoading(false);
       setError(null);
     }
@@ -332,6 +345,8 @@ export const useHouseholds = () => {
 
   return {
     households,
+    selectedHousehold,
+    selectHousehold,
     loading,
     error,
     retry: fetchHouseholds,
