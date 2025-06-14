@@ -4,23 +4,38 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Ensure DOM is loaded before creating root
-const rootElement = document.getElementById("root");
+console.log('🚀 Main entry point starting');
 
-if (!rootElement) {
-  throw new Error('Root element not found');
+// Ensure DOM is fully loaded
+const initializeApp = () => {
+  const rootElement = document.getElementById("root");
+
+  if (!rootElement) {
+    console.error('❌ Root element not found');
+    throw new Error('Root element not found');
+  }
+
+  console.log('✅ Root element found, creating React root');
+
+  try {
+    const root = createRoot(rootElement);
+    
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+    
+    console.log('✅ React app rendered successfully');
+  } catch (error) {
+    console.error('❌ Error rendering React app:', error);
+    throw error;
+  }
+};
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
 }
-
-// Create root and render with StrictMode to help identify timing issues
-const root = createRoot(rootElement);
-
-// Add development mode cache busting
-if (import.meta.env.DEV) {
-  console.log('🔧 Development mode - clearing any cached modules');
-}
-
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);

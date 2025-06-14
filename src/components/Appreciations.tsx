@@ -16,6 +16,39 @@ interface AppreciationsProps {
 
 const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
   const { user, userProfile } = useAuth();
+  
+  // Early return if no user to prevent hook errors
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
+          <p className="text-muted-foreground">Please log in to view appreciations</p>
+          <Button onClick={() => window.location.href = '/auth'} className="mt-4">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedHousehold) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
+          <p className="text-muted-foreground">Please select a household to view appreciations</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AppreciationsContent selectedHousehold={selectedHousehold} />;
+};
+
+// Separate component for when user is authenticated
+const AppreciationsContent: React.FC<{ selectedHousehold: Household }> = ({ selectedHousehold }) => {
+  const { userProfile } = useAuth();
   const { 
     appreciations, 
     comments, 
@@ -62,29 +95,6 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
       }
     }
   };
-
-  // Add loading state and error handling
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
-          <p className="text-muted-foreground">Please log in to view appreciations</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!selectedHousehold) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
-          <p className="text-muted-foreground">Please select a household to view appreciations</p>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

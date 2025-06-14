@@ -27,38 +27,23 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Safe localStorage access
-  const getStoredTheme = (): Theme => {
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // Safe localStorage access after mount
     try {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        return defaultTheme;
-      }
       const stored = localStorage.getItem(storageKey);
       if (stored && ['dark', 'light', 'system'].includes(stored)) {
-        return stored as Theme;
+        setThemeState(stored as Theme);
       }
     } catch (error) {
       console.warn('ThemeProvider: Failed to access localStorage:', error);
     }
-    return defaultTheme;
-  };
+  }, [storageKey]);
 
-  // Initialize theme state
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') {
-      return defaultTheme;
-    }
-    return getStoredTheme();
-  });
-
-  // Component mount guard
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Apply theme to DOM
   useEffect(() => {
     if (!isMounted) return;
 
@@ -70,10 +55,9 @@ export function ThemeProvider({
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
           .matches ? "dark" : "light";
         root.classList.add(systemTheme);
-        return;
+      } else {
+        root.classList.add(theme);
       }
-
-      root.classList.add(theme);
     } catch (error) {
       console.error('ThemeProvider: Error applying theme:', error);
     }
@@ -81,12 +65,11 @@ export function ThemeProvider({
 
   const setTheme = (newTheme: Theme) => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(storageKey, newTheme);
-      }
+      localStorage.setItem(storageKey, newTheme);
       setThemeState(newTheme);
     } catch (error) {
       console.error('ThemeProvider: Error setting theme:', error);
+      setThemeState(newTheme); // Still update state even if localStorage fails
     }
   };
 

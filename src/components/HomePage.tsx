@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,15 +21,6 @@ import {
   Heart,
   Zap
 } from 'lucide-react';
-
-interface ChildProfile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  avatar_selection: string;
-  pin?: string;
-  created_at: string;
-}
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -105,15 +97,10 @@ export default function HomePage() {
               enhance communication, and bring joy back to family life.
             </p>
           </div>
-          <img
-            src="/hero-image.png"
-            alt="Hublie App Interface"
-            className="rounded-xl shadow-lg mx-auto max-w-4xl"
-          />
         </section>
 
         {/* Updated CTA Section */}
-        <section className="text-center space-y-8">
+        <section className="text-center space-y-8 mt-16">
           <div className="space-y-4">
             <h2 className="text-3xl font-bold tracking-tight">Ready to Get Started?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -147,6 +134,7 @@ export default function HomePage() {
           </p>
         </section>
 
+        {/* Features Section */}
         <section className="py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow">

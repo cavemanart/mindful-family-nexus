@@ -23,8 +23,9 @@ const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error) => {
         console.log('Query retry attempt:', failureCount, error);
-        return failureCount < 3;
+        return failureCount < 2; // Reduce retries to prevent loops
       },
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
@@ -32,25 +33,15 @@ const queryClient = new QueryClient({
 const App = () => {
   console.log('🚀 App component rendering');
   
-  // Add safety check for React dispatcher
-  if (typeof React === 'undefined' || !React.useState) {
-    console.error('React or React hooks not properly initialized');
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Initializing application...</p>
-      </div>
-    );
-  }
-  
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ChildSessionProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+            <AuthProvider>
+              <ChildSessionProvider>
+                <Toaster />
+                <Sonner />
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/dashboard" element={<Index />} />
@@ -62,11 +53,11 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 <PWAInstallPrompt />
-              </BrowserRouter>
-            </ChildSessionProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+              </ChildSessionProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 };
