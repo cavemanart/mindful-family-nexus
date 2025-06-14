@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -53,6 +54,7 @@ export const useAppreciations = (householdId: string | null) => {
   const fetchHouseholdMembers = async () => {
     if (!householdId) {
       console.log('❌ No household ID provided for fetching members');
+      setHouseholdMembers([]);
       return;
     }
 
@@ -62,12 +64,13 @@ export const useAppreciations = (householdId: string | null) => {
       const { data, error } = await supabase
         .from('household_members')
         .select(`
-          id,
+          user_id,
           profiles:user_id (
             id,
             first_name,
             last_name,
-            role
+            role,
+            is_child_account
           )
         `)
         .eq('household_id', householdId);
@@ -79,10 +82,10 @@ export const useAppreciations = (householdId: string | null) => {
       
       console.log('📊 Raw household members data:', data);
       
-      // Filter out members with null profiles and log warnings
+      // Filter out members with null profiles and process data
       const validMembers = data?.filter(member => {
         if (!member.profiles) {
-          console.warn('⚠️ Found household member with null profile:', member.id);
+          console.warn('⚠️ Found household member with null profile, user_id:', member.user_id);
           return false;
         }
         return true;
@@ -90,12 +93,22 @@ export const useAppreciations = (householdId: string | null) => {
       
       console.log('✅ Valid household members:', validMembers.length, 'out of', data?.length || 0);
       
-      const members = validMembers.map(member => ({
-        id: member.profiles.id,
-        first_name: member.profiles.first_name || 'Unknown',
-        last_name: member.profiles.last_name || 'User',
-        role: member.profiles.role || 'member'
-      }));
+      const members = validMembers.map(member => {
+        const profile = member.profiles;
+        
+        // Determine the role - prioritize is_child_account flag
+        let memberRole = profile.role || 'member';
+        if (profile.is_child_account === true) {
+          memberRole = 'child';
+        }
+        
+        return {
+          id: profile.id,
+          first_name: profile.first_name || 'Unknown',
+          last_name: profile.last_name || 'User',
+          role: memberRole
+        };
+      });
       
       console.log('👥 Processed household members:', members);
       setHouseholdMembers(members);

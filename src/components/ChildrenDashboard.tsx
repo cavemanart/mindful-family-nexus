@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2 } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold.id);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold.id);
-  const { householdMembers, loading: membersLoading } = useAppreciations(selectedHousehold.id);
+  const { householdMembers, loading: membersLoading, refetch: refetchMembers } = useAppreciations(selectedHousehold.id);
   
   // Filter for children only with better error handling
   const children = React.useMemo(() => {
@@ -112,6 +113,11 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     }
   };
 
+  const handleRefresh = () => {
+    console.log('🔄 Manual refresh triggered');
+    refetchMembers();
+  };
+
   const getRewardLevel = (points: number) => {
     if (points >= 50) return { level: 'Super Star', color: 'text-purple-600 dark:text-purple-400', icon: '🌟' };
     if (points >= 30) return { level: 'Champion', color: 'text-blue-600 dark:text-blue-400', icon: '🏆' };
@@ -137,8 +143,12 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Kid's Dashboard 🎈
           </h2>
-          <p className="text-muted-foreground">No children in this household yet!</p>
-          <p className="text-muted-foreground text-sm mt-2">Add children to your household to see their tasks and progress.</p>
+          <p className="text-muted-foreground mb-4">No children in this household yet!</p>
+          <p className="text-muted-foreground text-sm mb-4">Add children to your household to see their tasks and progress.</p>
+          <Button onClick={handleRefresh} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </div>
     );
@@ -151,7 +161,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
         <h2 className="text-3xl font-bold text-foreground mb-4">
           Kid's Dashboard 🎈
         </h2>
-        <div className="flex justify-center gap-2 flex-wrap">
+        <div className="flex justify-center gap-2 flex-wrap mb-4">
           {children.map((child) => (
             <Button
               key={child.id}
@@ -163,6 +173,10 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             </Button>
           ))}
         </div>
+        <Button onClick={handleRefresh} variant="ghost" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Data
+        </Button>
       </div>
 
       {/* Points and Rewards */}

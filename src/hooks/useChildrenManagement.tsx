@@ -35,6 +35,7 @@ export const useChildrenManagement = (householdId: string | null) => {
 
   const fetchChildren = async () => {
     if (!householdId) {
+      console.log('❌ No household ID provided for fetching children');
       setChildren([]);
       setLoading(false);
       return;
@@ -44,47 +45,64 @@ export const useChildrenManagement = (householdId: string | null) => {
       console.log('🔄 Fetching children for household:', householdId);
       setLoading(true);
       
-      // First get household member user IDs
+      // Get all household members who are child accounts
       const { data: householdMembers, error: membersError } = await supabase
         .from('household_members')
-        .select('user_id')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            first_name,
+            last_name,
+            avatar_selection,
+            parent_id,
+            created_at,
+            is_child_account,
+            role
+          )
+        `)
         .eq('household_id', householdId);
 
-      if (membersError) throw membersError;
-
-      if (!householdMembers || householdMembers.length === 0) {
-        console.log('📝 No household members found');
-        setChildren([]);
-        setLoading(false);
-        return;
+      if (membersError) {
+        console.error('❌ Error fetching household members:', membersError);
+        throw membersError;
       }
 
-      const userIds = householdMembers.map(member => member.user_id);
-      console.log('👥 Found household member IDs:', userIds);
+      console.log('📊 Raw household members data:', householdMembers);
 
-      // Then get child profiles for those user IDs
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          avatar_selection,
-          parent_id,
-          created_at
-        `)
-        .eq('is_child_account', true)
-        .in('id', userIds);
+      // Filter for child accounts and validate profiles
+      const childProfiles = householdMembers
+        ?.filter(member => {
+          if (!member.profiles) {
+            console.warn('⚠️ Found household member with null profile:', member.user_id);
+            return false;
+          }
+          
+          const profile = member.profiles;
+          const isChildAccount = profile.is_child_account === true || profile.role === 'child';
+          
+          if (isChildAccount) {
+            console.log('👶 Found child profile:', profile.first_name, profile.last_name);
+          }
+          
+          return isChildAccount;
+        })
+        .map(member => ({
+          id: member.profiles.id,
+          first_name: member.profiles.first_name || 'Unknown',
+          last_name: member.profiles.last_name || 'Child',
+          avatar_selection: member.profiles.avatar_selection || 'bear',
+          parent_id: member.profiles.parent_id || '',
+          created_at: member.profiles.created_at || new Date().toISOString()
+        })) || [];
 
-      if (error) throw error;
-      
-      console.log('👶 Found children:', data);
-      setChildren(data || []);
+      console.log('👥 Processed children:', childProfiles.length, childProfiles);
+      setChildren(childProfiles);
     } catch (error: any) {
       console.error('❌ Error fetching children:', error);
       toast({
         title: "Error fetching children",
-        description: error.message,
+        description: error.message || 'Failed to load children',
         variant: "destructive"
       });
       setChildren([]);
@@ -108,17 +126,24 @@ export const useChildrenManagement = (householdId: string | null) => {
         p_household_id: householdId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RPC Error creating child:', error);
+        throw error;
+      }
 
-      console.log('✅ Child created successfully:', data);
+      console.log('✅ Child created successfully with ID:', data);
       
       toast({
         title: "Success",
         description: "Child account created successfully!",
       });
 
-      // Immediately refetch children
-      await fetchChildren();
+      // Wait a moment then refetch to ensure we get the latest data
+      setTimeout(() => {
+        console.log('🔄 Refetching children after creation...');
+        fetchChildren();
+      }, 1000);
+      
       return data;
     } catch (error: any) {
       console.error('❌ Error creating child:', error);
@@ -191,6 +216,7 @@ export const useChildrenManagement = (householdId: string | null) => {
   };
 
   useEffect(() => {
+    console.log('🔄 useChildrenManagement effect triggered, householdId:', householdId);
     fetchChildren();
   }, [householdId]);
 

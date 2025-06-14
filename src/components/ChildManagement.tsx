@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, Users, Baby } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, Baby, RefreshCw } from 'lucide-react';
 import { useChildrenManagement } from '@/hooks/useChildrenManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -63,6 +64,8 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
 
     setIsSubmitting(true);
     try {
+      console.log('🔄 Starting child creation process...');
+      
       await createChild({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
@@ -72,15 +75,23 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
         householdId: selectedHousehold.id
       });
       
+      console.log('✅ Child creation completed successfully');
       setIsCreateDialogOpen(false);
       resetForm();
       
-      // Force refetch to show the new child immediately
+      // Multiple refresh attempts to ensure data consistency
       setTimeout(() => {
+        console.log('🔄 First refresh after child creation...');
         refetch();
       }, 500);
       
+      setTimeout(() => {
+        console.log('🔄 Second refresh after child creation...');
+        refetch();
+      }, 2000);
+      
     } catch (error: any) {
+      console.error('❌ Failed to create child:', error);
       toast.error(error.message || 'Failed to create child account');
     } finally {
       setIsSubmitting(false);
@@ -148,6 +159,11 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
     resetForm();
   };
 
+  const handleManualRefresh = () => {
+    console.log('🔄 Manual refresh triggered in ChildManagement');
+    refetch();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -164,82 +180,92 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
           <Baby className="h-5 w-5 text-purple-500" />
           <h3 className="text-lg font-semibold">Children ({children.length})</h3>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Child
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Child Account</DialogTitle>
-              <DialogDescription>
-                Create a new child account with PIN access for your household.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleManualRefresh}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Child
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Child Account</DialogTitle>
+                <DialogDescription>
+                  Create a new child account with PIN access for your household.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name *</Label>
+                    <Input
+                      id="firstName"
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input
+                      id="lastName"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="pin">4-Digit PIN *</Label>
                   <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    placeholder="Enter first name"
+                    id="pin"
+                    type="password"
+                    maxLength={4}
+                    value={formData.pin}
+                    onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '') })}
+                    placeholder="1234"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    placeholder="Enter last name"
-                  />
+                  <Label>Avatar</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {avatarOptions.map((avatar) => (
+                      <button
+                        key={avatar.value}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, avatarSelection: avatar.value })}
+                        className={`p-3 rounded-lg border-2 transition-colors ${
+                          formData.avatarSelection === avatar.value
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="text-2xl">{avatar.emoji}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="pin">4-Digit PIN *</Label>
-                <Input
-                  id="pin"
-                  type="password"
-                  maxLength={4}
-                  value={formData.pin}
-                  onChange={(e) => setFormData({ ...formData, pin: e.target.value.replace(/\D/g, '') })}
-                  placeholder="1234"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Avatar</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  {avatarOptions.map((avatar) => (
-                    <button
-                      key={avatar.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, avatarSelection: avatar.value })}
-                      className={`p-3 rounded-lg border-2 transition-colors ${
-                        formData.avatarSelection === avatar.value
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="text-2xl">{avatar.emoji}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateChild} disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Child'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateChild} disabled={isSubmitting}>
+                  {isSubmitting ? 'Creating...' : 'Create Child'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Children List */}
@@ -251,6 +277,17 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
             <p className="text-gray-500 mb-4">
               Create child accounts to give your kids safe access to family features.
             </p>
+            <p className="text-sm text-gray-400 mb-4">
+              Debug: Household ID = {selectedHousehold.id}
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={handleManualRefresh}
+              className="mb-4"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Check Again
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -266,6 +303,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
                       <div>
                         <h4 className="font-medium">{child.first_name} {child.last_name}</h4>
                         <p className="text-sm text-gray-500">Child Account</p>
+                        <p className="text-xs text-gray-400">ID: {child.id}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
