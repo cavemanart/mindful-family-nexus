@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, Users, Baby, RefreshCw, AlertCircle } from 'lucide-react';
-import { useChildrenManagement } from '@/hooks/useChildrenManagement';
+import { useHouseholdChildren } from '@/hooks/useHouseholdChildren';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Household } from '@/hooks/useHouseholds';
@@ -29,7 +29,7 @@ const avatarOptions = [
 
 const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) => {
   const { user } = useAuth();
-  const { children, loading, createChild, updateChild, deleteChild, refetch } = useChildrenManagement(selectedHousehold.id);
+  const { children, loading, createChild, updateChild, deleteChild, refetch } = useHouseholdChildren(selectedHousehold.id);
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<any>(null);
@@ -65,21 +65,16 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
 
     setIsSubmitting(true);
     try {
-      console.log('🔄 Starting child creation process...');
-      
       await createChild({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         pin: formData.pin,
         avatarSelection: formData.avatarSelection,
-        parentId: user.id,
-        householdId: selectedHousehold.id
+        parentId: user.id
       });
       
-      console.log('✅ Child creation completed successfully');
       setIsCreateDialogOpen(false);
       resetForm();
-      toast.success('Child account created successfully!');
       
     } catch (error: any) {
       console.error('❌ Failed to create child:', error);
@@ -144,11 +139,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
     resetForm();
   };
 
-  const handleManualRefresh = () => {
-    console.log('🔄 Manual refresh triggered in ChildManagement');
-    refetch();
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -178,7 +168,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
           <Button 
             variant="outline" 
             size="sm"
-            onClick={handleManualRefresh}
+            onClick={refetch}
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -274,7 +264,10 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
               <p><strong>Household ID:</strong> {selectedHousehold.id}</p>
               <p><strong>Loading:</strong> {loading.toString()}</p>
               <p><strong>Children Count:</strong> {children.length}</p>
-              <p><strong>Children Data:</strong> {JSON.stringify(children, null, 2)}</p>
+              <p><strong>Children Data:</strong></p>
+              <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
+                {JSON.stringify(children, null, 2)}
+              </pre>
             </div>
           </CardContent>
         </Card>
@@ -291,7 +284,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
             </p>
             <Button 
               variant="outline" 
-              onClick={handleManualRefresh}
+              onClick={refetch}
               className="mb-4"
             >
               <RefreshCw className="h-4 w-4 mr-2" />

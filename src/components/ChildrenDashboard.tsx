@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { Star, CheckCircle, Clock, Heart, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useChores } from '@/hooks/useChores';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
-import { useChildrenManagement } from '@/hooks/useChildrenManagement';
+import { useHouseholdChildren } from '@/hooks/useHouseholdChildren';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 interface ChildrenDashboardProps {
@@ -32,11 +33,9 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold.id);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold.id);
-  const { children, loading: childrenLoading, refetch: refetchChildren } = useChildrenManagement(selectedHousehold.id);
+  const { children, loading: childrenLoading, refetch: refetchChildren } = useHouseholdChildren(selectedHousehold.id);
   
-  const [selectedChild, setSelectedChild] = useState(() => {
-    return children.length > 0 ? children[0].first_name : '';
-  });
+  const [selectedChild, setSelectedChild] = useState('');
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -47,7 +46,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   }, [children, selectedChild]);
 
   // Get the selected child's full name for matching with better null safety
-  const selectedChildFullName = React.useMemo(() => {
+  const selectedChildFullName = useMemo(() => {
     const child = children.find(child => child?.first_name === selectedChild);
     if (!child) {
       console.log('❌ No child found for selectedChild:', selectedChild);
@@ -58,7 +57,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     return fullName;
   }, [children, selectedChild]);
 
-  const childChores = React.useMemo(() => {
+  const childChores = useMemo(() => {
     if (!chores || !selectedChild) return [];
     
     return chores.filter(chore => {
@@ -70,7 +69,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     });
   }, [chores, selectedChild, selectedChildFullName]);
 
-  const childMessages = React.useMemo(() => {
+  const childMessages = useMemo(() => {
     if (!messages || !selectedChild) return [];
     
     return messages.filter(message => {
