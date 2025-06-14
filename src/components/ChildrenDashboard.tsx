@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2 } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useChores } from '@/hooks/useChores';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
-import { useAppreciations } from '@/hooks/useAppreciations';
+import { useChildren } from '@/hooks/useChildren';
+import AddChildDialog from './AddChildDialog';
 
 interface ChildrenDashboardProps {
   selectedHousehold: { id: string } | null;
@@ -15,11 +16,9 @@ interface ChildrenDashboardProps {
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold?.id || null);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold?.id || null);
-  const { householdMembers, loading: membersLoading } = useAppreciations(selectedHousehold?.id || null);
+  const { children, loading: childrenLoading } = useChildren(selectedHousehold?.id);
   
-  // Filter for children only
-  const children = householdMembers.filter(member => member.role === 'child');
-  const [selectedChild, setSelectedChild] = useState(children[0]?.first_name || '');
+  const [selectedChild, setSelectedChild] = useState('');
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -29,8 +28,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   }, [children, selectedChild]);
 
   // Get the selected child's full name for matching
-  const selectedChildFullName = children.find(child => child.first_name === selectedChild);
-  const childFullName = selectedChildFullName ? `${selectedChildFullName.first_name} ${selectedChildFullName.last_name}` : selectedChild;
+  const selectedChildData = children.find(child => child.first_name === selectedChild);
+  const childFullName = selectedChildData ? `${selectedChildData.first_name} ${selectedChildData.last_name}` : selectedChild;
 
   const childChores = chores.filter(chore => 
     chore.assigned_to === selectedChild || 
@@ -60,7 +59,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const reward = getRewardLevel(totalPoints);
 
-  if (choresLoading || messagesLoading || membersLoading) {
+  if (choresLoading || messagesLoading || childrenLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="animate-spin" size={24} />
@@ -76,8 +75,20 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Kid's Dashboard 🎈
           </h2>
-          <p className="text-muted-foreground">No children in this household yet!</p>
-          <p className="text-muted-foreground text-sm mt-2">Add children to your household to see their tasks and progress.</p>
+          <p className="text-muted-foreground mb-4">No children in this household yet!</p>
+          <p className="text-muted-foreground text-sm mb-6">Add children to your household to see their tasks and progress.</p>
+          
+          {selectedHousehold && (
+            <AddChildDialog 
+              householdId={selectedHousehold.id}
+              trigger={
+                <Button className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Your First Child
+                </Button>
+              }
+            />
+          )}
         </div>
       </div>
     );
@@ -90,7 +101,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
         <h2 className="text-3xl font-bold text-foreground mb-4">
           Kid's Dashboard 🎈
         </h2>
-        <div className="flex justify-center gap-2 flex-wrap">
+        <div className="flex justify-center gap-2 flex-wrap mb-4">
           {children.map((child) => (
             <Button
               key={child.id}
@@ -102,6 +113,18 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             </Button>
           ))}
         </div>
+        
+        {selectedHousehold && (
+          <AddChildDialog 
+            householdId={selectedHousehold.id}
+            trigger={
+              <Button variant="outline" size="sm">
+                <UserPlus className="mr-2 h-3 w-3" />
+                Add Another Child
+              </Button>
+            }
+          />
+        )}
       </div>
 
       {/* Points and Rewards */}

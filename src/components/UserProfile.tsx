@@ -10,11 +10,13 @@ import {
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { User, Settings } from 'lucide-react';
+import { User, Settings, UserPlus } from 'lucide-react';
 import { Household } from '@/hooks/useHouseholds';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useChildren } from '@/hooks/useChildren';
 import LeaveHouseholdDialog from './LeaveHouseholdDialog';
+import AddChildDialog from './AddChildDialog';
 import UserProfileErrorBoundary from './UserProfileErrorBoundary';
 
 interface UserProfileProps {
@@ -32,13 +34,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
 }) => {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const { children } = useChildren(selectedHousehold?.id);
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
+  const canManageChildren = userProfile?.role === 'parent' || userProfile?.role === 'grandparent' || isAdminOrOwner;
 
   const getRoleDisplay = (role?: string) => {
     switch (role) {
       case 'parent': return 'Parent';
       case 'nanny': return 'Nanny/Caregiver';
-      case 'chil d': return 'Child';
+      case 'child': return 'Child';
       case 'grandparent': return 'Grandparent';
       default: return 'Family Member';
     }
@@ -91,6 +95,35 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       {selectedHousehold.description}
                     </p>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Children Management */}
+            {canManageChildren && selectedHousehold && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Children ({children.length})</h3>
+                <div className="space-y-2">
+                  {children.length > 0 && (
+                    <div className="p-3 bg-muted rounded-lg">
+                      <div className="space-y-1">
+                        {children.map((child) => (
+                          <p key={child.id} className="text-sm">
+                            {child.first_name} {child.last_name}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <AddChildDialog 
+                    householdId={selectedHousehold.id}
+                    trigger={
+                      <Button variant="outline" className="w-full justify-start">
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Add Child
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             )}
