@@ -14,6 +14,7 @@ export type Database = {
           appreciation_id: string
           comment: string
           commenter_name: string
+          commenter_user_id: string | null
           created_at: string
           household_id: string
           id: string
@@ -22,6 +23,7 @@ export type Database = {
           appreciation_id: string
           comment: string
           commenter_name: string
+          commenter_user_id?: string | null
           created_at?: string
           household_id: string
           id?: string
@@ -30,6 +32,7 @@ export type Database = {
           appreciation_id?: string
           comment?: string
           commenter_name?: string
+          commenter_user_id?: string | null
           created_at?: string
           household_id?: string
           id?: string
@@ -40,6 +43,13 @@ export type Database = {
             columns: ["appreciation_id"]
             isOneToOne: false
             referencedRelation: "appreciations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appreciation_comments_commenter_user_id_fkey"
+            columns: ["commenter_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -58,6 +68,7 @@ export type Database = {
           household_id: string
           id: string
           reactor_name: string
+          reactor_user_id: string | null
         }
         Insert: {
           appreciation_id: string
@@ -65,6 +76,7 @@ export type Database = {
           household_id: string
           id?: string
           reactor_name: string
+          reactor_user_id?: string | null
         }
         Update: {
           appreciation_id?: string
@@ -72,6 +84,7 @@ export type Database = {
           household_id?: string
           id?: string
           reactor_name?: string
+          reactor_user_id?: string | null
         }
         Relationships: [
           {
@@ -88,42 +101,66 @@ export type Database = {
             referencedRelation: "households"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "appreciation_reactions_reactor_user_id_fkey"
+            columns: ["reactor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       appreciations: {
         Row: {
           created_at: string
           from_member: string
+          from_user_id: string | null
           household_id: string
           id: string
           message: string
-          reactions: number
           to_member: string
+          to_user_id: string | null
         }
         Insert: {
           created_at?: string
           from_member: string
+          from_user_id?: string | null
           household_id: string
           id?: string
           message: string
-          reactions?: number
           to_member: string
+          to_user_id?: string | null
         }
         Update: {
           created_at?: string
           from_member?: string
+          from_user_id?: string | null
           household_id?: string
           id?: string
           message?: string
-          reactions?: number
           to_member?: string
+          to_user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "appreciations_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appreciations_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appreciations_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
