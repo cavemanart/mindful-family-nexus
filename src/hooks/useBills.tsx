@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -96,6 +97,7 @@ export const useBills = (householdId: string | null) => {
       const newBill = {
         ...billData,
         household_id: householdId,
+        assigned_to: billData.assigned_to || '', // Handle empty assignment
         next_due_date: billData.recurrence_type !== 'none' ? calculateNextDueDate(billData.due_date, billData.recurrence_type, billData.recurrence_interval) : null
       };
 

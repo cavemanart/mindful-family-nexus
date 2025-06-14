@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock, HelpCircle, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,14 +75,14 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
   const canCreateMoreBills = isUnlimitedBills || billsThisMonth < billLimit;
 
   const handleAddBill = async () => {
-    if (newBill.name.trim() && newBill.amount && newBill.due_date && newBill.category && newBill.assigned_to) {
+    if (newBill.name.trim() && newBill.amount && newBill.due_date && newBill.category) {
       const success = await addBill({
         name: newBill.name,
         amount: parseFloat(newBill.amount),
         due_date: newBill.due_date,
         category: newBill.category,
         is_paid: false,
-        assigned_to: newBill.assigned_to,
+        assigned_to: newBill.assigned_to || '',
         recurrence_type: newBill.recurrence_type,
         recurrence_interval: newBill.recurrence_interval,
         is_template: newBill.is_template,
@@ -153,13 +154,13 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
-      'Utilities': 'bg-blue-100 text-blue-800',
-      'Insurance': 'bg-green-100 text-green-800',
-      'Housing': 'bg-purple-100 text-purple-800',
-      'Healthcare': 'bg-red-100 text-red-800',
-      'Transportation': 'bg-yellow-100 text-yellow-800',
-      'Entertainment': 'bg-pink-100 text-pink-800',
-      'Other': 'bg-gray-100 text-gray-800',
+      'Utilities': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      'Insurance': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      'Housing': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      'Healthcare': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      'Transportation': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      'Entertainment': 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+      'Other': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
     };
     return colors[category] || colors['Other'];
   };
@@ -177,17 +178,17 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Receipt className="text-green-500" size={28} />
             Family Bills Tracker
           </h2>
-          <p className="text-gray-600 mt-1">Keep track of your household expenses and never miss a payment</p>
+          <p className="text-muted-foreground mt-1">Keep track of your household expenses and never miss a payment</p>
         </div>
         <div className="flex gap-2">
           <Button 
             onClick={() => setShowRecurringHelp(!showRecurringHelp)}
             variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
+            className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
           >
             <HelpCircle size={16} className="mr-2" />
             How it Works
@@ -224,31 +225,31 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
       {/* Help Section */}
       {showRecurringHelp && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
           <CardHeader>
-            <CardTitle className="text-blue-800 flex items-center gap-2">
+            <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
               <Info size={20} />
               How Bills Tracking Works
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div>
-              <h4 className="font-semibold text-blue-800 mb-2">📋 Regular Bills</h4>
-              <p className="text-blue-700">Add one-time bills like credit card payments or irregular expenses. Just enter the details and mark as paid when complete.</p>
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📋 Regular Bills</h4>
+              <p className="text-blue-700 dark:text-blue-300">Add one-time bills like credit card payments or irregular expenses. Just enter the details and mark as paid when complete.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-blue-800 mb-2">🔄 Recurring Bills</h4>
-              <p className="text-blue-700">For bills that repeat (like rent, utilities, subscriptions), set up recurring bills. The system will automatically create new instances when they're due.</p>
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">🔄 Recurring Bills</h4>
+              <p className="text-blue-700 dark:text-blue-300">For bills that repeat (like rent, utilities, subscriptions), set up recurring bills. The system will automatically create new instances when they're due.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-blue-800 mb-2">⚡ Auto-Generate Feature</h4>
-              <p className="text-blue-700">Use "Generate Next Bills" to automatically create the next month's recurring bills. This saves time and ensures you don't forget any regular payments.</p>
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">⚡ Auto-Generate Feature</h4>
+              <p className="text-blue-700 dark:text-blue-300">Use "Generate Next Bills" to automatically create the next month's recurring bills. This saves time and ensures you don't forget any regular payments.</p>
             </div>
             <Button 
               onClick={() => setShowRecurringHelp(false)}
               variant="outline"
               size="sm"
-              className="border-blue-600 text-blue-600"
+              className="border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
             >
               Got it!
             </Button>
@@ -262,10 +263,10 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total This Month</p>
-                <p className="text-2xl font-bold text-gray-900">${totalAmount.toFixed(2)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total This Month</p>
+                <p className="text-2xl font-bold text-foreground">${totalAmount.toFixed(2)}</p>
               </div>
-              <DollarSign className="text-gray-400" size={24} />
+              <DollarSign className="text-muted-foreground" size={24} />
             </div>
           </CardContent>
         </Card>
@@ -274,7 +275,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Paid So Far</p>
+                <p className="text-sm font-medium text-muted-foreground">Paid So Far</p>
                 <p className="text-2xl font-bold text-green-600">${paidAmount.toFixed(2)}</p>
               </div>
               <CheckCircle className="text-green-400" size={24} />
@@ -286,7 +287,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Still to Pay</p>
+                <p className="text-sm font-medium text-muted-foreground">Still to Pay</p>
                 <p className="text-2xl font-bold text-red-600">${(totalAmount - paidAmount).toFixed(2)}</p>
               </div>
               <AlertCircle className="text-red-400" size={24} />
@@ -298,9 +299,9 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Recurring Bills</p>
+                <p className="text-sm font-medium text-muted-foreground">Recurring Bills</p>
                 <p className="text-2xl font-bold text-blue-600">{recurringBills.length}</p>
-                <p className="text-xs text-gray-500 mt-1">Auto-repeating</p>
+                <p className="text-xs text-muted-foreground mt-1">Auto-repeating</p>
               </div>
               <Repeat className="text-blue-400" size={24} />
             </div>
@@ -313,27 +314,27 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         <CardContent className="p-6">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="font-medium text-gray-700">Monthly Payment Progress</span>
-              <span className="text-gray-600">{progressPercentage.toFixed(1)}% Complete</span>
+              <span className="font-medium text-foreground">Monthly Payment Progress</span>
+              <span className="text-muted-foreground">{progressPercentage.toFixed(1)}% Complete</span>
             </div>
             <Progress value={progressPercentage} className="h-3" />
-            <p className="text-xs text-gray-500 mt-2">Track how much of this month's bills you've paid</p>
+            <p className="text-xs text-muted-foreground mt-2">Track how much of this month's bills you've paid</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Recurring Bills Management */}
       {recurringBills.length > 0 && (
-        <Card className="border-blue-200">
+        <Card className="border-blue-200 dark:border-blue-800">
           <CardHeader>
-            <CardTitle className="text-blue-800 flex items-center gap-2">
+            <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
               <Repeat size={20} />
               Recurring Bills Management
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-foreground">
                 You have {recurringBills.length} recurring bills set up. Generate next month's bills automatically.
               </p>
               <Button 
@@ -346,14 +347,14 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {recurringBills.slice(0, 4).map((bill) => (
-                <div key={bill.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div key={bill.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                   <div>
-                    <p className="font-medium text-blue-800">{bill.name}</p>
-                    <p className="text-sm text-blue-600">
+                    <p className="font-medium text-blue-800 dark:text-blue-200">{bill.name}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">
                       Every {bill.recurrence_interval} {bill.recurrence_type}(s) • ${bill.amount}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-blue-600 border-blue-300">
+                  <Badge variant="outline" className="text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600">
                     <Repeat size={12} className="mr-1" />
                     Auto
                   </Badge>
@@ -366,15 +367,15 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
       {/* Add Bill Form */}
       {isAddingBill && canCreateMoreBills && (
-        <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50">
+        <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50 dark:border-green-700 dark:from-green-950 dark:to-blue-950">
           <CardHeader>
-            <CardTitle className="text-green-800">Add New Bill</CardTitle>
-            <p className="text-sm text-gray-600">Enter your bill details below. For bills that repeat monthly (like rent or utilities), enable the recurring option.</p>
+            <CardTitle className="text-green-800 dark:text-green-200">Add New Bill</CardTitle>
+            <p className="text-sm text-muted-foreground">Enter your bill details below. For bills that repeat monthly (like rent or utilities), enable the recurring option.</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Bill Name *</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Bill Name *</label>
                 <Input
                   placeholder="e.g., Electric Bill, Rent, Netflix"
                   value={newBill.name}
@@ -382,7 +383,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Amount *</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Amount *</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -392,7 +393,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Due Date *</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Due Date *</label>
                 <Input
                   type="date"
                   value={newBill.due_date}
@@ -400,7 +401,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Category *</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Category *</label>
                 <Select value={newBill.category} onValueChange={(value) => 
                   setNewBill({ ...newBill, category: value })
                 }>
@@ -415,14 +416,15 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Assigned To *</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Assigned To (Optional)</label>
                 <Select value={newBill.assigned_to} onValueChange={(value) => 
                   setNewBill({ ...newBill, assigned_to: value })
                 }>
                   <SelectTrigger>
-                    <SelectValue placeholder="Who pays this bill?" />
+                    <SelectValue placeholder="Who pays this bill? (optional)" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">No assignment</SelectItem>
                     {familyMembers.map((member) => (
                       <SelectItem key={member} value={member}>{member}</SelectItem>
                     ))}
@@ -430,7 +432,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Repeats</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Repeats</label>
                 <Select value={newBill.recurrence_type} onValueChange={(value: 'none' | 'weekly' | 'monthly') => 
                   setNewBill({ ...newBill, recurrence_type: value })
                 }>
@@ -446,7 +448,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
               </div>
               {newBill.recurrence_type !== 'none' && (
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Every {newBill.recurrence_type === 'weekly' ? 'weeks' : 'months'}
                   </label>
                   <Input
@@ -460,16 +462,16 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
               )}
             </div>
             {newBill.recurrence_type !== 'none' && (
-              <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="is-template"
                     checked={newBill.is_template}
                     onCheckedChange={(checked) => setNewBill({ ...newBill, is_template: checked })}
                   />
-                  <Label htmlFor="is-template" className="text-blue-800">Make this a recurring template</Label>
+                  <Label htmlFor="is-template" className="text-blue-800 dark:text-blue-200">Make this a recurring template</Label>
                 </div>
-                <p className="text-xs text-blue-600 mt-2">
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
                   Recurring templates automatically generate new bills when due. Perfect for monthly rent, utilities, etc.
                 </p>
               </div>
@@ -490,7 +492,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
       {/* Upcoming Bills */}
       {upcomingBills.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <Calendar className="text-orange-500" size={20} />
             Bills to Pay ({upcomingBills.length})
           </h3>
@@ -504,16 +506,16 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 <Card 
                   key={bill.id} 
                   className={`hover:shadow-md transition-shadow ${
-                    isOverdue ? 'border-red-300 bg-red-50' : 
-                    isDueSoon ? 'border-yellow-300 bg-yellow-50' : 
-                    'border-gray-200'
+                    isOverdue ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950' : 
+                    isDueSoon ? 'border-yellow-300 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-950' : 
+                    'border-border'
                   }`}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div>
-                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <h4 className="font-semibold text-foreground flex items-center gap-2">
                             {bill.name}
                             {bill.recurrence_type !== 'none' && (
                               <Badge variant="outline" className="text-xs">
@@ -526,16 +528,18 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                             <Badge className={getCategoryColor(bill.category)} variant="secondary">
                               {bill.category}
                             </Badge>
-                            <span className="text-sm text-gray-600">{bill.assigned_to} pays this</span>
+                            {bill.assigned_to && (
+                              <span className="text-sm text-muted-foreground">{bill.assigned_to} pays this</span>
+                            )}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">${bill.amount.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-foreground">${bill.amount.toFixed(2)}</p>
                         <p className={`text-sm ${
                           isOverdue ? 'text-red-600 font-semibold' :
                           isDueSoon ? 'text-yellow-600 font-semibold' :
-                          'text-gray-600'
+                          'text-muted-foreground'
                         }`}>
                           {isOverdue ? `⚠️ Overdue by ${Math.abs(daysUntilDue)} days` :
                            daysUntilDue === 0 ? '📅 Due today' :
@@ -554,7 +558,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                               onClick={() => handleGenerateNext(bill.id)}
                               size="sm"
                               variant="outline"
-                              className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                              className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
                             >
                               <Clock size={14} className="mr-1" />
                               Next Bill
@@ -564,7 +568,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                             onClick={() => openDeleteDialog(bill.id, bill.name)}
                             size="sm"
                             variant="outline"
-                            className="border-red-600 text-red-600 hover:bg-red-50"
+                            className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                           >
                             <Trash2 size={14} />
                           </Button>
@@ -582,19 +586,19 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
       {/* Paid Bills */}
       {paidBills.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <CheckCircle className="text-green-500" size={20} />
             Paid This Month ({paidBills.length})
           </h3>
           <div className="space-y-3">
             {paidBills.map((bill) => (
-              <Card key={bill.id} className="bg-green-50 border-green-200 hover:shadow-md transition-shadow">
+              <Card key={bill.id} className="bg-green-50 border-green-200 hover:shadow-md transition-shadow dark:bg-green-950 dark:border-green-800">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <CheckCircle className="text-green-600" size={20} />
                       <div>
-                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        <h4 className="font-semibold text-foreground flex items-center gap-2">
                           {bill.name}
                           {bill.recurrence_type !== 'none' && (
                             <Badge variant="outline" className="text-xs">
@@ -607,7 +611,9 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                           <Badge className={getCategoryColor(bill.category)} variant="secondary">
                             {bill.category}
                           </Badge>
-                          <span className="text-sm text-gray-600">✓ Paid by {bill.assigned_to}</span>
+                          {bill.assigned_to && (
+                            <span className="text-sm text-muted-foreground">✓ Paid by {bill.assigned_to}</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -619,7 +625,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                           onClick={() => handleTogglePaid(bill.id)}
                           variant="outline"
                           size="sm"
-                          className="border-green-600 text-green-600 hover:bg-green-100"
+                          className="border-green-600 text-green-600 hover:bg-green-100 dark:hover:bg-green-900"
                         >
                           Undo Payment
                         </Button>
@@ -627,7 +633,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                           onClick={() => openDeleteDialog(bill.id, bill.name)}
                           size="sm"
                           variant="outline"
-                          className="border-red-600 text-red-600 hover:bg-red-50"
+                          className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -645,8 +651,8 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
       {bills.length === 0 && (
         <div className="text-center py-12">
           <Receipt size={48} className="text-green-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-lg">No bills added yet!</p>
-          <p className="text-gray-400 text-sm mt-2 mb-4">Start tracking your family's expenses by adding your first bill.</p>
+          <p className="text-muted-foreground text-lg">No bills added yet!</p>
+          <p className="text-muted-foreground text-sm mt-2 mb-4">Start tracking your family's expenses by adding your first bill.</p>
           <Button 
             onClick={() => setIsAddingBill(true)}
             className="bg-green-600 hover:bg-green-700"
