@@ -45,7 +45,7 @@ export const useChildrenManagement = (householdId: string | null) => {
       console.log('🔄 Fetching children for household:', householdId);
       setLoading(true);
       
-      // Use a single query with JOIN to avoid data iteration issues
+      // Simplified query to get children directly
       const { data: childrenData, error } = await supabase
         .from('profiles')
         .select(`
@@ -56,11 +56,9 @@ export const useChildrenManagement = (householdId: string | null) => {
           parent_id,
           created_at,
           is_child_account,
-          role,
-          household_members!inner(household_id)
+          role
         `)
-        .eq('is_child_account', true)
-        .eq('household_members.household_id', householdId);
+        .eq('is_child_account', true);
 
       if (error) {
         console.error('❌ Error fetching children:', error);
@@ -69,34 +67,48 @@ export const useChildrenManagement = (householdId: string | null) => {
 
       console.log('📊 Raw children data:', childrenData);
 
-      // Validate and process the data with safety checks
-      const processedChildren = Array.isArray(childrenData) 
-        ? childrenData
-            .filter(child => {
-              // Data validation: ensure child object is valid
-              if (!child || typeof child !== 'object') {
-                console.warn('⚠️ Found invalid child record:', child);
-                return false;
-              }
-              
-              const isValid = child.is_child_account === true || child.role === 'child';
-              if (isValid) {
-                console.log('👶 Valid child found:', child.first_name, child.last_name);
-              }
-              return isValid;
-            })
-            .map(child => ({
-              id: child.id || '',
-              first_name: child.first_name || 'Unknown',
-              last_name: child.last_name || 'Child',
-              avatar_selection: child.avatar_selection || 'bear',
-              parent_id: child.parent_id || '',
-              created_at: child.created_at || new Date().toISOString()
-            }))
-        : [];
+      // Now filter by household membership
+      const { data: householdMembers, error: memberError } = await supabase
+        .from('household_members')
+        .select('user_id')
+        .eq('household_id', householdId);
 
-      console.log('👥 Processed children:', processedChildren.length, processedChildren);
-      setChildren(processedChildren);
+      if (memberError) {
+        console.error('❌ Error fetching household members:', memberError);
+        throw memberError;
+      }
+
+      const memberIds = new Set((householdMembers || []).map(m => m.user_id));
+      console.log('👥 Household member IDs:', Array.from(memberIds));
+
+      // Filter children to only those in the household
+      const householdChildren = (childrenData || [])
+        .filter(child => {
+          if (!child || typeof child !== 'object') {
+            console.warn('⚠️ Found invalid child record:', child);
+            return false;
+          }
+          
+          const isChildAccount = child.is_child_account === true || child.role === 'child';
+          const isInHousehold = memberIds.has(child.id);
+          
+          if (isChildAccount && isInHousehold) {
+            console.log('👶 Valid household child found:', child.first_name, child.last_name);
+          }
+          
+          return isChildAccount && isInHousehold;
+        })
+        .map(child => ({
+          id: child.id || '',
+          first_name: child.first_name || 'Unknown',
+          last_name: child.last_name || 'Child',
+          avatar_selection: child.avatar_selection || 'bear',
+          parent_id: child.parent_id || '',
+          created_at: child.created_at || new Date().toISOString()
+        }));
+
+      console.log('👥 Final processed children:', householdChildren.length, householdChildren);
+      setChildren(householdChildren);
     } catch (error: any) {
       console.error('❌ Error fetching children:', error);
       toast({
@@ -211,7 +223,7 @@ export const useChildrenManagement = (householdId: string | null) => {
     }
   };
 
-  // Set up real-time subscription for immediate updates
+  // Set up effect to fetch children when household changes
   useEffect(() => {
     console.log('🔄 useChildrenManagement effect triggered, householdId:', householdId);
     fetchChildren();
