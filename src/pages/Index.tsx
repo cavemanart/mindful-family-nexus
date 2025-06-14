@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,9 +64,14 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
         <CleanTopBar 
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          preferences={preferences}
+          user={user}
+          households={households}
+          selectedHousehold={selectedHousehold}
+          onHouseholdChange={(householdId) => {
+            const household = households.find(h => h.id === householdId);
+            if (household) selectHousehold(household);
+          }}
+          onSignOut={() => {}}
         />
         <div className="max-w-4xl mx-auto pt-20 px-4">
           <HouseholdSelector 
@@ -96,7 +102,7 @@ const Index = () => {
       case 'notes':
         return isVisible('notes') ? <FamilyNotes selectedHousehold={selectedHousehold} /> : null;
       case 'rules':
-        return isVisible('rules') ? <HouseRulesManager /> : null;
+        return isVisible('rules') ? <HouseRulesManager householdId={selectedHousehold.id} canEdit={true} /> : null;
       case 'weekly':
         return isVisible('weekly') ? <WeeklySync selectedHousehold={selectedHousehold} /> : null;
       case 'children':
@@ -115,9 +121,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       <CleanTopBar 
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-        preferences={preferences}
+        user={user}
+        households={households}
+        selectedHousehold={selectedHousehold}
+        onHouseholdChange={(householdId) => {
+          const household = households.find(h => h.id === householdId);
+          if (household) selectHousehold(household);
+        }}
+        onSignOut={() => {}}
       />
       
       <main className="max-w-7xl mx-auto pt-20 pb-20 px-4">
@@ -125,8 +136,8 @@ const Index = () => {
       </main>
 
       <CleanMobileNavigation 
-        onPageChange={setCurrentPage}
-        preferences={preferences}
+        activeTab={currentPage}
+        setActiveTab={setCurrentPage}
       />
     </div>
   );
