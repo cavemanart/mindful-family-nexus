@@ -5,18 +5,24 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChildren } from '@/hooks/useChildren';
 import { useChildSession } from '@/hooks/useChildSession';
-import { Child } from '@/hooks/useChildren';
+import { ArrowLeft } from 'lucide-react';
 
-interface ChildProfile extends Child {
+interface ChildProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_selection: string;
+  pin?: string;
   created_at: string;
 }
 
 interface ChildPinLoginProps {
   householdId: string;
-  onLoginSuccess: (child: ChildProfile) => void;
+  onLoginSuccess?: (child: ChildProfile) => void;
+  onBack?: () => void;
 }
 
-const ChildPinLogin: React.FC<ChildPinLoginProps> = ({ householdId, onLoginSuccess }) => {
+const ChildPinLogin: React.FC<ChildPinLoginProps> = ({ householdId, onLoginSuccess, onBack }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,14 +51,18 @@ const ChildPinLogin: React.FC<ChildPinLoginProps> = ({ householdId, onLoginSucce
 
       // Create a proper ChildProfile object
       const childProfile: ChildProfile = {
-        ...matchingChild,
+        id: matchingChild.id,
+        first_name: matchingChild.first_name,
+        last_name: matchingChild.last_name,
+        avatar_selection: matchingChild.avatar_selection,
+        pin: matchingChild.pin,
         created_at: matchingChild.created_at || new Date().toISOString()
       };
 
       const success = await loginWithPin(pin, householdId);
       
       if (success) {
-        onLoginSuccess(childProfile);
+        onLoginSuccess?.(childProfile);
       } else {
         setError('Login failed. Please try again.');
       }
@@ -71,37 +81,51 @@ const ChildPinLogin: React.FC<ChildPinLoginProps> = ({ householdId, onLoginSucce
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-center">Child Login</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Input
-              type="password"
-              placeholder="Enter 4-digit PIN"
-              value={pin}
-              onChange={handlePinChange}
-              maxLength={4}
-              className="text-center text-2xl tracking-widest"
-            />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 p-4">
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            {onBack && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBack}
+                className="p-1"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <CardTitle className="text-center flex-1">Child Login</CardTitle>
           </div>
-          
-          {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
-          )}
-          
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={pin.length !== 4 || loading}
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                type="password"
+                placeholder="Enter 4-digit PIN"
+                value={pin}
+                onChange={handlePinChange}
+                maxLength={4}
+                className="text-center text-2xl tracking-widest"
+              />
+            </div>
+            
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
+            
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={pin.length !== 4 || loading}
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

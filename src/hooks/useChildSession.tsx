@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChildProfile {
   id: string;
@@ -17,6 +18,7 @@ interface ChildSessionContextType {
   setActiveChild: (child: ChildProfile | null) => void;
   clearChildSession: () => void;
   childFullName: string | null;
+  loginWithPin: (pin: string, householdId: string) => Promise<boolean>;
 }
 
 const ChildSessionContext = createContext<ChildSessionContextType | undefined>(undefined);
@@ -42,6 +44,44 @@ export const ChildSessionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setActiveChildState(null);
   };
 
+  const loginWithPin = async (pin: string, householdId: string): Promise<boolean> => {
+    try {
+      console.log('🔐 Attempting PIN login for household:', householdId);
+      
+      const { data, error } = await supabase.rpc('verify_child_pin', {
+        p_pin: pin,
+        p_household_id: householdId
+      });
+
+      if (error) {
+        console.error('❌ PIN verification error:', error);
+        return false;
+      }
+
+      if (data && data.length > 0) {
+        const childData = data[0];
+        const childProfile: ChildProfile = {
+          id: childData.child_id,
+          first_name: childData.child_name.split(' ')[0],
+          last_name: childData.child_name.split(' ').slice(1).join(' '),
+          avatar_selection: childData.avatar_selection,
+          pin: pin,
+          created_at: new Date().toISOString()
+        };
+        
+        setActiveChild(childProfile);
+        console.log('✅ Child logged in successfully:', childProfile.first_name);
+        return true;
+      }
+
+      console.log('❌ No child found with this PIN');
+      return false;
+    } catch (error) {
+      console.error('❌ PIN login error:', error);
+      return false;
+    }
+  };
+
   const isChildMode = !!activeChild;
   const childFullName = activeChild ? `${activeChild.first_name} ${activeChild.last_name}` : null;
 
@@ -51,6 +91,7 @@ export const ChildSessionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setActiveChild,
     clearChildSession,
     childFullName,
+    loginWithPin,
   };
 
   return (

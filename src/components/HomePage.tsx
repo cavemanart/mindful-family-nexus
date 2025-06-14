@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
+import { useChildSession } from '@/hooks/useChildSession';
 import ChildPinLogin from './ChildPinLogin';
 import { 
   Calendar, 
@@ -19,11 +20,21 @@ import {
   Zap
 } from 'lucide-react';
 
+interface ChildProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  avatar_selection: string;
+  pin?: string;
+  created_at: string;
+}
+
 export default function HomePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [showChildLogin, setShowChildLogin] = useState(false);
   const { households } = useHouseholds();
+  const { setActiveChild } = useChildSession();
   
   // Get the first household for child login
   const firstHousehold = households?.[0];
@@ -34,6 +45,16 @@ export default function HomePage() {
       navigate('/dashboard');
     }
   }, [user, loading, navigate]);
+
+  const handleChildLoginSuccess = (child: ChildProfile) => {
+    console.log('👶 Child login successful:', child.first_name);
+    setActiveChild(child);
+    navigate('/dashboard');
+  };
+
+  const handleBackToHome = () => {
+    setShowChildLogin(false);
+  };
 
   if (loading) {
     return (
@@ -47,7 +68,8 @@ export default function HomePage() {
     return (
       <ChildPinLogin 
         householdId={firstHousehold.id}
-        onBack={() => setShowChildLogin(false)}
+        onLoginSuccess={handleChildLoginSuccess}
+        onBack={handleBackToHome}
       />
     );
   }

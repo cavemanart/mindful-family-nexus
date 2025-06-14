@@ -64,10 +64,14 @@ export const useChildren = (householdId: string | undefined) => {
 
       const childrenData = data
         ?.map(member => member.profiles)
-        .filter((profile): profile is Child => 
-          profile !== null && 
-          profile.is_child_account === true
-        ) || [];
+        .filter((profile): profile is Child => {
+          return profile !== null && 
+                 profile.is_child_account === true &&
+                 typeof profile.id === 'string' &&
+                 typeof profile.first_name === 'string' &&
+                 typeof profile.last_name === 'string' &&
+                 typeof profile.avatar_selection === 'string';
+        }) || [];
 
       console.log('👶 useChildren: Filtered children:', childrenData);
       setChildren(childrenData);
