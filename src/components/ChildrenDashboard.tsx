@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw, AlertCircle } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,10 +15,15 @@ interface ChildrenDashboardProps {
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold?.id || null);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold?.id || null);
-  const { children, loading: childrenLoading, refreshChildren } = useChildren(selectedHousehold?.id);
+  const { 
+    children, 
+    loading: childrenLoading, 
+    refreshChildren, 
+    isRefreshing,
+    subscriptionStatus 
+  } = useChildren(selectedHousehold?.id);
   
   const [selectedChild, setSelectedChild] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
   console.log(`🔍 ChildrenDashboard: Rendering with ${children.length} children for household:`, selectedHousehold?.id);
@@ -35,28 +40,36 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   // Handle successful child addition
   const handleChildAdded = async () => {
     console.log('🔍 ChildrenDashboard: Child added, performing force refresh');
-    setIsRefreshing(true);
-    try {
-      await refreshChildren();
-      setLastRefreshTime(new Date());
-      console.log('✅ ChildrenDashboard: Force refresh completed');
-    } finally {
-      setIsRefreshing(false);
-    }
+    await handleManualRefresh();
   };
 
   // Manual refresh function
   const handleManualRefresh = async () => {
     console.log('🔍 ChildrenDashboard: Manual refresh triggered');
-    setIsRefreshing(true);
     try {
       await refreshChildren();
       setLastRefreshTime(new Date());
       console.log('✅ ChildrenDashboard: Manual refresh completed');
-    } finally {
-      setIsRefreshing(false);
+    } catch (error) {
+      console.error('❌ ChildrenDashboard: Manual refresh failed:', error);
     }
   };
+
+  // Get connection status indicator
+  const getConnectionStatus = () => {
+    switch (subscriptionStatus) {
+      case 'SUBSCRIBED':
+        return { icon: Wifi, color: 'text-green-500', text: 'Real-time connected' };
+      case 'SUBSCRIPTION_ERROR':
+        return { icon: WifiOff, color: 'text-red-500', text: 'Real-time error' };
+      case 'connecting':
+        return { icon: Loader2, color: 'text-yellow-500', text: 'Connecting...' };
+      default:
+        return { icon: WifiOff, color: 'text-gray-500', text: 'Disconnected' };
+    }
+  };
+
+  const connectionStatus = getConnectionStatus();
 
   // Get the selected child's full name for matching
   const selectedChildData = children.find(child => child.first_name === selectedChild);
@@ -71,7 +84,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const childMessages = messages.filter(message => 
     message.to_member === selectedChild || 
     message.to_member === childFullName ||
-    message.to_member === null // General messages
+    message.to_member === null
   );
 
   const completedChores = childChores.filter(chore => chore.completed);
@@ -110,7 +123,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           <p className="text-muted-foreground mb-4">No children in this household yet!</p>
           <p className="text-muted-foreground text-sm mb-6">Add children to your household to see their tasks and progress.</p>
           
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center mb-4">
             {selectedHousehold && (
               <AddChildDialog 
                 householdId={selectedHousehold.id}
@@ -136,6 +149,12 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               )}
               Force Refresh
             </Button>
+          </div>
+
+          {/* Connection Status */}
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-4">
+            <connectionStatus.icon className={`h-3 w-3 ${connectionStatus.color} ${subscriptionStatus === 'connecting' ? 'animate-spin' : ''}`} />
+            <span>{connectionStatus.text}</span>
           </div>
           
           {selectedHousehold && (
@@ -170,13 +189,13 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             >
               {child.first_name}
               {child.id.startsWith('temp-') && (
-                <AlertCircle className="ml-1 h-3 w-3 text-amber-500" />
+                <AlertCircle className="ml-1 h-3 w-3 text-amber-500" title="Syncing..." />
               )}
             </Button>
           ))}
         </div>
         
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-2 justify-center mb-4">
           {selectedHousehold && (
             <AddChildDialog 
               householdId={selectedHousehold.id}
@@ -205,21 +224,32 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           </Button>
         </div>
 
+        {/* Connection Status */}
+        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
+          <connectionStatus.icon className={`h-3 w-3 ${connectionStatus.color} ${subscriptionStatus === 'connecting' ? 'animate-spin' : ''}`} />
+          <span>{connectionStatus.text}</span>
+        </div>
+
         {lastRefreshTime && (
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-muted-foreground">
             Last refresh: {lastRefreshTime.toLocaleTimeString()}
           </p>
         )}
       </div>
 
-      {/* Debug Information */}
+      {/* Debug Information - Enhanced */}
       <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700">
         <CardContent className="p-4">
           <div className="text-sm space-y-1">
             <p><strong>Household ID:</strong> {selectedHousehold?.id}</p>
             <p><strong>Children Count:</strong> {children.length}</p>
-            <p><strong>Children:</strong> {children.map(c => c.first_name).join(', ') || 'None'}</p>
+            <p><strong>Children:</strong> {children.map(c => `${c.first_name} (${c.id.startsWith('temp-') ? 'syncing' : 'saved'})`).join(', ') || 'None'}</p>
             <p><strong>Selected Child:</strong> {selectedChild || 'None'}</p>
+            <p><strong>Real-time Status:</strong> 
+              <span className={connectionStatus.color.replace('text-', 'text-')}>
+                {connectionStatus.text}
+              </span>
+            </p>
             {lastRefreshTime && (
               <p><strong>Last Refresh:</strong> {lastRefreshTime.toLocaleString()}</p>
             )}
