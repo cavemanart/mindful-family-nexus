@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Bell, LogOut, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const navigationItems = [
     { key: 'dashboard', label: 'Dashboard' },
     { key: 'notes', label: 'Notes' },
-    { key: 'appreciations', label: 'Appreciations' },
+    { key: 'mvp', label: 'MVP' },
     { key: 'bills', label: 'Bills' },
     { key: 'mental-load', label: 'Mental Load' },
     { key: 'weekly-sync', label: 'Weekly Sync' },

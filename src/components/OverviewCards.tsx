@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Heart, Calendar, Users } from 'lucide-react';
+import { Heart, Calendar, Users, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -11,6 +10,31 @@ interface OverviewCardsProps {
 const OverviewCards: React.FC<OverviewCardsProps> = ({ setActiveSection }) => {
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg text-foreground">
+            <Trophy className="text-yellow-500" size={20} />
+            MVP of the Day
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-lg">
+              <p className="text-sm text-foreground">"Amazing work on the presentation! 🏆"</p>
+              <p className="text-xs text-muted-foreground mt-1">Today's MVP: Sarah</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="w-full text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950/30"
+              onClick={() => setActiveSection('mvp')}
+            >
+              View MVPs
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg text-foreground">

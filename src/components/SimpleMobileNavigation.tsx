@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar } from 'lucide-react';
+import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar } from 'lucide-react';
 
 interface SimpleMobileNavigationProps {
   activeTab: string;
@@ -10,7 +9,7 @@ interface SimpleMobileNavigationProps {
 const SimpleMobileNavigation: React.FC<SimpleMobileNavigationProps> = ({ activeTab, setActiveTab }) => {
   const navigationItems = [
     { key: 'dashboard', label: 'Home', icon: Home },
-    { key: 'appreciations', label: 'Thanks', icon: Heart },
+    { key: 'mvp', label: 'MVP', icon: Trophy },
     { key: 'bills', label: 'Bills', icon: DollarSign },
     { key: 'notes', label: 'Notes', icon: StickyNote },
     { key: 'mental-load', label: 'Tasks', icon: Brain },

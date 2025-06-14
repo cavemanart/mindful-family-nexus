@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, DollarSign, StickyNote, Users, Calendar, Baby } from 'lucide-react';
+import { Heart, DollarSign, StickyNote, Users, Calendar, Baby, Trophy } from 'lucide-react';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 interface QuickActionsProps {
@@ -12,6 +11,15 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
   const { getVisiblePages } = usePagePreferences();
 
   const actions = [
+    {
+      key: 'mvp',
+      title: 'Nominate MVP',
+      description: 'Celebrate family heroes',
+      icon: Trophy,
+      action: () => setActiveSection('mvp'),
+      color: 'from-yellow-500 to-orange-500',
+      bgColor: 'bg-gradient-to-br from-yellow-50/50 to-orange-50/50 dark:from-yellow-950/30 dark:to-orange-950/30'
+    },
     {
       key: 'appreciations',
       title: 'Send Appreciation',

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +20,7 @@ import NannyDashboard from '@/components/NannyDashboard';
 import ChildDashboard from '@/components/ChildDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
 import FamilyCalendar from '@/components/FamilyCalendar';
+import MVPOfTheDay from '@/components/MVPOfTheDay';
 
 const Index = () => {
   const { user, userProfile, signOut, loading: authLoading, error: authError, retry: retryAuth } = useAuth();
@@ -219,7 +219,7 @@ const Index = () => {
       case 'grandparent':
       default:
         if (activeTab === 'dashboard') return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
-        if (activeTab === 'appreciations' && isPageVisible('appreciations')) return <Appreciations selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'mvp' && isPageVisible('mvp')) return <MVPOfTheDay selectedHousehold={selectedHousehold} />;
         if (activeTab === 'bills' && isPageVisible('bills')) return <BillsTracker selectedHousehold={selectedHousehold} />;
         if (activeTab === 'notes' && isPageVisible('notes')) return <FamilyNotes selectedHousehold={selectedHousehold} />;
         if (activeTab === 'calendar' && isPageVisible('calendar')) return <FamilyCalendar selectedHousehold={selectedHousehold} />;

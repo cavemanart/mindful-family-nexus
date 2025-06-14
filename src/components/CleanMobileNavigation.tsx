@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User } from 'lucide-react';
+import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,7 +17,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   // Primary navigation items (shown in bottom bar) - now includes profile
   const primaryItems = [
     { key: 'dashboard', label: 'Home', icon: Home },
-    { key: 'appreciations', label: 'Thanks', icon: Heart },
+    { key: 'mvp', label: 'MVP', icon: Trophy },
     { key: 'bills', label: 'Bills', icon: DollarSign },
     { key: 'notes', label: 'Notes', icon: StickyNote },
     { key: 'profile', label: 'Profile', icon: User, alwaysVisible: true },

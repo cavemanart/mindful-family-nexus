@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Home, Heart, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X } from 'lucide-react';
+import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +14,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiv
   // Primary navigation items (shown in bottom bar)
   const primaryItems = [
     { key: 'dashboard', label: 'Home', icon: Home },
-    { key: 'appreciations', label: 'Thanks', icon: Heart },
+    { key: 'mvp', label: 'MVP', icon: Trophy },
     { key: 'bills', label: 'Bills', icon: DollarSign },
     { key: 'notes', label: 'Notes', icon: StickyNote },
   ];

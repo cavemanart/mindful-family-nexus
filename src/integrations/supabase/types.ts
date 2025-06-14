@@ -9,162 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      appreciation_comments: {
-        Row: {
-          appreciation_id: string
-          comment: string
-          commenter_name: string
-          commenter_user_id: string | null
-          created_at: string
-          household_id: string
-          id: string
-        }
-        Insert: {
-          appreciation_id: string
-          comment: string
-          commenter_name: string
-          commenter_user_id?: string | null
-          created_at?: string
-          household_id: string
-          id?: string
-        }
-        Update: {
-          appreciation_id?: string
-          comment?: string
-          commenter_name?: string
-          commenter_user_id?: string | null
-          created_at?: string
-          household_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appreciation_comments_appreciation_id_fkey"
-            columns: ["appreciation_id"]
-            isOneToOne: false
-            referencedRelation: "appreciations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appreciation_comments_commenter_user_id_fkey"
-            columns: ["commenter_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appreciation_comments_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      appreciation_reactions: {
-        Row: {
-          appreciation_id: string
-          created_at: string
-          household_id: string
-          id: string
-          reactor_name: string
-          reactor_user_id: string | null
-        }
-        Insert: {
-          appreciation_id: string
-          created_at?: string
-          household_id: string
-          id?: string
-          reactor_name: string
-          reactor_user_id?: string | null
-        }
-        Update: {
-          appreciation_id?: string
-          created_at?: string
-          household_id?: string
-          id?: string
-          reactor_name?: string
-          reactor_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appreciation_reactions_appreciation_id_fkey"
-            columns: ["appreciation_id"]
-            isOneToOne: false
-            referencedRelation: "appreciations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appreciation_reactions_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appreciation_reactions_reactor_user_id_fkey"
-            columns: ["reactor_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      appreciations: {
-        Row: {
-          created_at: string
-          from_member: string
-          from_user_id: string | null
-          household_id: string
-          id: string
-          message: string
-          to_member: string
-          to_user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          from_member: string
-          from_user_id?: string | null
-          household_id: string
-          id?: string
-          message: string
-          to_member: string
-          to_user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          from_member?: string
-          from_user_id?: string | null
-          household_id?: string
-          id?: string
-          message?: string
-          to_member?: string
-          to_user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appreciations_from_user_id_fkey"
-            columns: ["from_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appreciations_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appreciations_to_user_id_fkey"
-            columns: ["to_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bills: {
         Row: {
           amount: number
@@ -765,6 +609,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mvp_nominations: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          household_id: string
+          id: string
+          nominated_by: string
+          nominated_by_user_id: string | null
+          nominated_for: string
+          nominated_for_user_id: string | null
+          nomination_date: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          household_id: string
+          id?: string
+          nominated_by: string
+          nominated_by_user_id?: string | null
+          nominated_for: string
+          nominated_for_user_id?: string | null
+          nomination_date?: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          household_id?: string
+          id?: string
+          nominated_by?: string
+          nominated_by_user_id?: string | null
+          nominated_for?: string
+          nominated_for_user_id?: string | null
+          nomination_date?: string
+          reason?: string
+        }
+        Relationships: []
       }
       nanny_access_tokens: {
         Row: {
