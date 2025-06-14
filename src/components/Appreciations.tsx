@@ -38,7 +38,15 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
     to_member: '',
   });
 
-  const currentUserName = getCurrentUserName();
+  // Add safety check for getCurrentUserName
+  const currentUserName = React.useMemo(() => {
+    try {
+      return getCurrentUserName();
+    } catch (error) {
+      console.error('❌ Appreciations: Error getting current user name:', error);
+      return 'Unknown User';
+    }
+  }, [getCurrentUserName]);
 
   const handleAddAppreciation = async () => {
     if (newAppreciation.message.trim() && newAppreciation.to_member) {
@@ -54,6 +62,29 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
       }
     }
   };
+
+  // Add loading state and error handling
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
+          <p className="text-muted-foreground">Please log in to view appreciations</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedHousehold) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
+          <p className="text-muted-foreground">Please select a household to view appreciations</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -47,18 +46,33 @@ export const useAppreciations = (householdId: string | null) => {
   const { toast } = useToast();
   const { user, userProfile } = useAuth();
 
-  // Get current user's full name
+  // Get current user's full name with proper null checks
   const getCurrentUserName = () => {
-    if (userProfile?.first_name && userProfile?.last_name) {
+    if (!userProfile) {
+      console.log('📝 useAppreciations: userProfile is null');
+      return 'Unknown User';
+    }
+    
+    if (userProfile.first_name && userProfile.last_name) {
       return `${userProfile.first_name} ${userProfile.last_name}`.trim();
     }
+    
+    if (userProfile.first_name) {
+      return userProfile.first_name;
+    }
+    
     return 'Unknown User';
   };
 
   const fetchHouseholdMembers = async () => {
-    if (!householdId) return;
+    if (!householdId) {
+      console.log('📝 useAppreciations: No householdId provided');
+      return;
+    }
 
     try {
+      console.log('📝 useAppreciations: Fetching household members for:', householdId);
+      
       const { data, error } = await supabase
         .from('household_members')
         .select(`
@@ -72,18 +86,31 @@ export const useAppreciations = (householdId: string | null) => {
         `)
         .eq('household_id', householdId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ useAppreciations: Error fetching household members:', error);
+        throw error;
+      }
       
-      const members = data?.map(member => ({
-        id: member.profiles.id,
-        first_name: member.profiles.first_name || 'Unknown',
-        last_name: member.profiles.last_name || 'User',
-        role: member.profiles.role || 'member'
-      })) || [];
+      console.log('📊 useAppreciations: Raw household members data:', data);
       
+      const members = data?.map(member => {
+        if (!member.profiles) {
+          console.warn('⚠️ useAppreciations: Member has no profile:', member);
+          return null;
+        }
+        
+        return {
+          id: member.profiles.id,
+          first_name: member.profiles.first_name || 'Unknown',
+          last_name: member.profiles.last_name || 'User',
+          role: member.profiles.role || 'member'
+        };
+      }).filter(Boolean) || [];
+      
+      console.log('👥 useAppreciations: Processed members:', members);
       setHouseholdMembers(members);
     } catch (error: any) {
-      console.error('Error fetching household members:', error);
+      console.error('❌ useAppreciations: Error fetching household members:', error);
       toast({
         title: "Error fetching family members",
         description: error.message,
@@ -94,20 +121,29 @@ export const useAppreciations = (householdId: string | null) => {
 
   const fetchAppreciations = async () => {
     if (!householdId) {
+      console.log('📝 useAppreciations: No householdId provided for appreciations');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('📝 useAppreciations: Fetching appreciations for household:', householdId);
+      
       const { data, error } = await supabase
         .from('appreciations')
         .select('*')
         .eq('household_id', householdId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ useAppreciations: Error fetching appreciations:', error);
+        throw error;
+      }
+      
+      console.log('💝 useAppreciations: Fetched appreciations:', data);
       setAppreciations(data || []);
     } catch (error: any) {
+      console.error('❌ useAppreciations: Error in fetchAppreciations:', error);
       toast({
         title: "Error fetching appreciations",
         description: error.message,
@@ -119,7 +155,10 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const fetchComments = async (appreciationId: string) => {
-    if (!householdId) return;
+    if (!householdId) {
+      console.log('📝 useAppreciations: No householdId for comments');
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -132,6 +171,7 @@ export const useAppreciations = (householdId: string | null) => {
       if (error) throw error;
       setComments(prev => ({ ...prev, [appreciationId]: data || [] }));
     } catch (error: any) {
+      console.error('❌ useAppreciations: Error fetching comments:', error);
       toast({
         title: "Error fetching comments",
         description: error.message,
@@ -141,7 +181,10 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const fetchReactions = async (appreciationId: string) => {
-    if (!householdId) return;
+    if (!householdId) {
+      console.log('📝 useAppreciations: No householdId for reactions');
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -153,6 +196,7 @@ export const useAppreciations = (householdId: string | null) => {
       if (error) throw error;
       setReactions(prev => ({ ...prev, [appreciationId]: data || [] }));
     } catch (error: any) {
+      console.error('❌ useAppreciations: Error fetching reactions:', error);
       toast({
         title: "Error fetching reactions",
         description: error.message,
@@ -162,7 +206,16 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member'>) => {
-    if (!householdId || !user) {
+    if (!householdId) {
+      toast({
+        title: "Error",
+        description: "No household selected",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to add appreciations",
@@ -174,7 +227,7 @@ export const useAppreciations = (householdId: string | null) => {
     try {
       const currentUserName = getCurrentUserName();
       
-      console.log('🔄 Adding appreciation:', {
+      console.log('🔄 useAppreciations: Adding appreciation:', {
         ...appreciationData,
         household_id: householdId,
         from_member: currentUserName
@@ -189,7 +242,7 @@ export const useAppreciations = (householdId: string | null) => {
         }]);
 
       if (error) {
-        console.error('❌ Error adding appreciation:', error);
+        console.error('❌ useAppreciations: Error adding appreciation:', error);
         throw error;
       }
       
@@ -201,7 +254,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchAppreciations();
       return true;
     } catch (error: any) {
-      console.error('Error adding appreciation:', error);
+      console.error('❌ useAppreciations: Error adding appreciation:', error);
       toast({
         title: "Error adding appreciation",
         description: error.message,
@@ -212,7 +265,7 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const updateAppreciation = async (id: string, updates: Partial<Appreciation>) => {
-    if (!user) {
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to update appreciations",
@@ -222,7 +275,7 @@ export const useAppreciations = (householdId: string | null) => {
     }
 
     try {
-      console.log('🔄 Updating appreciation:', id, updates);
+      console.log('🔄 useAppreciations: Updating appreciation:', id, updates);
       
       const { error } = await supabase
         .from('appreciations')
@@ -230,7 +283,7 @@ export const useAppreciations = (householdId: string | null) => {
         .eq('id', id);
 
       if (error) {
-        console.error('❌ Error updating appreciation:', error);
+        console.error('❌ useAppreciations: Error updating appreciation:', error);
         throw error;
       }
       
@@ -242,7 +295,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchAppreciations();
       return true;
     } catch (error: any) {
-      console.error('Error updating appreciation:', error);
+      console.error('❌ useAppreciations: Error updating appreciation:', error);
       toast({
         title: "Error updating appreciation",
         description: error.message,
@@ -253,7 +306,7 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const deleteAppreciation = async (id: string) => {
-    if (!user) {
+    if (!user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to delete appreciations",
@@ -263,7 +316,7 @@ export const useAppreciations = (householdId: string | null) => {
     }
 
     try {
-      console.log('🔄 Deleting appreciation:', id);
+      console.log('🔄 useAppreciations: Deleting appreciation:', id);
       
       const { error } = await supabase
         .from('appreciations')
@@ -271,7 +324,7 @@ export const useAppreciations = (householdId: string | null) => {
         .eq('id', id);
 
       if (error) {
-        console.error('❌ Error deleting appreciation:', error);
+        console.error('❌ useAppreciations: Error deleting appreciation:', error);
         throw error;
       }
       
@@ -283,7 +336,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchAppreciations();
       return true;
     } catch (error: any) {
-      console.error('Error deleting appreciation:', error);
+      console.error('❌ useAppreciations: Error deleting appreciation:', error);
       toast({
         title: "Error deleting appreciation",
         description: error.message,
@@ -294,7 +347,7 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const toggleReaction = async (appreciationId: string, reactorName: string) => {
-    if (!householdId || !user) {
+    if (!householdId || !user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to react",
@@ -331,7 +384,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchReactions(appreciationId);
       return true;
     } catch (error: any) {
-      console.error('Error updating reaction:', error);
+      console.error('❌ useAppreciations: Error updating reaction:', error);
       toast({
         title: "Error updating reaction",
         description: error.message,
@@ -342,7 +395,7 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const addComment = async (appreciationId: string, commenterName: string, comment: string) => {
-    if (!householdId || !user) {
+    if (!householdId || !user?.id) {
       toast({
         title: "Error",
         description: "You must be logged in to comment",
@@ -366,7 +419,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchComments(appreciationId);
       return true;
     } catch (error: any) {
-      console.error('Error adding comment:', error);
+      console.error('❌ useAppreciations: Error adding comment:', error);
       toast({
         title: "Error adding comment",
         description: error.message,
@@ -377,9 +430,17 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   useEffect(() => {
-    fetchAppreciations();
-    fetchHouseholdMembers();
-  }, [householdId]);
+    console.log('🔄 useAppreciations: Effect triggered with:', { householdId, userId: user?.id });
+    
+    // Only fetch if we have both householdId and user
+    if (householdId && user?.id) {
+      fetchAppreciations();
+      fetchHouseholdMembers();
+    } else {
+      console.log('📝 useAppreciations: Skipping fetch - missing householdId or user');
+      setLoading(false);
+    }
+  }, [householdId, user?.id]);
 
   return {
     appreciations,
