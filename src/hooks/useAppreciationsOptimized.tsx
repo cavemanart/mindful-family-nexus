@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -419,8 +418,9 @@ export const useAppreciationsOptimized = (householdId: string | null) => {
         },
         (payload) => {
           console.log('Comments changed, refreshing...');
-          if (payload.new?.appreciation_id) {
-            fetchComments(payload.new.appreciation_id);
+          const newRecord = payload.new as any;
+          if (newRecord?.appreciation_id) {
+            fetchComments(newRecord.appreciation_id);
           }
           fetchAppreciations();
         }
@@ -435,8 +435,9 @@ export const useAppreciationsOptimized = (householdId: string | null) => {
         },
         (payload) => {
           console.log('Reactions changed, refreshing...');
-          if (payload.new?.appreciation_id) {
-            fetchReactions(payload.new.appreciation_id);
+          const newRecord = payload.new as any;
+          if (newRecord?.appreciation_id) {
+            fetchReactions(newRecord.appreciation_id);
           }
           fetchAppreciations();
         }

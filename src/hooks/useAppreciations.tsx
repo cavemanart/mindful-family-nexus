@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -9,9 +8,10 @@ export interface Appreciation {
   message: string;
   from_member: string;
   to_member: string;
-  reactions: number;
   created_at: string;
   household_id: string;
+  from_user_id?: string;
+  to_user_id?: string;
 }
 
 export interface AppreciationComment {
@@ -142,7 +142,20 @@ export const useAppreciations = (householdId: string | null) => {
       }
       
       console.log('💝 useAppreciations: Fetched appreciations:', data);
-      setAppreciations(data || []);
+      
+      // Transform data to match interface (remove reactions field if it exists)
+      const transformedData = data?.map(item => ({
+        id: item.id,
+        message: item.message,
+        from_member: item.from_member,
+        to_member: item.to_member,
+        created_at: item.created_at,
+        household_id: item.household_id,
+        from_user_id: item.from_user_id,
+        to_user_id: item.to_user_id
+      })) || [];
+      
+      setAppreciations(transformedData);
     } catch (error: any) {
       console.error('❌ useAppreciations: Error in fetchAppreciations:', error);
       toast({
