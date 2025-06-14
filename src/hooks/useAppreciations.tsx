@@ -49,8 +49,8 @@ export const useAppreciations = (householdId: string | null) => {
 
   // Get current user's full name
   const getCurrentUserName = () => {
-    if (userProfile) {
-      return `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'Unknown User';
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name} ${userProfile.last_name}`.trim();
     }
     return 'Unknown User';
   };
@@ -174,6 +174,12 @@ export const useAppreciations = (householdId: string | null) => {
     try {
       const currentUserName = getCurrentUserName();
       
+      console.log('🔄 Adding appreciation:', {
+        ...appreciationData,
+        household_id: householdId,
+        from_member: currentUserName
+      });
+      
       const { error } = await supabase
         .from('appreciations')
         .insert([{ 
@@ -182,7 +188,10 @@ export const useAppreciations = (householdId: string | null) => {
           from_member: currentUserName
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error adding appreciation:', error);
+        throw error;
+      }
       
       toast({
         title: "Success",
@@ -213,12 +222,17 @@ export const useAppreciations = (householdId: string | null) => {
     }
 
     try {
+      console.log('🔄 Updating appreciation:', id, updates);
+      
       const { error } = await supabase
         .from('appreciations')
         .update(updates)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error updating appreciation:', error);
+        throw error;
+      }
       
       toast({
         title: "Success",
@@ -249,12 +263,17 @@ export const useAppreciations = (householdId: string | null) => {
     }
 
     try {
+      console.log('🔄 Deleting appreciation:', id);
+      
       const { error } = await supabase
         .from('appreciations')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error deleting appreciation:', error);
+        throw error;
+      }
       
       toast({
         title: "Success",

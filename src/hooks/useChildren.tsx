@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,11 +11,14 @@ export interface Child {
   avatar_selection: string;
   is_child_account: boolean;
   parent_id?: string;
+  pin?: string;
+  created_at?: string;
 }
 
 export const useChildren = (householdId: string | undefined) => {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<'connecting' | 'SUBSCRIBED' | 'SUBSCRIPTION_ERROR' | 'disconnected'>('disconnected');
   const [retryCount, setRetryCount] = useState(0);
@@ -44,7 +48,9 @@ export const useChildren = (householdId: string | undefined) => {
             last_name,
             avatar_selection,
             is_child_account,
-            parent_id
+            parent_id,
+            pin,
+            created_at
           )
         `)
         .eq('household_id', householdId);
@@ -94,6 +100,64 @@ export const useChildren = (householdId: string | undefined) => {
       setIsRefreshing(false);
     }
   }, [householdId, user?.id, retryCount, toast]);
+
+  const createChild = useCallback(async (childData: {
+    firstName: string;
+    lastName: string;
+    pin: string;
+    avatarSelection: string;
+  }) => {
+    if (!householdId || !user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add children",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setCreating(true);
+
+    try {
+      console.log('🔄 useChildren: Creating child:', childData);
+
+      const { data, error } = await supabase.rpc('create_child_profile', {
+        p_first_name: childData.firstName,
+        p_last_name: childData.lastName,
+        p_pin: childData.pin,
+        p_avatar_selection: childData.avatarSelection,
+        p_parent_id: user.id,
+        p_household_id: householdId
+      });
+
+      if (error) {
+        console.error('❌ useChildren: Error creating child:', error);
+        throw error;
+      }
+
+      console.log('✅ useChildren: Child created successfully:', data);
+
+      toast({
+        title: "Success",
+        description: "Child account created successfully!",
+      });
+
+      // Refresh the children list
+      await fetchChildren();
+      return true;
+
+    } catch (error: any) {
+      console.error('❌ useChildren: Create child error:', error);
+      toast({
+        title: "Error creating child",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setCreating(false);
+    }
+  }, [householdId, user?.id, fetchChildren, toast]);
 
   const addOptimisticChild = useCallback((newChild: Omit<Child, 'id'>) => {
     const optimisticChild: Child = {
@@ -151,7 +215,9 @@ export const useChildren = (householdId: string | undefined) => {
           },
           (payload) => {
             console.log('📡 useChildren: Profile update received:', payload);
-            if (payload.new?.is_child_account || payload.old?.is_child_account) {
+            const newRecord = payload.new as any;
+            const oldRecord = payload.old as any;
+            if (newRecord?.is_child_account || oldRecord?.is_child_account) {
               fetchChildren();
             }
           }
@@ -162,7 +228,7 @@ export const useChildren = (householdId: string | undefined) => {
           if (status === 'SUBSCRIBED') {
             setSubscriptionStatus('SUBSCRIBED');
             console.log('✅ useChildren: Successfully subscribed to realtime updates');
-          } else if (status === 'SUBSCRIPTION_ERROR') {
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
             setSubscriptionStatus('SUBSCRIPTION_ERROR');
             console.error('❌ useChildren: Subscription error');
           }
@@ -191,8 +257,10 @@ export const useChildren = (householdId: string | undefined) => {
   return {
     children,
     loading,
+    creating,
     refreshChildren,
     addOptimisticChild,
+    createChild,
     isRefreshing,
     subscriptionStatus,
     lastFetchTime,
