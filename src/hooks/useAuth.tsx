@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -134,6 +133,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   };
 
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
+    console.log('📝 Signing up user:', email, role);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth`,
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          role: role,
+          is_child_account: role === 'child',
+        },
+      },
+    });
+    return { data, error };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    console.log('🔑 Signing in user:', email);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { data, error };
+  };
+
+  const signOut = async () => {
+    console.log('🚪 Signing out user');
+    await supabase.auth.signOut();
+    setUserProfile(null);
+    setError(null);
+  };
+
   useEffect(() => {
     let mounted = true;
     
@@ -201,40 +234,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
   }, []);
-
-  const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
-    console.log('📝 Signing up user:', email, role);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth`,
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          role: role,
-          is_child_account: role === 'child',
-        },
-      },
-    });
-    return { data, error };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    console.log('🔑 Signing in user:', email);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error };
-  };
-
-  const signOut = async () => {
-    console.log('🚪 Signing out user');
-    await supabase.auth.signOut();
-    setUserProfile(null);
-    setError(null);
-  };
 
   const value = {
     user,
