@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { AdvancedCalendarEvent, EventCategory } from '@/types/calendar';
 
 export const useAdvancedCalendar = (householdId: string | null) => {
@@ -11,6 +11,7 @@ export const useAdvancedCalendar = (householdId: string | null) => {
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchEvents = async () => {
     if (!householdId || !user) return;
@@ -30,7 +31,11 @@ export const useAdvancedCalendar = (householdId: string | null) => {
       if (fetchError) {
         console.error('❌ Error fetching calendar events:', fetchError);
         setError('Failed to load events');
-        toast.error('Failed to load events');
+        toast({
+          title: "Error",
+          description: "Failed to load events",
+          variant: "destructive"
+        });
       } else {
         console.log('✅ Advanced calendar events loaded:', data?.length || 0);
         setEvents(data || []);
@@ -39,7 +44,11 @@ export const useAdvancedCalendar = (householdId: string | null) => {
     } catch (error) {
       console.error('🚨 Error fetching calendar events:', error);
       setError('Failed to load events');
-      toast.error('Failed to load events');
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -59,14 +68,22 @@ export const useAdvancedCalendar = (householdId: string | null) => {
 
       if (fetchError) {
         console.error('❌ Error fetching categories:', fetchError);
-        toast.error('Failed to load categories');
+        toast({
+          title: "Error",
+          description: "Failed to load categories",
+          variant: "destructive"
+        });
       } else {
         console.log('✅ Categories loaded:', data?.length || 0);
         setCategories(data || []);
       }
     } catch (error) {
       console.error('🚨 Error fetching categories:', error);
-      toast.error('Failed to load categories');
+      toast({
+        title: "Error",
+        description: "Failed to load categories",
+        variant: "destructive"
+      });
     }
   };
 
@@ -95,17 +112,28 @@ export const useAdvancedCalendar = (householdId: string | null) => {
 
       if (error) {
         console.error('❌ Error creating calendar event:', error);
-        toast.error('Failed to create event');
+        toast({
+          title: "Error",
+          description: "Failed to create event",
+          variant: "destructive"
+        });
         return null;
       }
 
       console.log('✅ Advanced calendar event created:', data.id);
-      toast.success('Event created successfully');
+      toast({
+        title: "Success",
+        description: "Event created successfully"
+      });
       await fetchEvents();
       return data;
     } catch (error) {
       console.error('🚨 Error creating calendar event:', error);
-      toast.error('Failed to create event');
+      toast({
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -125,17 +153,28 @@ export const useAdvancedCalendar = (householdId: string | null) => {
 
       if (error) {
         console.error('❌ Error updating calendar event:', error);
-        toast.error('Failed to update event');
+        toast({
+          title: "Error",
+          description: "Failed to update event",
+          variant: "destructive"
+        });
         return null;
       }
 
       console.log('✅ Calendar event updated:', data.id);
-      toast.success('Event updated successfully');
+      toast({
+        title: "Success",
+        description: "Event updated successfully"
+      });
       await fetchEvents();
       return data;
     } catch (error) {
       console.error('🚨 Error updating calendar event:', error);
-      toast.error('Failed to update event');
+      toast({
+        title: "Error",
+        description: "Failed to update event",
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -153,17 +192,28 @@ export const useAdvancedCalendar = (householdId: string | null) => {
 
       if (error) {
         console.error('❌ Error deleting calendar event:', error);
-        toast.error('Failed to delete event');
+        toast({
+          title: "Error",
+          description: "Failed to delete event",
+          variant: "destructive"
+        });
         return false;
       }
 
       console.log('✅ Calendar event deleted');
-      toast.success('Event deleted successfully');
+      toast({
+        title: "Success",
+        description: "Event deleted successfully"
+      });
       await fetchEvents();
       return true;
     } catch (error) {
       console.error('🚨 Error deleting calendar event:', error);
-      toast.error('Failed to delete event');
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive"
+      });
       return false;
     }
   };

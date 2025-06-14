@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 export interface SimpleCalendarEvent {
   id: string;
@@ -19,6 +19,7 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
   const [events, setEvents] = useState<SimpleCalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const fetchEvents = async () => {
     if (!householdId || !user) return;
@@ -38,7 +39,11 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
       if (fetchError) {
         console.error('❌ Error fetching calendar events:', fetchError);
         setError('Failed to load events');
-        toast.error('Failed to load events');
+        toast({
+          title: "Error",
+          description: "Failed to load events",
+          variant: "destructive"
+        });
       } else {
         console.log('✅ Calendar events loaded:', data?.length || 0);
         setEvents(data || []);
@@ -47,7 +52,11 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
     } catch (error) {
       console.error('🚨 Error fetching calendar events:', error);
       setError('Failed to load events');
-      toast.error('Failed to load events');
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -77,17 +86,28 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
 
       if (error) {
         console.error('❌ Error creating calendar event:', error);
-        toast.error('Failed to create event');
+        toast({
+          title: "Error",
+          description: "Failed to create event",
+          variant: "destructive"
+        });
         return null;
       }
 
       console.log('✅ Calendar event created:', data.id);
-      toast.success('Event created successfully');
-      await fetchEvents(); // Refresh events
+      toast({
+        title: "Success",
+        description: "Event created successfully"
+      });
+      await fetchEvents();
       return data;
     } catch (error) {
       console.error('🚨 Error creating calendar event:', error);
-      toast.error('Failed to create event');
+      toast({
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -107,17 +127,28 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
 
       if (error) {
         console.error('❌ Error updating calendar event:', error);
-        toast.error('Failed to update event');
+        toast({
+          title: "Error",
+          description: "Failed to update event",
+          variant: "destructive"
+        });
         return null;
       }
 
       console.log('✅ Calendar event updated:', data.id);
-      toast.success('Event updated successfully');
-      await fetchEvents(); // Refresh events
+      toast({
+        title: "Success",
+        description: "Event updated successfully"
+      });
+      await fetchEvents();
       return data;
     } catch (error) {
       console.error('🚨 Error updating calendar event:', error);
-      toast.error('Failed to update event');
+      toast({
+        title: "Error",
+        description: "Failed to update event",
+        variant: "destructive"
+      });
       return null;
     }
   };
@@ -135,17 +166,28 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
 
       if (error) {
         console.error('❌ Error deleting calendar event:', error);
-        toast.error('Failed to delete event');
+        toast({
+          title: "Error",
+          description: "Failed to delete event",
+          variant: "destructive"
+        });
         return false;
       }
 
       console.log('✅ Calendar event deleted');
-      toast.success('Event deleted successfully');
-      await fetchEvents(); // Refresh events
+      toast({
+        title: "Success",
+        description: "Event deleted successfully"
+      });
+      await fetchEvents();
       return true;
     } catch (error) {
       console.error('🚨 Error deleting calendar event:', error);
-      toast.error('Failed to delete event');
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive"
+      });
       return false;
     }
   };
