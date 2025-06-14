@@ -15,41 +15,6 @@ interface AppreciationsOptimizedProps {
 const AppreciationsOptimized: React.FC<AppreciationsOptimizedProps> = ({ selectedHousehold }) => {
   const { user, userProfile } = useAuth();
   const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  // Early return if no user to prevent hook errors
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
-          <p className="text-muted-foreground">Please log in to view appreciations</p>
-          <Button onClick={() => window.location.href = '/auth'} className="mt-4">
-            Go to Login
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!selectedHousehold) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
-          <p className="text-muted-foreground">Please select a household to view appreciations</p>
-        </div>
-      </div>
-    );
-  }
-
-  return <AppreciationsContent selectedHousehold={selectedHousehold} />;
-};
-
-// Separate component for when user is authenticated
-const AppreciationsContent: React.FC<{ selectedHousehold: Household }> = ({ selectedHousehold }) => {
-  const { user, userProfile } = useAuth();
-  const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
   
   const { 
     appreciations, 
@@ -81,66 +46,33 @@ const AppreciationsContent: React.FC<{ selectedHousehold: Household }> = ({ sele
     return success;
   };
 
-  // Loading skeleton component
-  const LoadingSkeleton = () => (
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="animate-pulse">
-          <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-32 w-full"></div>
-        </div>
-      ))}
-    </div>
-  );
-
-  // Error state component
-  const ErrorState = () => (
-    <div className="flex items-center justify-center py-12">
-      <div className="text-center max-w-md">
-        <div className="mb-4">
-          {navigator.onLine ? (
-            <Heart className="text-red-400 mx-auto" size={48} />
-          ) : (
-            <WifiOff className="text-gray-400 mx-auto" size={48} />
-          )}
-        </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          {navigator.onLine ? "Something went wrong" : "You're offline"}
-        </h3>
-        <p className="text-muted-foreground mb-4">
-          {error || "Please check your connection and try again"}
-        </p>
-        <Button onClick={() => window.location.reload()}>
-          Try Again
-        </Button>
-      </div>
-    </div>
-  );
-
-  // Empty state component
-  const EmptyState = () => (
-    <div className="text-center py-12">
-      <Heart size={48} className="text-pink-300 mx-auto mb-4" />
-      {availableMembers.length === 0 ? (
-        <>
-          <p className="text-muted-foreground text-lg">No family members to appreciate yet!</p>
-          <p className="text-muted-foreground text-sm mt-2">Invite family members to start sharing appreciations.</p>
-        </>
-      ) : (
-        <>
-          <p className="text-muted-foreground text-lg">No appreciations yet!</p>
-          <p className="text-muted-foreground text-sm mt-2">Start spreading love by sharing your first appreciation.</p>
-          <Button 
-            onClick={() => setIsAddingAppreciation(true)} 
-            className="mt-4 bg-pink-600 hover:bg-pink-700"
-          >
-            <Plus size={16} className="mr-2" />
-            Share First Appreciation
+  // Early return conditions - but only after all hooks are called
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
+          <p className="text-muted-foreground">Please log in to view appreciations</p>
+          <Button onClick={() => window.location.href = '/auth'} className="mt-4">
+            Go to Login
           </Button>
-        </>
-      )}
-    </div>
-  );
+        </div>
+      </div>
+    );
+  }
 
+  if (!selectedHousehold) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Heart className="text-pink-300 mx-auto mb-4" size={48} />
+          <p className="text-muted-foreground">Please select a household to view appreciations</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading skeleton component
   if (loading) {
     return (
       <div className="space-y-6">
@@ -153,11 +85,18 @@ const AppreciationsContent: React.FC<{ selectedHousehold: Household }> = ({ sele
             <p className="text-muted-foreground mt-1">Share love and gratitude with your family</p>
           </div>
         </div>
-        <LoadingSkeleton />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 dark:bg-gray-700 rounded-lg h-32 w-full"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
+  // Error state component
   if (error) {
     return (
       <div className="space-y-6">
@@ -170,7 +109,26 @@ const AppreciationsContent: React.FC<{ selectedHousehold: Household }> = ({ sele
             <p className="text-muted-foreground mt-1">Share love and gratitude with your family</p>
           </div>
         </div>
-        <ErrorState />
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center max-w-md">
+            <div className="mb-4">
+              {navigator.onLine ? (
+                <Heart className="text-red-400 mx-auto" size={48} />
+              ) : (
+                <WifiOff className="text-gray-400 mx-auto" size={48} />
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              {navigator.onLine ? "Something went wrong" : "You're offline"}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {error || "Please check your connection and try again"}
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -227,7 +185,29 @@ const AppreciationsContent: React.FC<{ selectedHousehold: Household }> = ({ sele
         ))}
       </div>
 
-      {appreciations.length === 0 && <EmptyState />}
+      {appreciations.length === 0 && (
+        <div className="text-center py-12">
+          <Heart size={48} className="text-pink-300 mx-auto mb-4" />
+          {availableMembers.length === 0 ? (
+            <>
+              <p className="text-muted-foreground text-lg">No family members to appreciate yet!</p>
+              <p className="text-muted-foreground text-sm mt-2">Invite family members to start sharing appreciations.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-muted-foreground text-lg">No appreciations yet!</p>
+              <p className="text-muted-foreground text-sm mt-2">Start spreading love by sharing your first appreciation.</p>
+              <Button 
+                onClick={() => setIsAddingAppreciation(true)} 
+                className="mt-4 bg-pink-600 hover:bg-pink-700"
+              >
+                <Plus size={16} className="mr-2" />
+                Share First Appreciation
+              </Button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };

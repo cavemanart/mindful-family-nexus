@@ -21,124 +21,86 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
-// CSS-based fallback theme application
-const applyCSSTheme = (theme: Theme) => {
-  try {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
-    }
-  } catch (error) {
-    console.error('CSS theme application failed:', error);
-  }
-};
-
-// Fallback component for when React hooks aren't available
-const FallbackThemeProvider = ({ children, defaultTheme = "light" }: ThemeProviderProps) => {
-  console.warn('ThemeProvider: Using fallback mode due to React hooks unavailability');
-  
-  // Apply theme via CSS without hooks
-  useEffect(() => {
-    applyCSSTheme(defaultTheme);
-  }, [defaultTheme]);
-  
-  return <div className={defaultTheme}>{children}</div>;
-};
-
-// Safe hook-based ThemeProvider
-const SafeThemeProvider = ({
+export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
-}: ThemeProviderProps) => {
-  // Use state hook safely
-  const [theme, setThemeState] = useState<Theme>(defaultTheme);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
+}: ThemeProviderProps) {
+  const [theme, setTheme] = useState<Theme>(() => {
     try {
-      setIsMounted(true);
-      
-      // Safe localStorage access after mount
-      const stored = localStorage.getItem(storageKey);
-      if (stored && ['dark', 'light', 'system'].includes(stored)) {
-        setThemeState(stored as Theme);
+      if (typeof window !== "undefined" && window.localStorage) {
+        return (localStorage.getItem(storageKey) as Theme) || defaultTheme
       }
     } catch (error) {
-      console.warn('ThemeProvider: Failed to access localStorage:', error);
+      console.warn("Failed to access localStorage for theme:", error)
     }
-  }, [storageKey]);
+    return defaultTheme
+  })
+
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!isMounted) return;
-    applyCSSTheme(theme);
-  }, [theme, isMounted]);
+    setMounted(true)
+  }, [])
 
-  const setTheme = (newTheme: Theme) => {
-    try {
-      localStorage.setItem(storageKey, newTheme);
-      setThemeState(newTheme);
-    } catch (error) {
-      console.error('ThemeProvider: Error setting theme:', error);
-      setThemeState(newTheme);
+  useEffect(() => {
+    if (!mounted) return
+
+    const root = window.document.documentElement
+
+    root.classList.remove("light", "dark")
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light"
+
+      root.classList.add(systemTheme)
+      return
     }
-  };
+
+    root.classList.add(theme)
+  }, [theme, mounted])
 
   const value = {
     theme,
-    setTheme,
-  };
+    setTheme: (theme: Theme) => {
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          localStorage.setItem(storageKey, theme)
+        }
+      } catch (error) {
+        console.warn("Failed to save theme to localStorage:", error)
+      }
+      setTheme(theme)
+    },
+  }
+
+  // Show a minimal fallback until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return <div className="min-h-screen bg-background text-foreground">{children}</div>
+  }
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
       {children}
     </ThemeProviderContext.Provider>
-  );
-};
-
-// Main ThemeProvider with comprehensive safety checks
-export function ThemeProvider(props: ThemeProviderProps) {
-  // Check if React and hooks are available
-  if (typeof React === 'undefined') {
-    console.error('ThemeProvider: React not available, using CSS fallback');
-    return <FallbackThemeProvider {...props} />;
-  }
-
-  if (typeof React.useState !== 'function' || typeof React.useEffect !== 'function') {
-    console.error('ThemeProvider: React hooks not available, using CSS fallback');
-    return <FallbackThemeProvider {...props} />;
-  }
-
-  // Test hook execution safety
-  try {
-    const testState = React.useState(true);
-    if (!testState || typeof testState[1] !== 'function') {
-      throw new Error('React hooks not functioning properly');
-    }
-    
-    return <SafeThemeProvider {...props} />;
-  } catch (error) {
-    console.error('ThemeProvider: Hook execution failed, using CSS fallback:', error);
-    return <FallbackThemeProvider {...props} />;
-  }
+  )
 }
 
 export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext)
 
   if (context === undefined) {
-    console.warn("useTheme called outside of ThemeProvider, returning default values");
+    console.error("useTheme must be used within a ThemeProvider")
+    // Return a safe fallback
     return {
       theme: "light" as Theme,
-      setTheme: () => {},
-    };
+      setTheme: () => {}
+    }
   }
 
-  return context;
-};
+  return context
+}

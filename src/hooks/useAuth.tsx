@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(data);
         setError(null);
 
-        // Ensure subscription exists after profile is loaded (without complex timeouts)
+        // Ensure subscription exists after profile is loaded
         ensureUserSubscription(userId).catch(error => {
           console.error('❌ Error ensuring subscription:', error);
         });
