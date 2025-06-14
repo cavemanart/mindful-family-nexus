@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
 interface Child {
   id: string;
@@ -78,7 +79,14 @@ export const useChildren = (householdId?: string | null) => {
       const householdChildren = childProfiles.filter(child => householdChildIds.has(child.id));
 
       console.log('✅ useChildren: Children in household:', householdChildren.length, householdChildren.map(c => c.first_name));
-      setChildren(householdChildren || []);
+      
+      // Remove any optimistic children and replace with real data
+      setChildren(prev => {
+        const optimisticChildren = prev.filter(child => child.id.startsWith('temp-'));
+        const realChildren = householdChildren || [];
+        console.log('🔄 useChildren: Updating state - removing', optimisticChildren.length, 'optimistic, adding', realChildren.length, 'real children');
+        return realChildren;
+      });
       
     } catch (error) {
       console.error('❌ useChildren: Error fetching children:', error);
@@ -111,6 +119,14 @@ export const useChildren = (householdId?: string | null) => {
     setChildren(prev => [...prev, optimisticChild]);
     
     try {
+      console.log('🔍 useChildren: Calling RPC create_child_profile with:', {
+        p_first_name: childData.firstName,
+        p_last_name: childData.lastName,
+        p_avatar_selection: childData.avatarSelection,
+        p_parent_id: user.id,
+        p_household_id: householdId
+      });
+
       const { data, error } = await supabase.rpc('create_child_profile', {
         p_first_name: childData.firstName,
         p_last_name: childData.lastName,
@@ -128,13 +144,11 @@ export const useChildren = (householdId?: string | null) => {
       }
       
       console.log('✅ useChildren: Child created successfully, returned ID:', data);
+      console.log('🔍 useChildren: Database write completed, waiting for real-time sync...');
       toast.success(`${childData.firstName} has been added to the family!`);
       
-      // Replace optimistic child with real data via force refresh
-      setTimeout(() => {
-        console.log('🔄 useChildren: Force refreshing after successful creation');
-        fetchChildren(true);
-      }, 1000);
+      // Note: We're relying on real-time subscriptions to update the UI
+      // The optimistic child will be replaced when real data arrives
       
       return true;
     } catch (error) {
@@ -210,7 +224,7 @@ export const useChildren = (householdId?: string | null) => {
       )
       .subscribe((status) => {
         console.log('🔔 useChildren: Subscription status:', status);
-        if (status === 'SUBSCRIPTION_ERROR') {
+        if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIPTION_ERROR) {
           console.error('❌ useChildren: Real-time subscription failed');
           toast.error('Real-time updates disabled - use refresh button to see new children');
         }
