@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useChores } from '@/hooks/useChores';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useAppreciations } from '@/hooks/useAppreciations';
+import { useChildrenManagement } from '@/hooks/useChildrenManagement';
 
 interface ChildrenDashboardProps {
   selectedHousehold: { id: string } | null;
@@ -32,27 +33,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold.id);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold.id);
-  const { householdMembers, loading: membersLoading, refetch: refetchMembers } = useAppreciations(selectedHousehold.id);
+  const { children, loading: childrenLoading, refetch: refetchChildren } = useChildrenManagement(selectedHousehold.id);
   
-  // Filter for children only with better error handling
-  const children = React.useMemo(() => {
-    if (!householdMembers || householdMembers.length === 0) {
-      console.log('📝 No household members available yet');
-      return [];
-    }
-    
-    const kids = householdMembers.filter(member => {
-      if (!member || typeof member.role !== 'string') {
-        console.warn('⚠️ Invalid member data:', member);
-        return false;
-      }
-      return member.role === 'child';
-    });
-    
-    console.log('👶 Found children:', kids.length, kids.map(c => c.first_name));
-    return kids;
-  }, [householdMembers]);
-
   const [selectedChild, setSelectedChild] = useState(() => {
     return children.length > 0 ? children[0].first_name : '';
   });
@@ -115,7 +97,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const handleRefresh = () => {
     console.log('🔄 Manual refresh triggered');
-    refetchMembers();
+    refetchChildren();
   };
 
   const getRewardLevel = (points: number) => {
@@ -127,7 +109,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const reward = getRewardLevel(totalPoints);
 
-  if (choresLoading || messagesLoading || membersLoading) {
+  if (choresLoading || messagesLoading || childrenLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="animate-spin" size={24} />

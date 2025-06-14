@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, Users, Baby, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, Baby, RefreshCw, AlertCircle } from 'lucide-react';
 import { useChildrenManagement } from '@/hooks/useChildrenManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -34,6 +34,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -78,17 +79,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
       console.log('✅ Child creation completed successfully');
       setIsCreateDialogOpen(false);
       resetForm();
-      
-      // Multiple refresh attempts to ensure data consistency
-      setTimeout(() => {
-        console.log('🔄 First refresh after child creation...');
-        refetch();
-      }, 500);
-      
-      setTimeout(() => {
-        console.log('🔄 Second refresh after child creation...');
-        refetch();
-      }, 2000);
+      toast.success('Child account created successfully!');
       
     } catch (error: any) {
       console.error('❌ Failed to create child:', error);
@@ -121,11 +112,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
       setEditingChild(null);
       resetForm();
       
-      // Force refetch to show updated data
-      setTimeout(() => {
-        refetch();
-      }, 500);
-      
     } catch (error: any) {
       toast.error(error.message || 'Failed to update child account');
     } finally {
@@ -137,7 +123,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
     if (window.confirm('Are you sure you want to delete this child account? This action cannot be undone.')) {
       try {
         await deleteChild(childId);
-        // Refetch will be called automatically by the deleteChild function
       } catch (error: any) {
         toast.error(error.message || 'Failed to delete child account');
       }
@@ -167,7 +152,8 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full mr-2"></div>
+        <span>Loading children...</span>
       </div>
     );
   }
@@ -184,9 +170,18 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
           <Button 
             variant="outline" 
             size="sm"
-            onClick={handleManualRefresh}
+            onClick={() => setDebugMode(!debugMode)}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <AlertCircle className="h-4 w-4 mr-2" />
+            Debug
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -268,6 +263,23 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
         </div>
       </div>
 
+      {/* Debug Information */}
+      {debugMode && (
+        <Card className="bg-gray-50">
+          <CardHeader>
+            <CardTitle className="text-sm">Debug Information</CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs">
+            <div className="space-y-2">
+              <p><strong>Household ID:</strong> {selectedHousehold.id}</p>
+              <p><strong>Loading:</strong> {loading.toString()}</p>
+              <p><strong>Children Count:</strong> {children.length}</p>
+              <p><strong>Children Data:</strong> {JSON.stringify(children, null, 2)}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Children List */}
       {children.length === 0 ? (
         <Card>
@@ -276,9 +288,6 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
             <p className="text-lg font-medium mb-2">No Children Yet</p>
             <p className="text-gray-500 mb-4">
               Create child accounts to give your kids safe access to family features.
-            </p>
-            <p className="text-sm text-gray-400 mb-4">
-              Debug: Household ID = {selectedHousehold.id}
             </p>
             <Button 
               variant="outline" 
@@ -303,7 +312,7 @@ const ChildManagement: React.FC<ChildManagementProps> = ({ selectedHousehold }) 
                       <div>
                         <h4 className="font-medium">{child.first_name} {child.last_name}</h4>
                         <p className="text-sm text-gray-500">Child Account</p>
-                        <p className="text-xs text-gray-400">ID: {child.id}</p>
+                        <p className="text-xs text-gray-400">Created: {new Date(child.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
