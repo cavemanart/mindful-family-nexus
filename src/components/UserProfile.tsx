@@ -10,9 +10,10 @@ import {
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { User, Settings, UserPlus } from 'lucide-react';
+import { User, Settings, UserPlus, LogOut } from 'lucide-react';
 import { Household } from '@/hooks/useHouseholds';
-import { useAuth } from '@/hooks/useAuth';
+import { useSafeAuth } from '@/hooks/useSafeAuth';
+import { useChildSession } from '@/hooks/useChildSession';
 import { useNavigate } from 'react-router-dom';
 import { useChildren } from '@/hooks/useChildren';
 import LeaveHouseholdDialog from './LeaveHouseholdDialog';
@@ -20,25 +21,40 @@ import AddChildDialog from './AddChildDialog';
 import UserProfileErrorBoundary from './UserProfileErrorBoundary';
 
 interface UserProfileProps {
-  user: any;
   selectedHousehold: Household | null;
   onSignOut: () => void;
   onHouseholdLeft?: () => void;
 }
 
 const UserProfile: React.FC<UserProfileProps> = ({ 
-  user, 
   selectedHousehold, 
   onSignOut, 
   onHouseholdLeft 
 }) => {
-  const { userProfile } = useAuth();
+  const { 
+    user, 
+    userProfile, 
+    isChildMode, 
+    activeUserName, 
+    canManageHousehold,
+    signOut: safeSignOut 
+  } = useSafeAuth();
+  const { activeChild, clearChildSession } = useChildSession();
   const navigate = useNavigate();
   const { children } = useChildren(selectedHousehold?.id);
-  const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
-  const canManageChildren = userProfile?.role === 'parent' || userProfile?.role === 'grandparent' || isAdminOrOwner;
+
+  const handleSignOut = async () => {
+    if (isChildMode) {
+      clearChildSession();
+    } else {
+      await safeSignOut();
+      onSignOut();
+    }
+  };
 
   const getRoleDisplay = (role?: string) => {
+    if (isChildMode) return 'Child';
+    
     switch (role) {
       case 'parent': return 'Parent';
       case 'nanny': return 'Nanny/Caregiver';
@@ -48,6 +64,16 @@ const UserProfile: React.FC<UserProfileProps> = ({
     }
   };
 
+  const getAvatarFallback = () => {
+    if (isChildMode && activeChild) {
+      return activeChild.first_name[0].toUpperCase();
+    }
+    return user?.email?.[0].toUpperCase() || activeUserName[0].toUpperCase();
+  };
+
+  const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
+  const canManageChildren = canManageHousehold && (userProfile?.role === 'parent' || userProfile?.role === 'grandparent' || isAdminOrOwner);
+
   return (
     <UserProfileErrorBoundary>
       <Sheet>
@@ -55,7 +81,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
           <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
             <Avatar className="h-8 w-8">
               <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
             </Avatar>
           </Button>
         </SheetTrigger>
@@ -64,25 +90,27 @@ const UserProfile: React.FC<UserProfileProps> = ({
             <SheetTitle className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
                 <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
               </Avatar>
               <div className="text-left">
                 <p className="text-lg font-semibold">
-                  {userProfile?.first_name && userProfile?.last_name 
-                    ? `${userProfile.first_name} ${userProfile.last_name}`
-                    : user?.email
-                  }
+                  {activeUserName}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {getRoleDisplay(userProfile?.role)}
                 </p>
+                {isChildMode && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400">
+                    👶 Kid's Mode
+                  </p>
+                )}
               </div>
             </SheetTitle>
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
             {/* Current Household Info */}
-            {selectedHousehold && (
+            {selectedHousehold && !isChildMode && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Current Household</h3>
                 <div className="p-3 bg-muted rounded-lg">
@@ -99,7 +127,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Children Management */}
+            {/* Children Management - Only for authenticated parents */}
             {canManageChildren && selectedHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Children ({children.length})</h3>
@@ -128,8 +156,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Admin Actions */}
-            {isAdminOrOwner && selectedHousehold && userProfile?.role !== 'child' && (
+            {/* Admin Actions - Only for authenticated admins */}
+            {isAdminOrOwner && selectedHousehold && canManageHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Admin Actions</h3>
                 <div className="space-y-2">
@@ -145,17 +173,19 @@ const UserProfile: React.FC<UserProfileProps> = ({
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-muted-foreground">Account</h3>
               <div className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => navigate('/profile')}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Profile Settings
-                </Button>
-                <Button variant="outline" onClick={onSignOut} className="w-full justify-start">
-                  <User className="mr-2 h-4 w-4" />
-                  Sign Out
+                {!isChildMode && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => navigate('/profile')}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Profile Settings
+                  </Button>
+                )}
+                <Button variant="outline" onClick={handleSignOut} className="w-full justify-start">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {isChildMode ? 'Switch User' : 'Sign Out'}
                 </Button>
               </div>
             </div>
