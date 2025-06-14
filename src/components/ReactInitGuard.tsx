@@ -13,6 +13,8 @@ const ReactInitGuard: React.FC<ReactInitGuardProps> = ({ children, fallback }) =
   useEffect(() => {
     const checkReactReadiness = () => {
       try {
+        console.log('🔍 ReactInitGuard: Starting React readiness check');
+        
         // Comprehensive React readiness check
         if (typeof React === 'undefined') {
           throw new Error('React is not defined');
@@ -32,11 +34,11 @@ const ReactInitGuard: React.FC<ReactInitGuardProps> = ({ children, fallback }) =
           throw new Error('React hooks are not functioning properly');
         }
 
-        console.log('✅ React initialization guard: All checks passed');
+        console.log('✅ ReactInitGuard: All checks passed');
         setIsReactReady(true);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown React initialization error';
-        console.error('❌ React initialization guard failed:', errorMessage);
+        console.error('❌ ReactInitGuard failed:', errorMessage);
         setError(errorMessage);
       }
     };
@@ -47,7 +49,7 @@ const ReactInitGuard: React.FC<ReactInitGuardProps> = ({ children, fallback }) =
     // Retry mechanism for race conditions
     const retryTimeout = setTimeout(() => {
       if (!isReactReady && !error) {
-        console.log('🔄 React initialization guard: Retrying...');
+        console.log('🔄 ReactInitGuard: Retrying...');
         checkReactReadiness();
       }
     }, 100);

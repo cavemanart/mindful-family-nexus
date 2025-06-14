@@ -9,7 +9,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
-  errorType?: 'dispatcher' | 'theme' | 'general';
+  errorType?: 'dispatcher' | 'theme' | 'hook-order' | 'general';
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -21,12 +21,14 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error);
     
     // Determine error type for better handling
-    let errorType: 'dispatcher' | 'theme' | 'general' = 'general';
+    let errorType: 'dispatcher' | 'theme' | 'hook-order' | 'general' = 'general';
     
     if (error.message.includes('dispatcher') || error.message.includes('useState')) {
       errorType = 'dispatcher';
     } else if (error.message.includes('theme') || error.message.includes('ThemeProvider')) {
       errorType = 'theme';
+    } else if (error.message.includes('321') || error.message.includes('hook') || error.message.includes('order')) {
+      errorType = 'hook-order';
     }
     
     return { hasError: true, error, errorType };
@@ -35,9 +37,14 @@ class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary details:', error, errorInfo);
     
-    // Log specific React dispatcher errors for debugging
+    // Log specific React errors for debugging
     if (error.message.includes('dispatcher')) {
       console.error('React dispatcher error detected. This usually happens when hooks are called outside of a React component or before React is fully mounted.');
+    }
+    
+    if (error.message.includes('321')) {
+      console.error('React Error #321 detected. This is usually caused by hook order mismatch or conditional hook calls.');
+      console.error('Component stack:', errorInfo.componentStack);
     }
     
     // Log theme-related errors
@@ -60,6 +67,17 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
           <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
             <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
+            
+            {this.state.errorType === 'hook-order' && (
+              <div className="mb-4">
+                <p className="text-gray-600 mb-2">
+                  React Hook Order Error (Error #321) detected.
+                </p>
+                <p className="text-sm text-gray-500">
+                  This is usually caused by conditional hook calls or component remounting issues.
+                </p>
+              </div>
+            )}
             
             {this.state.errorType === 'dispatcher' && (
               <div className="mb-4">
