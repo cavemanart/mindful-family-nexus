@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -143,8 +144,8 @@ export const useAppreciations = (householdId: string | null) => {
       
       console.log('💝 useAppreciations: Fetched appreciations:', data);
       
-      // Transform data to match interface (remove reactions field if it exists)
-      const transformedData = data?.map(item => ({
+      // Transform data to match interface
+      const transformedData: Appreciation[] = data?.map(item => ({
         id: item.id,
         message: item.message,
         from_member: item.from_member,
