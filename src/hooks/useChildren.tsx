@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -62,17 +61,27 @@ export const useChildren = (householdId: string | undefined) => {
 
       console.log('📊 useChildren: Raw data from query:', data);
 
-      // Remove the type predicate and use a simple filter with explicit type checking
+      // Filter and map to Child objects without type predicate
       const childrenData = data
         ?.map(member => member.profiles)
-        .filter((profile): profile is Child => {
+        .filter(profile => {
           return profile !== null && 
                  profile.is_child_account === true &&
                  typeof profile.id === 'string' &&
                  typeof profile.first_name === 'string' &&
                  typeof profile.last_name === 'string' &&
                  typeof profile.avatar_selection === 'string';
-        }) || [];
+        })
+        .map(profile => ({
+          id: profile.id,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          avatar_selection: profile.avatar_selection,
+          is_child_account: profile.is_child_account,
+          parent_id: profile.parent_id || undefined,
+          pin: profile.pin || undefined,
+          created_at: profile.created_at || undefined
+        } as Child)) || [];
 
       console.log('👶 useChildren: Filtered children:', childrenData);
       setChildren(childrenData);
