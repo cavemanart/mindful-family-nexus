@@ -6,6 +6,9 @@ import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
 import NannyTokenGenerator from './NannyTokenGenerator';
 import SubscriptionStatusCard from './SubscriptionStatusCard';
+import ChoresOverviewCard from './ChoresOverviewCard';
+import AddChoreDialog from './AddChoreDialog';
+import { useChildren } from '@/hooks/useChildren';
 
 interface DashboardProps {
   setActiveSection: (section: string) => void;
@@ -14,6 +17,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold }) => {
   const { user } = useAuth();
+  const { children } = useChildren(selectedHousehold?.id);
 
   // If not logged in, prompt to log in
   if (!user) {
@@ -60,7 +64,19 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
         <div className="lg:col-span-2 space-y-8">
           {/* Quick Actions */}
           <div className="bg-card rounded-2xl border shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
+              {children.length > 0 && (
+                <AddChoreDialog 
+                  householdId={selectedHousehold.id}
+                  trigger={
+                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                      + Assign Chore
+                    </button>
+                  }
+                />
+              )}
+            </div>
             <QuickActions setActiveSection={setActiveSection} />
           </div>
 
@@ -69,6 +85,16 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
             <h2 className="text-xl font-semibold text-foreground mb-4">Overview</h2>
             <OverviewCards setActiveSection={setActiveSection} />
           </div>
+
+          {/* Chores Overview */}
+          {children.length > 0 && (
+            <div className="bg-card rounded-2xl border shadow-sm p-6">
+              <ChoresOverviewCard 
+                householdId={selectedHousehold.id}
+                onNavigateToChildren={() => setActiveSection('children')}
+              />
+            </div>
+          )}
 
           {/* Nanny Access Generator */}
           <div className="bg-card rounded-2xl border shadow-sm p-6">

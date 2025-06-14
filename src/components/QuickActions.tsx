@@ -1,7 +1,10 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, DollarSign, StickyNote, Users, Calendar, Baby, Trophy } from 'lucide-react';
+import { Heart, DollarSign, StickyNote, Users, Calendar, Baby, Trophy, CheckCircle } from 'lucide-react';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
+import { useChildren } from '@/hooks/useChildren';
+import AddChoreDialog from './AddChoreDialog';
 
 interface QuickActionsProps {
   setActiveSection: (section: string) => void;
