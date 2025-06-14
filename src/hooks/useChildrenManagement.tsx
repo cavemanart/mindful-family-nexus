@@ -45,29 +45,7 @@ export const useChildrenManagement = (householdId: string | null) => {
       console.log('🔄 Fetching children for household:', householdId);
       setLoading(true);
       
-      // First get all user IDs that are members of the household
-      const { data: memberIds, error: memberError } = await supabase
-        .from('household_members')
-        .select('user_id')
-        .eq('household_id', householdId);
-
-      if (memberError) {
-        console.error('❌ Error fetching household members:', memberError);
-        throw memberError;
-      }
-
-      if (!memberIds || memberIds.length === 0) {
-        console.log('📊 No members found for household:', householdId);
-        setChildren([]);
-        setLoading(false);
-        return;
-      }
-
-      // Extract the user IDs into an array
-      const userIds = memberIds.map(member => member.user_id);
-      console.log('👥 Household member IDs:', userIds);
-
-      // Now query profiles for child accounts that are household members
+      // Use a single query with JOIN to avoid data iteration issues
       const { data: childrenData, error } = await supabase
         .from('profiles')
         .select(`
@@ -78,10 +56,11 @@ export const useChildrenManagement = (householdId: string | null) => {
           parent_id,
           created_at,
           is_child_account,
-          role
+          role,
+          household_members!inner(household_id)
         `)
         .eq('is_child_account', true)
-        .in('id', userIds);
+        .eq('household_members.household_id', householdId);
 
       if (error) {
         console.error('❌ Error fetching children:', error);
@@ -90,28 +69,31 @@ export const useChildrenManagement = (householdId: string | null) => {
 
       console.log('📊 Raw children data:', childrenData);
 
-      // Process and validate the data
-      const processedChildren = (childrenData || [])
-        .filter(child => {
-          if (!child) {
-            console.warn('⚠️ Found null child record');
-            return false;
-          }
-          
-          const isValid = child.is_child_account === true || child.role === 'child';
-          if (isValid) {
-            console.log('👶 Valid child found:', child.first_name, child.last_name);
-          }
-          return isValid;
-        })
-        .map(child => ({
-          id: child.id,
-          first_name: child.first_name || 'Unknown',
-          last_name: child.last_name || 'Child',
-          avatar_selection: child.avatar_selection || 'bear',
-          parent_id: child.parent_id || '',
-          created_at: child.created_at || new Date().toISOString()
-        }));
+      // Validate and process the data with safety checks
+      const processedChildren = Array.isArray(childrenData) 
+        ? childrenData
+            .filter(child => {
+              // Data validation: ensure child object is valid
+              if (!child || typeof child !== 'object') {
+                console.warn('⚠️ Found invalid child record:', child);
+                return false;
+              }
+              
+              const isValid = child.is_child_account === true || child.role === 'child';
+              if (isValid) {
+                console.log('👶 Valid child found:', child.first_name, child.last_name);
+              }
+              return isValid;
+            })
+            .map(child => ({
+              id: child.id || '',
+              first_name: child.first_name || 'Unknown',
+              last_name: child.last_name || 'Child',
+              avatar_selection: child.avatar_selection || 'bear',
+              parent_id: child.parent_id || '',
+              created_at: child.created_at || new Date().toISOString()
+            }))
+        : [];
 
       console.log('👥 Processed children:', processedChildren.length, processedChildren);
       setChildren(processedChildren);
