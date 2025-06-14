@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock, HelpCircle, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,7 +39,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     amount: '',
     due_date: '',
     category: '',
-    assigned_to: '',
+    assigned_to: 'unassigned',
     recurrence_type: 'none' as 'none' | 'weekly' | 'monthly',
     recurrence_interval: 1,
     is_template: false,
@@ -124,7 +125,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         due_date: newBill.due_date,
         category: newBill.category,
         is_paid: false,
-        assigned_to: newBill.assigned_to || '',
+        assigned_to: newBill.assigned_to === 'unassigned' ? '' : newBill.assigned_to,
         recurrence_type: newBill.recurrence_type,
         recurrence_interval: newBill.recurrence_interval,
         is_template: newBill.is_template,
@@ -136,7 +137,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           amount: '', 
           due_date: '', 
           category: '', 
-          assigned_to: '',
+          assigned_to: 'unassigned',
           recurrence_type: 'none',
           recurrence_interval: 1,
           is_template: false,
@@ -467,7 +468,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                     <SelectValue placeholder="Who pays this bill? (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No assignment</SelectItem>
+                    <SelectItem value="unassigned">No assignment</SelectItem>
                     {familyMembers.map((member) => (
                       <SelectItem key={member} value={member}>{member}</SelectItem>
                     ))}
