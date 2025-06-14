@@ -29,32 +29,61 @@ export const useChildren = (householdId?: string | null) => {
   const fetchChildren = async () => {
     if (!householdId) {
       console.log('🔍 useChildren: No household ID provided');
+      setChildren([]);
       return;
     }
     
     console.log('🔍 useChildren: Fetching children for household:', householdId);
     setLoading(true);
+    
     try {
-      const { data, error } = await supabase
+      // First, get all child profiles
+      const { data: childProfiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          avatar_selection,
-          created_at,
-          household_members!inner(household_id)
-        `)
+        .select('id, first_name, last_name, avatar_selection, created_at')
         .eq('is_child_account', true)
-        .eq('household_members.household_id', householdId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      console.log('✅ useChildren: Fetched children:', data?.length || 0);
-      setChildren(data || []);
+      if (profilesError) {
+        console.error('❌ useChildren: Error fetching child profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('🔍 useChildren: Found child profiles:', childProfiles?.length || 0);
+
+      if (!childProfiles || childProfiles.length === 0) {
+        console.log('🔍 useChildren: No child profiles found');
+        setChildren([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then, filter by household membership
+      const childIds = childProfiles.map(child => child.id);
+      const { data: householdMembers, error: membersError } = await supabase
+        .from('household_members')
+        .select('user_id')
+        .eq('household_id', householdId)
+        .in('user_id', childIds);
+
+      if (membersError) {
+        console.error('❌ useChildren: Error fetching household members:', membersError);
+        throw membersError;
+      }
+
+      console.log('🔍 useChildren: Household members found:', householdMembers?.length || 0);
+
+      // Filter child profiles to only include those in the household
+      const householdChildIds = new Set(householdMembers?.map(member => member.user_id) || []);
+      const householdChildren = childProfiles.filter(child => householdChildIds.has(child.id));
+
+      console.log('✅ useChildren: Children in household:', householdChildren.length);
+      setChildren(householdChildren || []);
+      
     } catch (error) {
       console.error('❌ useChildren: Error fetching children:', error);
       toast.error('Failed to load children');
+      setChildren([]);
     } finally {
       setLoading(false);
     }
@@ -68,6 +97,7 @@ export const useChildren = (householdId?: string | null) => {
 
     console.log('🔍 useChildren: Creating child:', childData.firstName);
     setCreating(true);
+    
     try {
       const { data, error } = await supabase.rpc('create_child_profile', {
         p_first_name: childData.firstName,
@@ -78,13 +108,20 @@ export const useChildren = (householdId?: string | null) => {
         p_household_id: householdId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ useChildren: RPC error:', error);
+        throw error;
+      }
       
-      console.log('✅ useChildren: Child created successfully');
+      console.log('✅ useChildren: Child created successfully, returned ID:', data);
       toast.success(`${childData.firstName} has been added to the family!`);
       
       // Force refresh the children list
-      await fetchChildren();
+      setTimeout(() => {
+        console.log('🔄 useChildren: Refreshing children list after creation');
+        fetchChildren();
+      }, 500);
+      
       return true;
     } catch (error) {
       console.error('❌ useChildren: Error creating child:', error);
@@ -102,7 +139,7 @@ export const useChildren = (householdId?: string | null) => {
     console.log('🔍 useChildren: Setting up real-time subscription for household:', householdId);
 
     const channel = supabase
-      .channel('children-changes')
+      .channel(`children-changes-${householdId}`)
       .on(
         'postgres_changes',
         {
@@ -114,7 +151,7 @@ export const useChildren = (householdId?: string | null) => {
         (payload) => {
           console.log('🔔 useChildren: Real-time INSERT detected:', payload.new);
           // Refresh children list when a new child is added
-          fetchChildren();
+          setTimeout(() => fetchChildren(), 1000);
         }
       )
       .on(
@@ -128,10 +165,27 @@ export const useChildren = (householdId?: string | null) => {
         (payload) => {
           console.log('🔔 useChildren: Real-time UPDATE detected:', payload.new);
           // Refresh children list when a child is updated
-          fetchChildren();
+          setTimeout(() => fetchChildren(), 1000);
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'household_members'
+        },
+        (payload) => {
+          console.log('🔔 useChildren: Real-time household member INSERT detected:', payload.new);
+          // Refresh when new members are added
+          if (payload.new.household_id === householdId) {
+            setTimeout(() => fetchChildren(), 1000);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔔 useChildren: Subscription status:', status);
+      });
 
     return () => {
       console.log('🔍 useChildren: Cleaning up real-time subscription');

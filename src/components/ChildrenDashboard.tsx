@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,8 +19,9 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const { children, loading: childrenLoading, refreshChildren } = useChildren(selectedHousehold?.id);
   
   const [selectedChild, setSelectedChild] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  console.log('🔍 ChildrenDashboard: Rendering with', children.length, 'children');
+  console.log('🔍 ChildrenDashboard: Rendering with', children.length, 'children for household:', selectedHousehold?.id);
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -33,7 +34,23 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   // Handle successful child addition
   const handleChildAdded = async () => {
     console.log('🔍 ChildrenDashboard: Child added, refreshing children list');
-    await refreshChildren();
+    setIsRefreshing(true);
+    try {
+      await refreshChildren();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    console.log('🔍 ChildrenDashboard: Manual refresh triggered');
+    setIsRefreshing(true);
+    try {
+      await refreshChildren();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Get the selected child's full name for matching
@@ -88,17 +105,38 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           <p className="text-muted-foreground mb-4">No children in this household yet!</p>
           <p className="text-muted-foreground text-sm mb-6">Add children to your household to see their tasks and progress.</p>
           
+          <div className="flex gap-2 justify-center">
+            {selectedHousehold && (
+              <AddChildDialog 
+                householdId={selectedHousehold.id}
+                onChildAdded={handleChildAdded}
+                trigger={
+                  <Button className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Add Your First Child
+                  </Button>
+                }
+              />
+            )}
+            
+            <Button 
+              variant="outline" 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+          </div>
+          
           {selectedHousehold && (
-            <AddChildDialog 
-              householdId={selectedHousehold.id}
-              onChildAdded={handleChildAdded}
-              trigger={
-                <Button className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add Your First Child
-                </Button>
-              }
-            />
+            <p className="text-xs text-muted-foreground mt-4">
+              Household ID: {selectedHousehold.id}
+            </p>
           )}
         </div>
       </div>
@@ -127,18 +165,34 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           ))}
         </div>
         
-        {selectedHousehold && (
-          <AddChildDialog 
-            householdId={selectedHousehold.id}
-            onChildAdded={handleChildAdded}
-            trigger={
-              <Button variant="outline" size="sm">
-                <UserPlus className="mr-2 h-3 w-3" />
-                Add Another Child
-              </Button>
-            }
-          />
-        )}
+        <div className="flex gap-2 justify-center">
+          {selectedHousehold && (
+            <AddChildDialog 
+              householdId={selectedHousehold.id}
+              onChildAdded={handleChildAdded}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <UserPlus className="mr-2 h-3 w-3" />
+                  Add Another Child
+                </Button>
+              }
+            />
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-3 w-3" />
+            )}
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Points and Rewards */}

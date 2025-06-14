@@ -70,7 +70,6 @@ const TopBar: React.FC<TopBarProps> = ({
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col space-y-4 py-4">
                 <UserProfile 
-                  user={user}
                   selectedHousehold={selectedHousehold}
                   onSignOut={onSignOut}
                   onHouseholdLeft={onHouseholdLeft}
@@ -115,7 +114,6 @@ const TopBar: React.FC<TopBarProps> = ({
               </Select>
             )}
             <UserProfile 
-              user={user}
               selectedHousehold={selectedHousehold}
               onSignOut={onSignOut}
               onHouseholdLeft={onHouseholdLeft}
