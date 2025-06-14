@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -43,7 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        // Ensure profile has valid names
         const safeProfile = {
           ...data,
           first_name: data.first_name || 'User',
@@ -65,7 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       console.error('🚨 Error in fetchUserProfile:', error);
-      // Don't set error state for profile issues - continue with fallback
       setUserProfile({
         id: userId,
         first_name: 'User',
@@ -84,14 +83,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setError(null);
 
-      // Check network connectivity
       if (typeof window !== 'undefined' && !navigator.onLine) {
         setError('You appear to be offline. Please check your connection.');
         setLoading(false);
         return;
       }
 
-      // Get current session with timeout
       const sessionPromise = supabase.auth.getSession();
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Session fetch timeout')), 10000)
@@ -114,7 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Don't wait for profile fetch to complete initialization
         fetchUserProfile(session.user.id).catch(console.error);
       }
       
@@ -172,14 +168,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     console.log('🚀 Setting up auth state listener');
     
-    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
         console.log('🔄 Auth state changed:', event, !!session);
         
-        // Update state immediately
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -196,17 +190,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserProfile(null);
         }
 
-        // Only set loading to false after initial session check
         if (initialized) {
           setLoading(false);
         }
       }
     );
 
-    // Initialize auth after setting up listener
     initializeAuth();
 
-    // Online/offline detection
     const handleOnline = () => {
       console.log('🌐 Back online, checking auth');
       if (error && error.includes('offline')) {
@@ -247,8 +238,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+  return React.createElement(AuthContext.Provider, { value }, children);
+}
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
