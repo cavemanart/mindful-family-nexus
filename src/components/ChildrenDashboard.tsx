@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -189,7 +190,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             >
               {child.first_name}
               {child.id.startsWith('temp-') && (
-                <AlertCircle className="ml-1 h-3 w-3 text-amber-500" title="Syncing..." />
+                <AlertCircle className="ml-1 h-3 w-3 text-amber-500" />
               )}
             </Button>
           ))}
