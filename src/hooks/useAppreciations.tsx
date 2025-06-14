@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Appreciation {
   id: string;
@@ -43,6 +45,15 @@ export const useAppreciations = (householdId: string | null) => {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user, userProfile } = useAuth();
+
+  // Get current user's full name
+  const getCurrentUserName = () => {
+    if (userProfile) {
+      return `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'Unknown User';
+    }
+    return 'Unknown User';
+  };
 
   const fetchHouseholdMembers = async () => {
     if (!householdId) return;
@@ -151,15 +162,24 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member'>) => {
-    if (!householdId) return false;
+    if (!householdId || !user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add appreciations",
+        variant: "destructive"
+      });
+      return false;
+    }
 
     try {
+      const currentUserName = getCurrentUserName();
+      
       const { error } = await supabase
         .from('appreciations')
         .insert([{ 
           ...appreciationData, 
           household_id: householdId,
-          from_member: 'current_user' // This will be updated to use actual user name
+          from_member: currentUserName
         }]);
 
       if (error) throw error;
@@ -172,6 +192,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchAppreciations();
       return true;
     } catch (error: any) {
+      console.error('Error adding appreciation:', error);
       toast({
         title: "Error adding appreciation",
         description: error.message,
@@ -182,6 +203,15 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const updateAppreciation = async (id: string, updates: Partial<Appreciation>) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update appreciations",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     try {
       const { error } = await supabase
         .from('appreciations')
@@ -198,6 +228,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchAppreciations();
       return true;
     } catch (error: any) {
+      console.error('Error updating appreciation:', error);
       toast({
         title: "Error updating appreciation",
         description: error.message,
@@ -207,8 +238,51 @@ export const useAppreciations = (householdId: string | null) => {
     }
   };
 
+  const deleteAppreciation = async (id: string) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to delete appreciations",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('appreciations')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Appreciation deleted successfully!",
+      });
+      
+      fetchAppreciations();
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting appreciation:', error);
+      toast({
+        title: "Error deleting appreciation",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const toggleReaction = async (appreciationId: string, reactorName: string) => {
-    if (!householdId) return false;
+    if (!householdId || !user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to react",
+        variant: "destructive"
+      });
+      return false;
+    }
 
     try {
       const existingReactions = reactions[appreciationId] || [];
@@ -238,6 +312,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchReactions(appreciationId);
       return true;
     } catch (error: any) {
+      console.error('Error updating reaction:', error);
       toast({
         title: "Error updating reaction",
         description: error.message,
@@ -248,7 +323,14 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   const addComment = async (appreciationId: string, commenterName: string, comment: string) => {
-    if (!householdId) return false;
+    if (!householdId || !user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to comment",
+        variant: "destructive"
+      });
+      return false;
+    }
 
     try {
       const { error } = await supabase
@@ -265,6 +347,7 @@ export const useAppreciations = (householdId: string | null) => {
       fetchComments(appreciationId);
       return true;
     } catch (error: any) {
+      console.error('Error adding comment:', error);
       toast({
         title: "Error adding comment",
         description: error.message,
@@ -287,10 +370,12 @@ export const useAppreciations = (householdId: string | null) => {
     loading,
     addAppreciation,
     updateAppreciation,
+    deleteAppreciation,
     toggleReaction,
     addComment,
     fetchComments,
     fetchReactions,
-    refetch: fetchAppreciations
+    refetch: fetchAppreciations,
+    getCurrentUserName
   };
 };

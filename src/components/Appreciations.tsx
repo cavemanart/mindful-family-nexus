@@ -24,10 +24,12 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
     loading, 
     addAppreciation, 
     updateAppreciation,
+    deleteAppreciation,
     toggleReaction,
     addComment,
     fetchComments,
-    fetchReactions
+    fetchReactions,
+    getCurrentUserName
   } = useAppreciations(selectedHousehold?.id);
   
   const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
@@ -36,7 +38,7 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
     to_member: '',
   });
 
-  const currentUserName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Unknown User';
+  const currentUserName = getCurrentUserName();
 
   const handleAddAppreciation = async () => {
     if (newAppreciation.message.trim() && newAppreciation.to_member) {
@@ -98,7 +100,10 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
                 </SelectTrigger>
                 <SelectContent>
                   {householdMembers
-                    .filter(member => member.id !== user?.id) // Exclude current user
+                    .filter(member => {
+                      const memberFullName = `${member.first_name} ${member.last_name}`;
+                      return memberFullName !== currentUserName;
+                    })
                     .map((member) => (
                       <SelectItem key={member.id} value={`${member.first_name} ${member.last_name}`}>
                         {member.first_name} {member.last_name}
@@ -141,6 +146,7 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
             onToggleReaction={toggleReaction}
             onAddComment={addComment}
             onUpdateAppreciation={updateAppreciation}
+            onDeleteAppreciation={deleteAppreciation}
             onLoadComments={fetchComments}
             onLoadReactions={fetchReactions}
           />
