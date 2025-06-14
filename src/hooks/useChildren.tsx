@@ -47,20 +47,57 @@ export const useChildren = (householdId: string | null) => {
       console.log('🔄 Fetching children for household:', householdId);
       setLoading(true);
       
-      // Use type assertion to work around TypeScript limitations
-      const { data, error } = await (supabase as any)
-        .from('household_children')
-        .select('*')
-        .eq('household_id', householdId)
-        .order('created_at', { ascending: false });
+      // Get children from profiles table who are members of this household
+      const { data: childrenData, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          pin,
+          avatar_selection,
+          parent_id,
+          created_at,
+          updated_at,
+          is_child_account
+        `)
+        .eq('is_child_account', true);
 
       if (error) {
-        console.error('❌ Error fetching children:', error);
+        console.error('❌ Error fetching children profiles:', error);
         throw error;
       }
 
-      console.log('✅ Children fetched successfully:', data?.length || 0);
-      setChildren((data as HouseholdChild[]) || []);
+      // Get household members to filter children
+      const { data: householdMembers, error: memberError } = await supabase
+        .from('household_members')
+        .select('user_id')
+        .eq('household_id', householdId);
+
+      if (memberError) {
+        console.error('❌ Error fetching household members:', memberError);
+        throw memberError;
+      }
+
+      const memberIds = new Set((householdMembers || []).map(m => m.user_id));
+
+      // Filter children to only those in the household and format data
+      const householdChildren = (childrenData || [])
+        .filter(child => memberIds.has(child.id))
+        .map(child => ({
+          id: child.id,
+          household_id: householdId,
+          first_name: child.first_name || '',
+          last_name: child.last_name || '',
+          pin: child.pin || '',
+          avatar_selection: child.avatar_selection || 'bear',
+          parent_id: child.parent_id || '',
+          created_at: child.created_at || new Date().toISOString(),
+          updated_at: child.updated_at || new Date().toISOString()
+        }));
+
+      console.log('✅ Children fetched successfully:', householdChildren.length);
+      setChildren(householdChildren);
     } catch (error: any) {
       console.error('❌ Error fetching children:', error);
       toast({
@@ -80,18 +117,14 @@ export const useChildren = (householdId: string | null) => {
     try {
       console.log('👶 Creating child:', childData);
       
-      const { data, error } = await (supabase as any)
-        .from('household_children')
-        .insert({
-          household_id: householdId,
-          first_name: childData.firstName,
-          last_name: childData.lastName,
-          pin: childData.pin,
-          avatar_selection: childData.avatarSelection,
-          parent_id: childData.parentId
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('create_child_profile', {
+        p_first_name: childData.firstName,
+        p_last_name: childData.lastName,
+        p_pin: childData.pin,
+        p_avatar_selection: childData.avatarSelection,
+        p_parent_id: childData.parentId,
+        p_household_id: householdId
+      });
 
       if (error) {
         console.error('❌ Error creating child:', error);
@@ -128,8 +161,8 @@ export const useChildren = (householdId: string | null) => {
         updateData.pin = updates.pin;
       }
 
-      const { error } = await (supabase as any)
-        .from('household_children')
+      const { error } = await supabase
+        .from('profiles')
         .update(updateData)
         .eq('id', childId);
 
@@ -153,8 +186,15 @@ export const useChildren = (householdId: string | null) => {
     try {
       console.log('🗑️ Deleting child:', childId);
 
-      const { error } = await (supabase as any)
-        .from('household_children')
+      // First remove from household_members
+      await supabase
+        .from('household_members')
+        .delete()
+        .eq('user_id', childId);
+
+      // Then delete the profile
+      const { error } = await supabase
+        .from('profiles')
         .delete()
         .eq('id', childId);
 
@@ -192,11 +232,24 @@ export const useChildren = (householdId: string | null) => {
         {
           event: '*',
           schema: 'public',
-          table: 'household_children',
+          table: 'profiles',
+          filter: `is_child_account=eq.true`
+        },
+        (payload) => {
+          console.log('📡 Child profile change detected:', payload);
+          setTimeout(() => fetchChildren(), 300);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'household_members',
           filter: `household_id=eq.${householdId}`
         },
         (payload) => {
-          console.log('📡 Child change detected:', payload);
+          console.log('📡 Household member change detected:', payload);
           setTimeout(() => fetchChildren(), 300);
         }
       )
