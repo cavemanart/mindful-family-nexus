@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,13 +14,17 @@ import NannyTokenGenerator from './NannyTokenGenerator';
 import NannyTokenManager from './NannyTokenManager';
 import HouseRulesManager from './HouseRulesManager';
 import { useAuth } from '@/hooks/useAuth';
-import { useHouseholds } from '@/hooks/useHouseholds';
+import { Household } from '@/hooks/useHouseholds';
 import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
 import { useMedications } from '@/hooks/useMedications';
 import { useHouseholdInfo } from '@/hooks/useHouseholdInfo';
 import { useFamilyNotes } from '@/hooks/useFamilyNotes';
 
-const NannyMode = () => {
+interface NannyModeProps {
+  selectedHousehold: Household;
+}
+
+const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
   const [isLocked, setIsLocked] = useState(true);
   const [accessPin, setAccessPin] = useState('');
   const [showCodes, setShowCodes] = useState(false);
@@ -30,10 +33,7 @@ const NannyMode = () => {
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
   const [showChildInfoForm, setShowChildInfoForm] = useState(false);
   const { userProfile } = useAuth();
-  const { households } = useHouseholds();
   
-  const selectedHousehold = households[0];
-
   const { contacts, addContact, deleteContact } = useEmergencyContacts(selectedHousehold?.id);
   const { medications, addMedication, deleteMedication } = useMedications(selectedHousehold?.id);
   const { householdInfo, addHouseholdInfo, deleteHouseholdInfo } = useHouseholdInfo(selectedHousehold?.id);
