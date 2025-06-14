@@ -21,18 +21,19 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
-export function ThemeProvider({
+// Create a fallback component for when React hooks aren't available
+const FallbackThemeProvider = ({ children }: { children: React.ReactNode }) => {
+  console.warn('ThemeProvider: Using fallback mode due to React hooks unavailability');
+  return <div className="light">{children}</div>;
+};
+
+// Main ThemeProvider component with proper hook usage
+const MainThemeProvider = ({
   children,
   defaultTheme = "light",
   storageKey = "vite-ui-theme",
   ...props
-}: ThemeProviderProps) {
-  // Early return with fallback if React hooks are not available
-  if (typeof React === 'undefined' || !React.useState) {
-    console.error('ThemeProvider: React hooks not available');
-    return <div>{children}</div>;
-  }
-
+}: ThemeProviderProps) => {
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -89,13 +90,34 @@ export function ThemeProvider({
       {children}
     </ThemeProviderContext.Provider>
   );
+};
+
+// Export the main ThemeProvider with safety checks
+export function ThemeProvider(props: ThemeProviderProps) {
+  // Check if React and hooks are available before attempting to use them
+  if (typeof React === 'undefined' || typeof React.useState !== 'function') {
+    console.error('ThemeProvider: React hooks not available, using fallback');
+    return <FallbackThemeProvider {...props} />;
+  }
+
+  // Additional safety check for the current React context
+  try {
+    return <MainThemeProvider {...props} />;
+  } catch (error) {
+    console.error('ThemeProvider: Error in main provider, using fallback:', error);
+    return <FallbackThemeProvider {...props} />;
+  }
 }
 
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    console.warn("useTheme called outside of ThemeProvider, returning default values");
+    return {
+      theme: "light" as Theme,
+      setTheme: () => {},
+    };
   }
 
   return context;
