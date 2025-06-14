@@ -47,7 +47,8 @@ export const useSimpleChildren = (householdId: string | null) => {
       console.log('🔄 Fetching children for household:', householdId);
       setLoading(true);
       
-      const { data, error } = await supabase
+      // Use type assertion to work around TypeScript limitations
+      const { data, error } = await (supabase as any)
         .from('household_children')
         .select('*')
         .eq('household_id', householdId)
@@ -59,7 +60,7 @@ export const useSimpleChildren = (householdId: string | null) => {
       }
 
       console.log('✅ Children fetched successfully:', data?.length || 0);
-      setChildren(data || []);
+      setChildren((data as HouseholdChild[]) || []);
     } catch (error: any) {
       console.error('❌ Error fetching children:', error);
       toast({
@@ -79,7 +80,7 @@ export const useSimpleChildren = (householdId: string | null) => {
     try {
       console.log('👶 Creating child:', childData);
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('household_children')
         .insert({
           household_id: householdId,
@@ -127,7 +128,7 @@ export const useSimpleChildren = (householdId: string | null) => {
         updateData.pin = updates.pin;
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('household_children')
         .update(updateData)
         .eq('id', childId);
@@ -152,7 +153,7 @@ export const useSimpleChildren = (householdId: string | null) => {
     try {
       console.log('🗑️ Deleting child:', childId);
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('household_children')
         .delete()
         .eq('id', childId);
