@@ -27,8 +27,12 @@ export const useChildren = (householdId?: string | null) => {
   const [creating, setCreating] = useState(false);
 
   const fetchChildren = async () => {
-    if (!householdId) return;
+    if (!householdId) {
+      console.log('🔍 useChildren: No household ID provided');
+      return;
+    }
     
+    console.log('🔍 useChildren: Fetching children for household:', householdId);
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -46,9 +50,10 @@ export const useChildren = (householdId?: string | null) => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      console.log('✅ useChildren: Fetched children:', data?.length || 0);
       setChildren(data || []);
     } catch (error) {
-      console.error('Error fetching children:', error);
+      console.error('❌ useChildren: Error fetching children:', error);
       toast.error('Failed to load children');
     } finally {
       setLoading(false);
@@ -61,6 +66,7 @@ export const useChildren = (householdId?: string | null) => {
       return false;
     }
 
+    console.log('🔍 useChildren: Creating child:', childData.firstName);
     setCreating(true);
     try {
       const { data, error } = await supabase.rpc('create_child_profile', {
@@ -74,11 +80,14 @@ export const useChildren = (householdId?: string | null) => {
 
       if (error) throw error;
       
+      console.log('✅ useChildren: Child created successfully');
       toast.success(`${childData.firstName} has been added to the family!`);
-      await fetchChildren(); // Refresh the list
+      
+      // Force refresh the children list
+      await fetchChildren();
       return true;
     } catch (error) {
-      console.error('Error creating child:', error);
+      console.error('❌ useChildren: Error creating child:', error);
       toast.error('Failed to add child');
       return false;
     } finally {
@@ -86,6 +95,51 @@ export const useChildren = (householdId?: string | null) => {
     }
   };
 
+  // Set up real-time subscription for children changes
+  useEffect(() => {
+    if (!householdId) return;
+
+    console.log('🔍 useChildren: Setting up real-time subscription for household:', householdId);
+
+    const channel = supabase
+      .channel('children-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'profiles',
+          filter: `is_child_account=eq.true`
+        },
+        (payload) => {
+          console.log('🔔 useChildren: Real-time INSERT detected:', payload.new);
+          // Refresh children list when a new child is added
+          fetchChildren();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `is_child_account=eq.true`
+        },
+        (payload) => {
+          console.log('🔔 useChildren: Real-time UPDATE detected:', payload.new);
+          // Refresh children list when a child is updated
+          fetchChildren();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔍 useChildren: Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [householdId]);
+
+  // Initial fetch
   useEffect(() => {
     fetchChildren();
   }, [householdId]);

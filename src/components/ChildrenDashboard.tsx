@@ -16,16 +16,25 @@ interface ChildrenDashboardProps {
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold?.id || null);
   const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold?.id || null);
-  const { children, loading: childrenLoading } = useChildren(selectedHousehold?.id);
+  const { children, loading: childrenLoading, refreshChildren } = useChildren(selectedHousehold?.id);
   
   const [selectedChild, setSelectedChild] = useState('');
+
+  console.log('🔍 ChildrenDashboard: Rendering with', children.length, 'children');
 
   // Update selected child when children list changes
   React.useEffect(() => {
     if (children.length > 0 && !selectedChild) {
+      console.log('🔍 ChildrenDashboard: Setting selected child to:', children[0].first_name);
       setSelectedChild(children[0].first_name);
     }
   }, [children, selectedChild]);
+
+  // Handle successful child addition
+  const handleChildAdded = async () => {
+    console.log('🔍 ChildrenDashboard: Child added, refreshing children list');
+    await refreshChildren();
+  };
 
   // Get the selected child's full name for matching
   const selectedChildData = children.find(child => child.first_name === selectedChild);
@@ -69,6 +78,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   }
 
   if (children.length === 0) {
+    console.log('🔍 ChildrenDashboard: No children found, showing empty state');
     return (
       <div className="space-y-6">
         <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
@@ -81,6 +91,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           {selectedHousehold && (
             <AddChildDialog 
               householdId={selectedHousehold.id}
+              onChildAdded={handleChildAdded}
               trigger={
                 <Button className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">
                   <UserPlus className="mr-2 h-4 w-4" />
@@ -93,6 +104,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
       </div>
     );
   }
+
+  console.log('🔍 ChildrenDashboard: Showing dashboard for', children.length, 'children');
 
   return (
     <div className="space-y-6">
@@ -117,6 +130,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
         {selectedHousehold && (
           <AddChildDialog 
             householdId={selectedHousehold.id}
+            onChildAdded={handleChildAdded}
             trigger={
               <Button variant="outline" size="sm">
                 <UserPlus className="mr-2 h-3 w-3" />

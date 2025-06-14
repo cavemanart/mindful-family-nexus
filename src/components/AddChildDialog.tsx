@@ -17,6 +17,7 @@ import { useChildren } from '@/hooks/useChildren';
 interface AddChildDialogProps {
   householdId: string;
   trigger?: React.ReactNode;
+  onChildAdded?: () => void; // Callback for when a child is successfully added
 }
 
 const avatarOptions = [
@@ -27,7 +28,7 @@ const avatarOptions = [
   { value: 'child-5', label: '🧑 Teen', emoji: '🧑' },
 ];
 
-const AddChildDialog: React.FC<AddChildDialogProps> = ({ householdId, trigger }) => {
+const AddChildDialog: React.FC<AddChildDialogProps> = ({ householdId, trigger, onChildAdded }) => {
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -47,6 +48,7 @@ const AddChildDialog: React.FC<AddChildDialogProps> = ({ householdId, trigger })
       return;
     }
 
+    console.log('🔍 AddChildDialog: Submitting child creation form');
     const success = await createChild({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -55,11 +57,18 @@ const AddChildDialog: React.FC<AddChildDialogProps> = ({ householdId, trigger })
     });
 
     if (success) {
+      console.log('✅ AddChildDialog: Child created successfully, closing dialog');
       setOpen(false);
       setFirstName('');
       setLastName('');
       setPin('');
       setSelectedAvatar('child-1');
+      
+      // Call the callback if provided
+      if (onChildAdded) {
+        console.log('🔍 AddChildDialog: Calling onChildAdded callback');
+        onChildAdded();
+      }
     }
   };
 
