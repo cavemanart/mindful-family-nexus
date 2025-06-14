@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
 import { useChores } from '@/hooks/useChores';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
-import { useAppreciations } from '@/hooks/useAppreciations';
+import { useMVPOfTheDay } from '@/hooks/useMVPOfTheDay';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Star, Trophy, Calendar, Heart, Target } from 'lucide-react';
@@ -17,7 +18,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   const { userProfile } = useAuth();
   const { chores, toggleChore } = useChores(selectedHousehold?.id);
   const { wins, goals } = useWeeklyData(selectedHousehold?.id || null);
-  const { appreciations } = useAppreciations(selectedHousehold?.id || null);
+  const { todaysMVP } = useMVPOfTheDay(selectedHousehold?.id);
 
   if (!selectedHousehold) {
     return (
@@ -37,12 +38,6 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
 
   const completedChores = myChores.filter(chore => chore.completed);
   const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
-
-  // Filter appreciations for or from this child
-  const myAppreciations = appreciations.filter(appreciation => 
-    appreciation.to_member.toLowerCase() === userProfile?.first_name?.toLowerCase() ||
-    appreciation.from_member.toLowerCase() === userProfile?.first_name?.toLowerCase()
-  );
 
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -199,32 +194,27 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
         </CardContent>
       </Card>
 
-      {/* My Appreciations */}
+      {/* Today's MVP */}
       <Card className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-pink-500" />
-            Family Love ❤️
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Today's MVP 🏅
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {myAppreciations.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">No appreciations yet!</p>
+            {!todaysMVP ? (
+              <p className="text-center text-muted-foreground py-4">No MVP nominated yet today!</p>
             ) : (
-              myAppreciations.slice(0, 3).map((appreciation) => (
-                <div key={appreciation.id} className="bg-white rounded-lg p-3 border">
-                  <div className="flex items-start gap-2">
-                    <Heart className="h-4 w-4 text-pink-500 mt-1 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm">{appreciation.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        From {appreciation.from_member} to {appreciation.to_member}
-                      </p>
-                    </div>
-                  </div>
+              <div className="bg-white rounded-lg p-4 border">
+                <div className="text-center">
+                  <div className="text-2xl mb-2">{todaysMVP.emoji}</div>
+                  <h3 className="font-bold text-lg text-foreground">{todaysMVP.nominated_for}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">Nominated by {todaysMVP.nominated_by}</p>
+                  <p className="italic text-foreground">"{todaysMVP.reason}"</p>
                 </div>
-              ))
+              </div>
             )}
           </div>
         </CardContent>

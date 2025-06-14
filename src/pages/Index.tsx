@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import ErrorBoundary from '@/components/ErrorBoundary';
 import CleanMobileNavigation from '@/components/CleanMobileNavigation';
 import CleanTopBar from '@/components/CleanTopBar';
-import Appreciations from '@/components/Appreciations';
+import MVPOfTheDay from '@/components/MVPOfTheDay';
 import BillsTracker from '@/components/BillsTracker';
 import FamilyNotes from '@/components/FamilyNotes';
 import MentalLoad from '@/components/MentalLoad';
@@ -20,7 +20,6 @@ import NannyDashboard from '@/components/NannyDashboard';
 import ChildDashboard from '@/components/ChildDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
 import FamilyCalendar from '@/components/FamilyCalendar';
-import MVPOfTheDay from '@/components/MVPOfTheDay';
 
 const Index = () => {
   const { user, userProfile, signOut, loading: authLoading, error: authError, retry: retryAuth } = useAuth();
