@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Heart, Plus, Archive } from 'lucide-react';
+import { Heart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,12 +24,10 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
     loading, 
     addAppreciation, 
     updateAppreciation,
-    deleteAppreciation,
     toggleReaction,
     addComment,
     fetchComments,
-    fetchReactions,
-    archiveOldAppreciations
+    fetchReactions
   } = useAppreciations(selectedHousehold?.id);
   
   const [isAddingAppreciation, setIsAddingAppreciation] = useState(false);
@@ -54,10 +53,6 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
     }
   };
 
-  const handleArchiveOld = async () => {
-    await archiveOldAppreciations();
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -76,25 +71,15 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
           </h2>
           <p className="text-muted-foreground mt-1">Share love and gratitude with your family</p>
         </div>
-        <div className="flex gap-2">
+        {householdMembers.length > 1 && (
           <Button 
-            onClick={handleArchiveOld}
-            variant="outline"
-            className="border-orange-300 text-orange-700 hover:bg-orange-50"
+            onClick={() => setIsAddingAppreciation(true)} 
+            className="bg-pink-600 hover:bg-pink-700"
           >
-            <Archive size={16} className="mr-2" />
-            Archive Old
+            <Plus size={16} className="mr-2" />
+            Add Appreciation
           </Button>
-          {householdMembers.length > 1 && (
-            <Button 
-              onClick={() => setIsAddingAppreciation(true)} 
-              className="bg-pink-600 hover:bg-pink-700"
-            >
-              <Plus size={16} className="mr-2" />
-              Add Appreciation
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
       {isAddingAppreciation && (
@@ -156,7 +141,6 @@ const Appreciations: React.FC<AppreciationsProps> = ({ selectedHousehold }) => {
             onToggleReaction={toggleReaction}
             onAddComment={addComment}
             onUpdateAppreciation={updateAppreciation}
-            onDeleteAppreciation={deleteAppreciation}
             onLoadComments={fetchComments}
             onLoadReactions={fetchReactions}
           />

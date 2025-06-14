@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 
 export interface Appreciation {
   id: string;
@@ -12,8 +10,6 @@ export interface Appreciation {
   reactions: number;
   created_at: string;
   household_id: string;
-  archived: boolean;
-  archived_at?: string;
 }
 
 export interface AppreciationComment {
@@ -47,81 +43,41 @@ export const useAppreciations = (householdId: string | null) => {
   const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { user, userProfile } = useAuth();
-
-  const currentUserName = userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'Unknown User';
 
   const fetchHouseholdMembers = async () => {
-    if (!householdId) {
-      console.log('❌ No household ID provided for fetching members');
-      setHouseholdMembers([]);
-      return;
-    }
+    if (!householdId) return;
 
     try {
-      console.log('🔍 Fetching household members for household:', householdId);
-      
       const { data, error } = await supabase
         .from('household_members')
         .select(`
-          user_id,
+          id,
           profiles:user_id (
             id,
             first_name,
             last_name,
-            role,
-            is_child_account
+            role
           )
         `)
         .eq('household_id', householdId);
 
-      if (error) {
-        console.error('❌ Error fetching household members:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('📊 Raw household members data:', data);
+      const members = data?.map(member => ({
+        id: member.profiles.id,
+        first_name: member.profiles.first_name || 'Unknown',
+        last_name: member.profiles.last_name || 'User',
+        role: member.profiles.role || 'member'
+      })) || [];
       
-      // Filter out members with null profiles and process data
-      const validMembers = data?.filter(member => {
-        if (!member.profiles) {
-          console.warn('⚠️ Found household member with null profile, user_id:', member.user_id);
-          return false;
-        }
-        return true;
-      }) || [];
-      
-      console.log('✅ Valid household members:', validMembers.length, 'out of', data?.length || 0);
-      
-      const members = validMembers.map(member => {
-        const profile = member.profiles;
-        
-        // Determine the role - prioritize is_child_account flag
-        let memberRole = profile.role || 'member';
-        if (profile.is_child_account === true) {
-          memberRole = 'child';
-        }
-        
-        return {
-          id: profile.id,
-          first_name: profile.first_name || 'Unknown',
-          last_name: profile.last_name || 'User',
-          role: memberRole
-        };
-      });
-      
-      console.log('👥 Processed household members:', members);
       setHouseholdMembers(members);
     } catch (error: any) {
-      console.error('🚨 Error in fetchHouseholdMembers:', error);
+      console.error('Error fetching household members:', error);
       toast({
         title: "Error fetching family members",
-        description: `${error.message || 'Unknown error occurred'}. Some data may be inconsistent.`,
+        description: error.message,
         variant: "destructive"
       });
-      
-      // Set empty array on error to prevent crashes
-      setHouseholdMembers([]);
     }
   };
 
@@ -136,13 +92,11 @@ export const useAppreciations = (householdId: string | null) => {
         .from('appreciations')
         .select('*')
         .eq('household_id', householdId)
-        .eq('archived', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setAppreciations(data || []);
     } catch (error: any) {
-      console.error('Error fetching appreciations:', error);
       toast({
         title: "Error fetching appreciations",
         description: error.message,
@@ -196,7 +150,7 @@ export const useAppreciations = (householdId: string | null) => {
     }
   };
 
-  const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member' | 'archived' | 'archived_at'>) => {
+  const addAppreciation = async (appreciationData: Omit<Appreciation, 'id' | 'created_at' | 'household_id' | 'from_member'>) => {
     if (!householdId) return false;
 
     try {
@@ -205,7 +159,7 @@ export const useAppreciations = (householdId: string | null) => {
         .insert([{ 
           ...appreciationData, 
           household_id: householdId,
-          from_member: currentUserName
+          from_member: 'current_user' // This will be updated to use actual user name
         }]);
 
       if (error) throw error;
@@ -253,53 +207,6 @@ export const useAppreciations = (householdId: string | null) => {
     }
   };
 
-  const deleteAppreciation = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('appreciations')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "Appreciation deleted successfully!",
-      });
-      
-      fetchAppreciations();
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Error deleting appreciation",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  const archiveOldAppreciations = async () => {
-    try {
-      const { data, error } = await supabase.rpc('archive_old_appreciations');
-      
-      if (error) throw error;
-      
-      if (data > 0) {
-        toast({
-          title: "Appreciations archived",
-          description: `${data} old appreciation(s) have been archived.`,
-        });
-        fetchAppreciations();
-      }
-      
-      return data;
-    } catch (error: any) {
-      console.error('Error archiving old appreciations:', error);
-      return 0;
-    }
-  };
-
   const toggleReaction = async (appreciationId: string, reactorName: string) => {
     if (!householdId) return false;
 
@@ -308,6 +215,7 @@ export const useAppreciations = (householdId: string | null) => {
       const userReaction = existingReactions.find(r => r.reactor_name === reactorName);
 
       if (userReaction) {
+        // Remove reaction
         const { error } = await supabase
           .from('appreciation_reactions')
           .delete()
@@ -315,6 +223,7 @@ export const useAppreciations = (householdId: string | null) => {
 
         if (error) throw error;
       } else {
+        // Add reaction
         const { error } = await supabase
           .from('appreciation_reactions')
           .insert([{
@@ -366,13 +275,8 @@ export const useAppreciations = (householdId: string | null) => {
   };
 
   useEffect(() => {
-    console.log('🔄 useAppreciations effect triggered, householdId:', householdId);
     fetchAppreciations();
     fetchHouseholdMembers();
-    
-    if (householdId) {
-      archiveOldAppreciations();
-    }
   }, [householdId]);
 
   return {
@@ -383,12 +287,10 @@ export const useAppreciations = (householdId: string | null) => {
     loading,
     addAppreciation,
     updateAppreciation,
-    deleteAppreciation,
     toggleReaction,
     addComment,
     fetchComments,
     fetchReactions,
-    archiveOldAppreciations,
     refetch: fetchAppreciations
   };
 };

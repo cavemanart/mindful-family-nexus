@@ -3,49 +3,61 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useHouseholds, Household } from '@/hooks/useHouseholds';
-import { Loader2, RefreshCw, Wifi, WifiOff, AlertCircle } from "lucide-react"
+import { usePagePreferences } from '@/hooks/usePagePreferences';
+import { Loader2, RefreshCw, Wifi, WifiOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ErrorBoundary from '@/components/ErrorBoundary';
-import CleanTopBar from '@/components/CleanTopBar';
 import CleanMobileNavigation from '@/components/CleanMobileNavigation';
+import CleanTopBar from '@/components/CleanTopBar';
+import Appreciations from '@/components/Appreciations';
+import BillsTracker from '@/components/BillsTracker';
+import FamilyNotes from '@/components/FamilyNotes';
+import MentalLoad from '@/components/MentalLoad';
+import NannyMode from '@/components/NannyMode';
+import ChildrenDashboard from '@/components/ChildrenDashboard';
+import WeeklySync from '@/components/WeeklySync';
 import Dashboard from '@/components/Dashboard';
 import NannyDashboard from '@/components/NannyDashboard';
 import ChildDashboard from '@/components/ChildDashboard';
 import HouseholdSelector from '@/components/HouseholdSelector';
+import FamilyCalendar from '@/components/FamilyCalendar';
 
 const Index = () => {
   const { user, userProfile, signOut, loading: authLoading, error: authError, retry: retryAuth } = useAuth();
   const { households, loading: householdsLoading, error: householdsError, retry: retryHouseholds } = useHouseholds();
+  const { isPageVisible, loading: preferencesLoading, error: preferencesError } = usePagePreferences();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [showHouseholdSelector, setShowHouseholdSelector] = useState(false);
-  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Track online/offline status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
-      return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      };
-    }
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   useEffect(() => {
     if (!user && !authLoading) {
-      navigate('/auth');
+      navigate('/');
     }
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user && !householdsLoading && households.length > 0) {
-      if (households.length === 1) {
+    if (user && !householdsLoading) {
+      if (households.length === 0) {
+        setShowHouseholdSelector(true);
+        setSelectedHousehold(null);
+      } else if (households.length === 1) {
         setSelectedHousehold(households[0]);
         setShowHouseholdSelector(false);
       } else {
@@ -61,11 +73,15 @@ const Index = () => {
           localStorage.setItem('selectedHouseholdId', households[0].id);
         }
       }
-    } else if (user && !householdsLoading && households.length === 0) {
-      setShowHouseholdSelector(true);
-      setSelectedHousehold(null);
     }
   }, [user, households, householdsLoading]);
+
+  // Redirect to dashboard if current tab is not visible (except profile which is always accessible)
+  useEffect(() => {
+    if (activeTab !== 'dashboard' && activeTab !== 'profile' && !isPageVisible(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, isPageVisible]);
 
   const handleHouseholdSelect = (household: Household) => {
     setSelectedHousehold(household);
@@ -84,7 +100,7 @@ const Index = () => {
   const handleSignOut = async () => {
     localStorage.removeItem('selectedHouseholdId');
     await signOut();
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleRetry = () => {
@@ -93,8 +109,13 @@ const Index = () => {
     retryHouseholds();
   };
 
+  // Handle tab changes including profile navigation
   const handleTabChange = (tab: string) => {
-    navigate(`/${tab === 'dashboard' ? '' : tab}`);
+    if (tab === 'profile') {
+      navigate('/profile');
+    } else {
+      setActiveTab(tab);
+    }
   };
 
   // Progressive loading messages
@@ -102,30 +123,28 @@ const Index = () => {
     if (!isOnline) return "Checking connection...";
     if (authLoading) return "Authenticating...";
     if (householdsLoading) return "Loading households...";
+    if (preferencesLoading) return "Loading preferences...";
     return "Loading your family hub...";
   };
 
-  // Critical errors that prevent app function
-  const hasCriticalError = authError && (
-    authError.includes('Failed to initialize') || 
-    authError.includes('offline') ||
-    authError.includes('Session fetch timeout') ||
-    authError.includes('Failed to load session')
-  );
-  
   // Error handling with retry options
   const renderError = () => {
-    if (!hasCriticalError) return null;
+    const hasError = authError || householdsError || preferencesError;
+    const errorMessage = authError || householdsError || preferencesError || "Something went wrong";
+
+    if (!hasError) return null;
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
         <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-lg">
           <div className="mb-4">
-            <AlertCircle className="h-12 w-12 mx-auto text-red-500" />
+            {!isOnline ? <WifiOff className="h-12 w-12 mx-auto text-red-500" /> : <RefreshCw className="h-12 w-12 mx-auto text-red-500" />}
           </div>
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Connection Issue</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">
+            {!isOnline ? "Connection Issue" : "Loading Error"}
+          </h2>
           <p className="text-gray-600 mb-4">
-            {!isOnline ? "Please check your internet connection and try again." : "Unable to connect to the server. Please try again."}
+            {!isOnline ? "Please check your internet connection and try again." : errorMessage}
           </p>
           <div className="space-y-2">
             <Button onClick={handleRetry} className="w-full">
@@ -141,12 +160,12 @@ const Index = () => {
     );
   };
 
-  // Show error state only for critical errors
-  if (hasCriticalError) {
+  // Show error state if there are errors
+  if (authError || householdsError || preferencesError) {
     return renderError();
   }
 
-  // Show loading state with timeout protection
+  // Show loading state with progressive messages and timeout handling
   if (authLoading || (user && householdsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -156,14 +175,18 @@ const Index = () => {
           </div>
           <p className="text-gray-600 mb-4">{getLoadingMessage()}</p>
           
-          <div className="mt-6 space-y-2">
-            <p className="text-sm text-gray-500">Taking longer than expected?</p>
-            <Button variant="outline" onClick={handleRetry} size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </div>
+          {/* Show retry option after some time */}
+          {(authLoading || householdsLoading) && (
+            <div className="mt-6 space-y-2">
+              <p className="text-sm text-gray-500">Taking longer than expected?</p>
+              <Button variant="outline" onClick={handleRetry} size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          )}
           
+          {/* Connection status indicator */}
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
             <span>{isOnline ? "Connected" : "Offline"}</span>
@@ -181,54 +204,30 @@ const Index = () => {
     return <HouseholdSelector onHouseholdSelect={handleHouseholdSelect} />;
   }
 
-  // Role-based dashboard rendering with better error handling
+  // Role-based dashboard rendering
   const renderDashboard = () => {
-    try {
-      console.log('🎯 Rendering dashboard for user:', userProfile?.role, 'household:', selectedHousehold?.id);
-      
-      // Log any non-critical errors for debugging but don't crash
-      if (householdsError) {
-        console.warn('⚠️ Non-critical households error:', householdsError);
-      }
-      
-      if (!userProfile) {
-        console.log('📋 Using default dashboard - no userProfile');
-        return <Dashboard />;
-      }
+    if (!userProfile || !selectedHousehold) {
+      return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
+    }
 
-      if (!selectedHousehold) {
-        console.log('📋 No selected household, showing default dashboard');
-        return <Dashboard />;
-      }
-
-      switch (userProfile.role) {
-        case 'child':
-          console.log('👶 Rendering child dashboard');
-          return <ChildDashboard selectedHousehold={selectedHousehold} />;
-        case 'nanny':
-          console.log('👩‍🍼 Rendering nanny dashboard');
-          return <NannyDashboard selectedHousehold={selectedHousehold} />;
-        case 'parent':
-        case 'grandparent':
-        default:
-          console.log('👨‍👩‍👧‍👦 Rendering parent/default dashboard');
-          return <Dashboard />;
-      }
-    } catch (error) {
-      console.error('❌ Error rendering dashboard:', error);
-      // Show graceful fallback instead of crashing
-      return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-orange-600 mb-2">Loading Issue</h2>
-            <p className="text-gray-600 mb-4">Having trouble loading some data</p>
-            <Button onClick={() => window.location.reload()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Page
-            </Button>
-          </div>
-        </div>
-      );
+    switch (userProfile.role) {
+      case 'child':
+        return <ChildDashboard selectedHousehold={selectedHousehold} />;
+      case 'nanny':
+        return <NannyDashboard selectedHousehold={selectedHousehold} />;
+      case 'parent':
+      case 'grandparent':
+      default:
+        if (activeTab === 'dashboard') return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'appreciations' && isPageVisible('appreciations')) return <Appreciations selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'bills' && isPageVisible('bills')) return <BillsTracker selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'notes' && isPageVisible('notes')) return <FamilyNotes selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'calendar' && isPageVisible('calendar')) return <FamilyCalendar selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'mental-load' && isPageVisible('mental-load')) return <MentalLoad />;
+        if (activeTab === 'nanny-mode' && isPageVisible('nanny-mode')) return <NannyMode />;
+        if (activeTab === 'children' && isPageVisible('children')) return <ChildrenDashboard selectedHousehold={selectedHousehold} />;
+        if (activeTab === 'weekly-sync' && isPageVisible('weekly-sync')) return <WeeklySync selectedHousehold={selectedHousehold} />;
+        return <Dashboard setActiveSection={setActiveTab} selectedHousehold={selectedHousehold} />;
     }
   };
 
@@ -238,7 +237,7 @@ const Index = () => {
     <ErrorBoundary fallback={
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Something went wrong</h2>
+          <h2 className="text-xl font-bold text-red-600 mb-2">Dashboard Error</h2>
           <p className="text-gray-600 mb-4">Please refresh to try again</p>
           <Button onClick={() => window.location.reload()}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -263,7 +262,7 @@ const Index = () => {
         </main>
 
         {showMobileNav && (
-          <CleanMobileNavigation activeTab="dashboard" setActiveTab={handleTabChange} />
+          <CleanMobileNavigation activeTab={activeTab} setActiveTab={handleTabChange} />
         )}
       </div>
     </ErrorBoundary>

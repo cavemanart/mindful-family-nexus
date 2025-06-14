@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
@@ -11,10 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye, EyeOff, Users } from 'lucide-react';
+import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ChildManagement from '@/components/ChildManagement';
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -27,28 +27,18 @@ const Profile = () => {
     user: !!user, 
     userProfile: !!userProfile, 
     authLoading,
-    householdsCount: households?.length || 0,
-    userRole: userProfile?.role
+    householdsCount: households?.length || 0 
   });
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
-  // Fix the TypeScript error by ensuring we have the correct household type
-  const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId')) || households?.[0];
+  const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId'));
   const [householdName, setHouseholdName] = useState('');
   const [isUpdatingHousehold, setIsUpdatingHousehold] = useState(false);
   
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
-  const canManageChildren = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
-
-  console.log('👶 Child management check:', {
-    canManageChildren,
-    userRole: userProfile?.role,
-    selectedHousehold: !!selectedHousehold,
-    householdId: selectedHousehold?.id
-  });
 
   // Update form values when userProfile loads
   useEffect(() => {
@@ -183,7 +173,7 @@ const Profile = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="hover:bg-muted"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -264,53 +254,6 @@ const Profile = () => {
               </Button>
             </CardContent>
           </Card>
-
-          {/* Children Management - Always show for parents and grandparents, with better messaging */}
-          {canManageChildren && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Manage Children
-                </CardTitle>
-                <CardDescription>
-                  Create and manage child accounts with PIN access for your household
-                  {!selectedHousehold && " (Select a household first)"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedHousehold ? (
-                  <ChildManagement selectedHousehold={selectedHousehold} />
-                ) : (
-                  <div className="text-center py-8">
-                    <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-lg font-medium mb-2">No Household Selected</p>
-                    <p className="text-muted-foreground mb-4">
-                      You need to be part of a household to manage children. 
-                      Please join or create a household first.
-                    </p>
-                    <Button onClick={() => navigate('/')} variant="outline">
-                      Go to Dashboard
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Show message for non-parents/grandparents */}
-          {!canManageChildren && userProfile && (
-            <Card className="bg-muted/50">
-              <CardContent className="p-6 text-center">
-                <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium mb-2">Child Management</p>
-                <p className="text-muted-foreground">
-                  Child management is only available for parents and grandparents.
-                  Your current role is: {getRoleDisplay(userProfile.role)}
-                </p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Page Visibility Settings */}
           <Card>

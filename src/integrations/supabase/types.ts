@@ -92,8 +92,6 @@ export type Database = {
       }
       appreciations: {
         Row: {
-          archived: boolean
-          archived_at: string | null
           created_at: string
           from_member: string
           household_id: string
@@ -103,8 +101,6 @@ export type Database = {
           to_member: string
         }
         Insert: {
-          archived?: boolean
-          archived_at?: string | null
           created_at?: string
           from_member: string
           household_id: string
@@ -114,8 +110,6 @@ export type Database = {
           to_member: string
         }
         Update: {
-          archived?: boolean
-          archived_at?: string | null
           created_at?: string
           from_member?: string
           household_id?: string
@@ -770,7 +764,6 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_selection: string | null
           avatar_url: string | null
           created_at: string | null
           device_id: string | null
@@ -780,13 +773,11 @@ export type Database = {
           is_child_account: boolean | null
           last_name: string | null
           parent_id: string | null
-          pin: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           stripe_customer_id: string | null
           updated_at: string | null
         }
         Insert: {
-          avatar_selection?: string | null
           avatar_url?: string | null
           created_at?: string | null
           device_id?: string | null
@@ -796,13 +787,11 @@ export type Database = {
           is_child_account?: boolean | null
           last_name?: string | null
           parent_id?: string | null
-          pin?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Update: {
-          avatar_selection?: string | null
           avatar_url?: string | null
           created_at?: string | null
           device_id?: string | null
@@ -812,7 +801,6 @@ export type Database = {
           is_child_account?: boolean | null
           last_name?: string | null
           parent_id?: string | null
-          pin?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           stripe_customer_id?: string | null
           updated_at?: string | null
@@ -1006,10 +994,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      archive_old_appreciations: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
       can_edit_calendar_event: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
@@ -1017,17 +1001,6 @@ export type Database = {
       can_view_calendar_event: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
-      }
-      create_child_profile: {
-        Args: {
-          p_first_name: string
-          p_last_name: string
-          p_pin: string
-          p_avatar_selection: string
-          p_parent_id: string
-          p_household_id: string
-        }
-        Returns: string
       }
       create_profile_and_household: {
         Args: {
@@ -1072,15 +1045,6 @@ export type Database = {
       process_recurring_bills: {
         Args: Record<PropertyKey, never>
         Returns: number
-      }
-      verify_child_pin: {
-        Args: { p_pin: string; p_household_id: string }
-        Returns: {
-          child_id: string
-          child_name: string
-          avatar_selection: string
-          household_id: string
-        }[]
       }
       verify_nanny_token: {
         Args: { p_token: string }

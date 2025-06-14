@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export interface PagePreference {
   id: string;
@@ -38,7 +38,6 @@ export const usePagePreferences = () => {
   const [preferences, setPreferences] = useState<PagePreference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -58,11 +57,12 @@ export const usePagePreferences = () => {
       
       console.log('📋 Fetching page preferences for user:', user.id);
       
+      // Set timeout for preferences fetch
       const fetchTimeout = setTimeout(() => {
         console.error('⏰ Page preferences fetch timeout');
         setError('Loading preferences took too long');
         setLoading(false);
-      }, 8000);
+      }, 8000); // 8 second timeout
 
       const { data, error: fetchError } = await supabase
         .from('user_page_preferences')
@@ -74,11 +74,7 @@ export const usePagePreferences = () => {
       if (fetchError) {
         console.error('❌ Error fetching page preferences:', fetchError);
         setError('Failed to load page preferences');
-        toast({
-          title: "Error",
-          description: "Failed to load page preferences",
-          variant: "destructive"
-        });
+        toast.error('Failed to load page preferences');
       } else {
         console.log('✅ Page preferences loaded:', data?.length || 0);
         setPreferences(data || []);
@@ -87,11 +83,7 @@ export const usePagePreferences = () => {
     } catch (error) {
       console.error('🚨 Error fetching page preferences:', error);
       setError('Failed to load page preferences');
-      toast({
-        title: "Error",
-        description: "Failed to load page preferences",
-        variant: "destructive"
-      });
+      toast.error('Failed to load page preferences');
     } finally {
       setLoading(false);
     }
@@ -99,7 +91,7 @@ export const usePagePreferences = () => {
 
   const isPageVisible = (pageKey: string): boolean => {
     const preference = preferences.find(p => p.page_key === pageKey);
-    return preference ? preference.is_visible : true;
+    return preference ? preference.is_visible : true; // Default to visible
   };
 
   const togglePageVisibility = async (pageKey: string) => {
@@ -110,6 +102,7 @@ export const usePagePreferences = () => {
 
     try {
       if (existingPreference) {
+        // Update existing preference
         const { error } = await supabase
           .from('user_page_preferences')
           .update({ is_visible: newVisibility })
@@ -125,6 +118,7 @@ export const usePagePreferences = () => {
           )
         );
       } else {
+        // Create new preference
         const { data, error } = await supabase
           .from('user_page_preferences')
           .insert({
@@ -140,17 +134,10 @@ export const usePagePreferences = () => {
         setPreferences(prev => [...prev, data]);
       }
 
-      toast({
-        title: "Success",
-        description: "Page visibility updated"
-      });
+      toast.success('Page visibility updated');
     } catch (error) {
       console.error('Error updating page preference:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update page visibility",
-        variant: "destructive"
-      });
+      toast.error('Failed to update page visibility');
     }
   };
 

@@ -1,11 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
-import { Heart, User, MessageCircle, Edit, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Heart, User, MessageCircle, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Appreciation, AppreciationComment, AppreciationReaction } from '@/hooks/useAppreciations';
 
 interface AppreciationCardProps {
@@ -16,7 +16,6 @@ interface AppreciationCardProps {
   onToggleReaction: (appreciationId: string, reactorName: string) => Promise<boolean>;
   onAddComment: (appreciationId: string, commenterName: string, comment: string) => Promise<boolean>;
   onUpdateAppreciation: (id: string, updates: Partial<Appreciation>) => Promise<boolean>;
-  onDeleteAppreciation: (id: string) => Promise<boolean>;
   onLoadComments: (appreciationId: string) => void;
   onLoadReactions: (appreciationId: string) => void;
 }
@@ -29,7 +28,6 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
   onToggleReaction,
   onAddComment,
   onUpdateAppreciation,
-  onDeleteAppreciation,
   onLoadComments,
   onLoadReactions
 }) => {
@@ -52,7 +50,6 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
 
   const userHasReacted = reactions.some(r => r.reactor_name === currentUser);
   const canEdit = appreciation.from_member === currentUser;
-  const canDelete = appreciation.from_member === currentUser;
 
   useEffect(() => {
     onLoadReactions(appreciation.id);
@@ -83,10 +80,6 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
     } else {
       setIsEditing(false);
     }
-  };
-
-  const handleDelete = async () => {
-    await onDeleteAppreciation(appreciation.id);
   };
 
   return (
@@ -131,29 +124,6 @@ const AppreciationCard: React.FC<AppreciationCardProps> = ({
                   </div>
                 </DialogContent>
               </Dialog>
-            )}
-            {canDelete && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                    <Trash2 size={14} />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Appreciation</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this appreciation? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             )}
           </div>
         </div>

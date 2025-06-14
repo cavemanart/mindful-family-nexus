@@ -1,7 +1,7 @@
-
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { ensureUserSubscription } from '@/lib/subscription-utils';
 
 export type UserRole = 'parent' | 'nanny' | 'child' | 'grandparent';
 
@@ -19,15 +19,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
-  console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error, initialized });
+  console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error });
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -36,72 +35,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
+        .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('❌ Error fetching user profile:', error);
-        throw error;
-      }
-
-      if (data) {
-        const safeProfile = {
-          ...data,
-          first_name: data.first_name || 'User',
-          last_name: data.last_name || '',
-          role: data.role || 'parent'
-        };
-        console.log('✅ User profile fetched:', safeProfile);
-        setUserProfile(safeProfile);
+      if (!error && data) {
+        console.log('✅ User profile fetched:', data);
+        setUserProfile(data);
         setError(null);
+
+        // Ensure subscription exists after profile is loaded
+        setTimeout(async () => {
+          try {
+            await ensureUserSubscription(userId);
+            console.log('✅ Subscription ensured');
+          } catch (error) {
+            console.error('❌ Error ensuring subscription:', error);
+          }
+        }, 0);
       } else {
-        console.log('⚠️ No profile found, creating default profile');
-        setUserProfile({
-          id: userId,
-          first_name: 'User',
-          last_name: '',
-          role: 'parent',
-          email: user?.email || ''
-        });
+        console.log('❌ Error fetching user profile:', error);
+        setError('Failed to load user profile');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('🚨 Error in fetchUserProfile:', error);
-      setUserProfile({
-        id: userId,
-        first_name: 'User',
-        last_name: '',
-        role: 'parent',
-        email: user?.email || ''
-      });
+      setError('Failed to load user profile');
+    }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      console.log('💳 Checking subscription status');
+      const { data, error } = await supabase.functions.invoke('check-subscription-status');
+      if (error) {
+        console.error('❌ Subscription check error:', error);
+      } else {
+        console.log('✅ Subscription status checked:', data);
+      }
+    } catch (error) {
+      console.error('🚨 Error checking subscription:', error);
     }
   };
 
   const initializeAuth = async () => {
-    if (initialized) return;
-    
     try {
-      console.log('🚀 Initializing auth');
+      console.log('🚀 Initializing auth with timeout');
       setLoading(true);
       setError(null);
 
-      if (typeof window !== 'undefined' && !navigator.onLine) {
+      // Set a timeout for the entire auth initialization
+      const authTimeout = setTimeout(() => {
+        console.error('⏰ Auth initialization timeout');
+        setError('Authentication took too long. Please try again.');
+        setLoading(false);
+      }, 15000); // 15 second timeout
+
+      // Check if we're online
+      if (!navigator.onLine) {
+        clearTimeout(authTimeout);
         setError('You appear to be offline. Please check your connection.');
         setLoading(false);
         return;
       }
 
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Session fetch timeout')), 10000)
-      );
-
-      const { data: { session }, error: sessionError } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]) as any;
+      // Get initial session with timeout
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
         console.error('❌ Session error:', sessionError);
-        setError('Failed to load session. Please try again.');
+        // Clear potentially corrupted tokens
+        await supabase.auth.signOut();
+        setError('Session error. Please sign in again.');
+        clearTimeout(authTimeout);
         setLoading(false);
         return;
       }
@@ -111,23 +114,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserProfile(session.user.id).catch(console.error);
+        await fetchUserProfile(session.user.id);
       }
       
-      setInitialized(true);
+      clearTimeout(authTimeout);
       setLoading(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('🚨 Auth initialization error:', error);
-      setError('Failed to initialize. Please refresh the page.');
+      setError('Failed to initialize authentication');
       setLoading(false);
     }
   };
 
   const retry = () => {
     console.log('🔄 Retrying auth initialization');
-    setInitialized(false);
     initializeAuth();
   };
+
+  useEffect(() => {
+    console.log('🚀 Setting up auth state listener');
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 Auth state changed:', event, !!session);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          console.log('👤 User authenticated, fetching profile');
+          // Use setTimeout to prevent potential deadlocks
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          console.log('👤 User not authenticated, clearing profile');
+          setUserProfile(null);
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          setError(null);
+        }
+      }
+    );
+
+    // Initialize auth
+    initializeAuth();
+
+    // Online/offline detection
+    const handleOnline = () => {
+      console.log('🌐 Back online, retrying auth');
+      if (error && error.includes('offline')) {
+        retry();
+      }
+    };
+
+    const handleOffline = () => {
+      console.log('📴 Gone offline');
+      setError('You are currently offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      console.log('🧹 Cleaning up auth subscription');
+      subscription.unsubscribe();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
     console.log('📝 Signing up user:', email, role);
@@ -163,69 +218,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
   };
 
-  useEffect(() => {
-    let mounted = true;
-    
-    console.log('🚀 Setting up auth state listener');
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-        
-        console.log('🔄 Auth state changed:', event, !!session);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user && event !== 'TOKEN_REFRESHED') {
-          console.log('👤 User authenticated, fetching profile');
-          fetchUserProfile(session.user.id).catch(console.error);
-        } else if (!session) {
-          console.log('👤 User not authenticated, clearing profile');
-          setUserProfile(null);
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          setError(null);
-          setUserProfile(null);
-        }
-
-        if (initialized) {
-          setLoading(false);
-        }
-      }
-    );
-
-    initializeAuth();
-
-    const handleOnline = () => {
-      console.log('🌐 Back online, checking auth');
-      if (error && error.includes('offline')) {
-        retry();
-      }
-    };
-
-    const handleOffline = () => {
-      console.log('📴 Gone offline');
-      setError('You are currently offline');
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
-    }
-
-    return () => {
-      mounted = false;
-      console.log('🧹 Cleaning up auth subscription');
-      subscription.unsubscribe();
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      }
-    };
-  }, []);
-
   const value = {
     user,
     session,
@@ -239,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

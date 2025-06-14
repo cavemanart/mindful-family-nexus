@@ -1,70 +1,52 @@
 
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/toaster';
-import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/hooks/useAuth';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import React from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import NotFound from "./pages/NotFound";
+import HomePage from "./components/HomePage";
+import NannyAccess from "./pages/NannyAccess";
+import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
+import Success from "./pages/Success";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import ErrorBoundary from "./components/ErrorBoundary";
 
-import { queryClient } from '@/lib/queryClient';
+const queryClient = new QueryClient();
 
-import Index from '@/pages/Index';
-import Auth from '@/pages/Auth';
-import Profile from '@/pages/Profile';
-import ChildrenPage from '@/pages/ChildrenPage';
-import Subscription from '@/pages/Subscription';
-import Success from '@/pages/Success';
-import NotFound from '@/pages/NotFound';
-import NannyLogin from '@/pages/NannyLogin';
-import NannyAccess from '@/pages/NannyAccess';
-import ChildAccess from '@/pages/ChildAccess';
-import ChildAccessHelp from '@/pages/ChildAccessHelp';
-import CalendarPage from '@/pages/CalendarPage';
-import AppreciationsPage from '@/pages/AppreciationsPage';
-import BillsPage from '@/pages/BillsPage';
-import NotesPage from '@/pages/NotesPage';
-import MentalLoadPage from '@/pages/MentalLoadPage';
-import NannyModePage from '@/pages/NannyModePage';
-import WeeklySyncPage from '@/pages/WeeklySyncPage';
-
-function App() {
+const App = () => {
+  console.log('🚀 App component rendering');
+  
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="system" storageKey="hublie-theme">
+        <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
           <AuthProvider>
+            <Toaster />
+            <Sonner />
             <BrowserRouter>
-              <div className="min-h-screen bg-background">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/dashboard" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/children" element={<ChildrenPage />} />
-                  <Route path="/subscription" element={<Subscription />} />
-                  <Route path="/success" element={<Success />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
-                  <Route path="/appreciations" element={<AppreciationsPage />} />
-                  <Route path="/bills" element={<BillsPage />} />
-                  <Route path="/notes" element={<NotesPage />} />
-                  <Route path="/mental-load" element={<MentalLoadPage />} />
-                  <Route path="/nanny-mode" element={<NannyModePage />} />
-                  <Route path="/weekly-sync" element={<WeeklySyncPage />} />
-                  <Route path="/nanny-login" element={<NannyLogin onSuccess={() => {}} />} />
-                  <Route path="/nanny-access/:householdId" element={<NannyAccess />} />
-                  <Route path="/child-access/:householdId" element={<ChildAccess />} />
-                  <Route path="/child-access-help" element={<ChildAccessHelp />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <Toaster />
-              </div>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/dashboard" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/subscription" element={<Subscription />} />
+                <Route path="/success" element={<Success />} />
+                <Route path="/nanny" element={<NannyAccess />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <PWAInstallPrompt />
             </BrowserRouter>
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
-}
+};
 
 export default App;

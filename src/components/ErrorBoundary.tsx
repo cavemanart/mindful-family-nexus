@@ -1,8 +1,5 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Props {
   children: ReactNode;
@@ -12,7 +9,6 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
-  errorInfo?: ErrorInfo;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -27,49 +23,34 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary details:', error, errorInfo);
-    this.setState({ errorInfo });
+    
+    // Log specific React dispatcher errors for debugging
+    if (error.message.includes('dispatcher')) {
+      console.error('React dispatcher error detected. This usually happens when hooks are called outside of a React component or before React is fully mounted.');
+    }
   }
 
   public render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="max-w-md w-full">
-            <CardHeader className="text-center">
-              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <CardTitle className="text-xl">Something went wrong</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground text-center">
-                The application encountered an unexpected error. This has been logged for investigation.
+      return this.props.fallback || (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
+          <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">
+              We encountered an unexpected error. Please refresh the page to try again.
+            </p>
+            {this.state.error?.message.includes('dispatcher') && (
+              <p className="text-sm text-gray-500 mb-4">
+                React initialization error detected. This should be resolved on refresh.
               </p>
-              
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div className="bg-muted p-3 rounded text-sm">
-                  <strong>Error:</strong> {this.state.error.message}
-                </div>
-              )}
-              
-              <div className="flex gap-2 justify-center">
-                <Button 
-                  onClick={() => this.setState({ hasError: false })}
-                  variant="outline"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Try Again
-                </Button>
-                <Button 
-                  onClick={() => window.location.reload()}
-                >
-                  Reload Page
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Refresh Page
+            </button>
+          </div>
         </div>
       );
     }
