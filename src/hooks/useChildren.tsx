@@ -26,18 +26,18 @@ export const useChildren = (householdId?: string | null) => {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const fetchChildren = async () => {
+  const fetchChildren = async (forceRefresh = false) => {
     if (!householdId) {
       console.log('🔍 useChildren: No household ID provided');
       setChildren([]);
       return;
     }
     
-    console.log('🔍 useChildren: Fetching children for household:', householdId);
+    console.log(`🔍 useChildren: Fetching children for household: ${householdId} ${forceRefresh ? '(FORCE REFRESH)' : ''}`);
     setLoading(true);
     
     try {
-      // First, get all child profiles
+      // Step 1: Get all child profiles
       const { data: childProfiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_selection, created_at')
@@ -58,7 +58,7 @@ export const useChildren = (householdId?: string | null) => {
         return;
       }
 
-      // Then, filter by household membership
+      // Step 2: Filter by household membership
       const childIds = childProfiles.map(child => child.id);
       const { data: householdMembers, error: membersError } = await supabase
         .from('household_members')
@@ -77,7 +77,7 @@ export const useChildren = (householdId?: string | null) => {
       const householdChildIds = new Set(householdMembers?.map(member => member.user_id) || []);
       const householdChildren = childProfiles.filter(child => householdChildIds.has(child.id));
 
-      console.log('✅ useChildren: Children in household:', householdChildren.length);
+      console.log('✅ useChildren: Children in household:', householdChildren.length, householdChildren.map(c => c.first_name));
       setChildren(householdChildren || []);
       
     } catch (error) {
@@ -98,6 +98,18 @@ export const useChildren = (householdId?: string | null) => {
     console.log('🔍 useChildren: Creating child:', childData.firstName);
     setCreating(true);
     
+    // Optimistic update - add child to local state immediately
+    const optimisticChild: Child = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      first_name: childData.firstName,
+      last_name: childData.lastName,
+      avatar_selection: childData.avatarSelection,
+      created_at: new Date().toISOString()
+    };
+    
+    console.log('🔄 useChildren: Adding optimistic child to UI:', optimisticChild.first_name);
+    setChildren(prev => [...prev, optimisticChild]);
+    
     try {
       const { data, error } = await supabase.rpc('create_child_profile', {
         p_first_name: childData.firstName,
@@ -110,21 +122,25 @@ export const useChildren = (householdId?: string | null) => {
 
       if (error) {
         console.error('❌ useChildren: RPC error:', error);
+        // Remove optimistic update on error
+        setChildren(prev => prev.filter(child => child.id !== optimisticChild.id));
         throw error;
       }
       
       console.log('✅ useChildren: Child created successfully, returned ID:', data);
       toast.success(`${childData.firstName} has been added to the family!`);
       
-      // Force refresh the children list
+      // Replace optimistic child with real data via force refresh
       setTimeout(() => {
-        console.log('🔄 useChildren: Refreshing children list after creation');
-        fetchChildren();
-      }, 500);
+        console.log('🔄 useChildren: Force refreshing after successful creation');
+        fetchChildren(true);
+      }, 1000);
       
       return true;
     } catch (error) {
       console.error('❌ useChildren: Error creating child:', error);
+      // Remove optimistic update on error
+      setChildren(prev => prev.filter(child => child.id !== optimisticChild.id));
       toast.error('Failed to add child');
       return false;
     } finally {
@@ -151,7 +167,10 @@ export const useChildren = (householdId?: string | null) => {
         (payload) => {
           console.log('🔔 useChildren: Real-time INSERT detected:', payload.new);
           // Refresh children list when a new child is added
-          setTimeout(() => fetchChildren(), 1000);
+          setTimeout(() => {
+            console.log('🔄 useChildren: Refreshing due to real-time INSERT');
+            fetchChildren(true);
+          }, 1500);
         }
       )
       .on(
@@ -165,7 +184,10 @@ export const useChildren = (householdId?: string | null) => {
         (payload) => {
           console.log('🔔 useChildren: Real-time UPDATE detected:', payload.new);
           // Refresh children list when a child is updated
-          setTimeout(() => fetchChildren(), 1000);
+          setTimeout(() => {
+            console.log('🔄 useChildren: Refreshing due to real-time UPDATE');
+            fetchChildren(true);
+          }, 1500);
         }
       )
       .on(
@@ -179,12 +201,19 @@ export const useChildren = (householdId?: string | null) => {
           console.log('🔔 useChildren: Real-time household member INSERT detected:', payload.new);
           // Refresh when new members are added
           if (payload.new.household_id === householdId) {
-            setTimeout(() => fetchChildren(), 1000);
+            setTimeout(() => {
+              console.log('🔄 useChildren: Refreshing due to household member INSERT');
+              fetchChildren(true);
+            }, 1500);
           }
         }
       )
       .subscribe((status) => {
         console.log('🔔 useChildren: Subscription status:', status);
+        if (status === 'SUBSCRIPTION_ERROR') {
+          console.error('❌ useChildren: Real-time subscription failed');
+          toast.error('Real-time updates disabled - use refresh button to see new children');
+        }
       });
 
     return () => {
@@ -203,6 +232,6 @@ export const useChildren = (householdId?: string | null) => {
     loading,
     creating,
     createChild,
-    refreshChildren: fetchChildren
+    refreshChildren: () => fetchChildren(true)
   };
 };

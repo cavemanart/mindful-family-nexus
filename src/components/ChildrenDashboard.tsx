@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +19,10 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   
   const [selectedChild, setSelectedChild] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
-  console.log('🔍 ChildrenDashboard: Rendering with', children.length, 'children for household:', selectedHousehold?.id);
+  console.log(`🔍 ChildrenDashboard: Rendering with ${children.length} children for household:`, selectedHousehold?.id);
+  console.log('🔍 ChildrenDashboard: Children data:', children.map(c => ({ id: c.id, name: c.first_name })));
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -33,10 +34,12 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   // Handle successful child addition
   const handleChildAdded = async () => {
-    console.log('🔍 ChildrenDashboard: Child added, refreshing children list');
+    console.log('🔍 ChildrenDashboard: Child added, performing force refresh');
     setIsRefreshing(true);
     try {
       await refreshChildren();
+      setLastRefreshTime(new Date());
+      console.log('✅ ChildrenDashboard: Force refresh completed');
     } finally {
       setIsRefreshing(false);
     }
@@ -48,6 +51,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     setIsRefreshing(true);
     try {
       await refreshChildren();
+      setLastRefreshTime(new Date());
+      console.log('✅ ChildrenDashboard: Manual refresh completed');
     } finally {
       setIsRefreshing(false);
     }
@@ -129,14 +134,17 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               ) : (
                 <RefreshCw className="mr-2 h-4 w-4" />
               )}
-              Refresh
+              Force Refresh
             </Button>
           </div>
           
           {selectedHousehold && (
-            <p className="text-xs text-muted-foreground mt-4">
-              Household ID: {selectedHousehold.id}
-            </p>
+            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+              <p>Household ID: {selectedHousehold.id}</p>
+              {lastRefreshTime && (
+                <p>Last refresh: {lastRefreshTime.toLocaleTimeString()}</p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -161,6 +169,9 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               className={selectedChild === child.first_name ? "bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600" : ""}
             >
               {child.first_name}
+              {child.id.startsWith('temp-') && (
+                <AlertCircle className="ml-1 h-3 w-3 text-amber-500" />
+              )}
             </Button>
           ))}
         </div>
@@ -190,10 +201,31 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             ) : (
               <RefreshCw className="mr-2 h-3 w-3" />
             )}
-            Refresh
+            Force Refresh
           </Button>
         </div>
+
+        {lastRefreshTime && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Last refresh: {lastRefreshTime.toLocaleTimeString()}
+          </p>
+        )}
       </div>
+
+      {/* Debug Information */}
+      <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700">
+        <CardContent className="p-4">
+          <div className="text-sm space-y-1">
+            <p><strong>Household ID:</strong> {selectedHousehold?.id}</p>
+            <p><strong>Children Count:</strong> {children.length}</p>
+            <p><strong>Children:</strong> {children.map(c => c.first_name).join(', ') || 'None'}</p>
+            <p><strong>Selected Child:</strong> {selectedChild || 'None'}</p>
+            {lastRefreshTime && (
+              <p><strong>Last Refresh:</strong> {lastRefreshTime.toLocaleString()}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Points and Rewards */}
       <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200 dark:border-yellow-700">
