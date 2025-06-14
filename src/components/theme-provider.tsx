@@ -23,18 +23,24 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "light",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
+  // Early return with fallback if React hooks are not available
+  if (typeof React === 'undefined' || !React.useState) {
+    console.error('ThemeProvider: React hooks not available');
+    return <div>{children}</div>;
+  }
+
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    
-    // Safe localStorage access after mount
     try {
+      setIsMounted(true);
+      
+      // Safe localStorage access after mount
       const stored = localStorage.getItem(storageKey);
       if (stored && ['dark', 'light', 'system'].includes(stored)) {
         setThemeState(stored as Theme);

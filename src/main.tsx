@@ -6,6 +6,14 @@ import './index.css';
 
 console.log('🚀 Main entry point starting');
 
+// Ensure React is properly loaded
+if (typeof React === 'undefined') {
+  console.error('❌ React is not loaded');
+  throw new Error('React is not loaded');
+}
+
+console.log('✅ React loaded successfully');
+
 // Ensure DOM is fully loaded
 const initializeApp = () => {
   const rootElement = document.getElementById("root");
@@ -29,7 +37,16 @@ const initializeApp = () => {
     console.log('✅ React app rendered successfully');
   } catch (error) {
     console.error('❌ Error rendering React app:', error);
-    throw error;
+    
+    // Fallback render without StrictMode
+    try {
+      const root = createRoot(rootElement);
+      root.render(<App />);
+      console.log('✅ React app rendered with fallback');
+    } catch (fallbackError) {
+      console.error('❌ Fallback render also failed:', fallbackError);
+      throw fallbackError;
+    }
   }
 };
 
