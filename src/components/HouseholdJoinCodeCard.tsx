@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -67,7 +66,7 @@ export default function HouseholdJoinCodeCard({ householdId }: Props) {
           </div>
         )}
         <div className="text-xs text-muted-foreground mt-2">
-          Give this code to your child for one-hour use, or until redeemed.
+          Give this code to your child for 24-hour use, or until redeemed.
         </div>
       </CardContent>
     </Card>
