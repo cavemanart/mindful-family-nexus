@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Heart, Calendar, Users, Trophy } from 'lucide-react';
+import { Trophy, Calendar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -30,31 +31,6 @@ const OverviewCards: React.FC<OverviewCardsProps> = ({ setActiveSection }) => {
               onClick={() => setActiveSection('mvp')}
             >
               View MVPs
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg text-foreground">
-            <Heart className="text-pink-500" size={20} />
-            Recent Appreciations
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="p-3 bg-pink-50 dark:bg-pink-950/30 rounded-lg">
-              <p className="text-sm text-foreground">"Thanks for making breakfast! ❤️"</p>
-              <p className="text-xs text-muted-foreground mt-1">From Mom to Dad</p>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="w-full text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/30"
-              onClick={() => setActiveSection('appreciations')}
-            >
-              View All
             </Button>
           </div>
         </CardContent>
@@ -114,3 +90,4 @@ const OverviewCards: React.FC<OverviewCardsProps> = ({ setActiveSection }) => {
 };
 
 export default OverviewCards;
+
