@@ -144,6 +144,58 @@ export type Database = {
           },
         ]
       }
+      child_pins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          household_id: string
+          id: string
+          pin: string
+          used_at: string | null
+          used_by_profile_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          household_id: string
+          id?: string
+          pin: string
+          used_at?: string | null
+          used_by_profile_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          household_id?: string
+          id?: string
+          pin?: string
+          used_at?: string | null
+          used_by_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_pins_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_pins_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_pins_used_by_profile_id_fkey"
+            columns: ["used_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chores: {
         Row: {
           assigned_to: string
@@ -1020,6 +1072,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      generate_child_pin: {
+        Args: { _household_id: string }
+        Returns: string
+      }
       generate_household_join_code: {
         Args: { _household_id: string }
         Returns: string
@@ -1058,6 +1114,15 @@ export type Database = {
       join_household_with_code: {
         Args: {
           _code: string
+          _name: string
+          _avatar_selection: string
+          _device_id: string
+        }
+        Returns: string
+      }
+      join_household_with_pin: {
+        Args: {
+          _pin: string
           _name: string
           _avatar_selection: string
           _device_id: string
