@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ import {
 export default function HomePage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [showChildLogin, setShowChildLogin] = useState(false);
   const { households } = useHouseholds();
   const { setActiveChild } = useChildSession();
   
@@ -39,31 +37,11 @@ export default function HomePage() {
     }
   }, [user, loading, navigate]);
 
-  const handleChildLoginSuccess = (child: Child) => {
-    console.log('👶 Child login successful:', child.first_name);
-    setActiveChild(child);
-    navigate('/dashboard');
-  };
-
-  const handleBackToHome = () => {
-    setShowChildLogin(false);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
         <p className="text-lg font-semibold">Loading...</p>
       </div>
-    );
-  }
-
-  if (showChildLogin && firstHousehold) {
-    return (
-      <ChildPinLogin 
-        householdId={firstHousehold.id}
-        onLoginSuccess={handleChildLoginSuccess}
-        onBack={handleBackToHome}
-      />
     );
   }
 
@@ -117,16 +95,14 @@ export default function HomePage() {
               Get Started Free
             </Button>
             
-            {firstHousehold && (
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => setShowChildLogin(true)}
-                className="flex-1"
-              >
-                👶 Kid's Login
-              </Button>
-            )}
+            <Button 
+              size="lg" 
+              variant="outline"
+              onClick={() => navigate('/join-household')}
+              className="flex-1"
+            >
+              👶 Kid&apos;s Login
+            </Button>
           </div>
           
           <p className="text-sm text-muted-foreground">
