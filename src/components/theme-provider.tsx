@@ -27,6 +27,7 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
+  // Safe theme initialization with fallback
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -43,10 +44,15 @@ export function ThemeProvider({
 
   const [mounted, setMounted] = useState(false);
 
+  // Progressive mounting to prevent React conflicts
   useEffect(() => {
-    console.log('🎨 Theme provider mounting');
-    setMounted(true);
-    console.log('✅ Theme provider mounted successfully');
+    const timer = setTimeout(() => {
+      console.log('🎨 Theme provider mounting safely');
+      setMounted(true);
+      console.log('✅ Theme provider mounted successfully');
+    }, 10); // Small delay to ensure React is ready
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -93,9 +99,10 @@ export function ThemeProvider({
     },
   };
 
+  // Progressive rendering to prevent flash
   if (!mounted) {
     return (
-      <div style={{ visibility: 'hidden', opacity: 0 }}>
+      <div style={{ visibility: 'hidden', opacity: 0, position: 'absolute' }}>
         {children}
       </div>
     );

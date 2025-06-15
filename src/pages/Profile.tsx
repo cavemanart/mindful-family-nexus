@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
-import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useTheme } from '@/components/theme-provider';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,16 +10,15 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye } from 'lucide-react';
+import { ArrowLeft, User, Home, Palette, Shield, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import AvatarUpload from '@/components/AvatarUpload';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
   const { households } = useHouseholds();
   const { theme, setTheme } = useTheme();
-  const { availablePages, isPageVisible, togglePageVisibility, loading: preferencesLoading } = usePagePreferences();
   const navigate = useNavigate();
   
   console.log('📄 Profile component state:', { 
@@ -33,7 +31,6 @@ const Profile = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   
   const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId'));
   const [householdName, setHouseholdName] = useState('');
@@ -47,7 +44,6 @@ const Profile = () => {
       console.log('👤 Setting profile form values:', userProfile);
       setFirstName(userProfile.first_name || '');
       setLastName(userProfile.last_name || '');
-      setAvatarUrl(userProfile.avatar_url || null);
     }
   }, [userProfile]);
 
@@ -120,10 +116,6 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarUpdate = (newAvatarUrl: string | null) => {
-    setAvatarUrl(newAvatarUrl);
-  };
-
   const getRoleDisplay = (role?: string) => {
     switch (role) {
       case 'parent': return 'Parent';
@@ -133,14 +125,6 @@ const Profile = () => {
       default: return 'Family Member';
     }
   };
-
-  const groupedPages = availablePages.reduce((acc, page) => {
-    if (!acc[page.category]) {
-      acc[page.category] = [];
-    }
-    acc[page.category].push(page);
-    return acc;
-  }, {} as Record<string, typeof availablePages>);
 
   // Show loading state while authentication is loading
   if (authLoading) {
@@ -195,14 +179,12 @@ const Profile = () => {
         </div>
 
         <div className="space-y-8">
-          {/* Profile Header */}
+          {/* Profile Header - Temporarily without AvatarUpload */}
           <div className="text-center space-y-4">
-            <AvatarUpload
-              currentAvatarUrl={avatarUrl}
-              fallbackText={getAvatarFallback()}
-              onAvatarUpdate={handleAvatarUpdate}
-              size="lg"
-            />
+            <Avatar className="h-24 w-24 mx-auto">
+              <AvatarImage src={userProfile?.avatar_url || undefined} />
+              <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
+            </Avatar>
             <div>
               <h1 className="text-3xl font-bold">Profile Settings</h1>
               <p className="text-muted-foreground">
@@ -265,58 +247,6 @@ const Profile = () => {
               >
                 {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Page Visibility Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                Page Visibility
-              </CardTitle>
-              <CardDescription>
-                Choose which pages you want to see in your navigation. You can always change these settings later.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {preferencesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="animate-spin h-6 w-6" />
-                </div>
-              ) : (
-                Object.entries(groupedPages).map(([category, pages]) => (
-                  <div key={category} className="space-y-4">
-                    <h3 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
-                      {category === 'core' ? 'Core Pages' : 
-                       category === 'family' ? 'Family Features' : 'Management Tools'}
-                    </h3>
-                    <div className="space-y-3">
-                      {pages.map((page) => (
-                        <div key={page.key} className="flex items-center justify-between p-3 rounded-lg border">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Label className="font-medium">{page.label}</Label>
-                              {page.alwaysVisible && (
-                                <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                                  Always visible
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">{page.description}</p>
-                          </div>
-                          <Switch
-                            checked={isPageVisible(page.key)}
-                            onCheckedChange={() => togglePageVisibility(page.key)}
-                            disabled={page.alwaysVisible}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    {category !== 'management' && <Separator />}
-                  </div>
-                ))
-              )}
             </CardContent>
           </Card>
 

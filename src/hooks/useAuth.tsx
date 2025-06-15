@@ -21,13 +21,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Progressive state initialization to prevent React overload
+  const [initializationStep, setInitializationStep] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('🔐 AuthProvider state:', { user: !!user, session: !!session, userProfile: !!userProfile, loading, error });
+  console.log('🔐 AuthProvider state:', { 
+    user: !!user, 
+    session: !!session, 
+    userProfile: !!userProfile, 
+    loading, 
+    error,
+    initializationStep 
+  });
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -59,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initializeAuth = async () => {
     try {
-      console.log('🚀 Initializing auth');
+      console.log('🚀 Initializing auth - step:', initializationStep);
       setLoading(true);
       setError(null);
 
@@ -90,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setLoading(false);
+      setInitializationStep(prev => prev + 1);
     } catch (error) {
       console.error('🚨 Auth initialization error:', error);
       setError('Failed to initialize authentication');
@@ -99,63 +109,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const retry = () => {
     console.log('🔄 Retrying auth initialization');
+    setInitializationStep(0);
     initializeAuth();
   };
 
+  // Progressive initialization to prevent React overload
   useEffect(() => {
-    console.log('🚀 Setting up auth state listener');
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔄 Auth state changed:', event, !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          console.log('👤 User authenticated, fetching profile');
-          // Use setTimeout to prevent hook call issues during auth state change
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
-        } else {
-          console.log('👤 User not authenticated, clearing profile');
-          setUserProfile(null);
+    if (initializationStep === 0) {
+      console.log('🚀 Starting progressive auth initialization');
+      
+      // Small delay to ensure React is fully ready
+      const timer = setTimeout(() => {
+        setInitializationStep(1);
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+  }, [initializationStep]);
+
+  useEffect(() => {
+    if (initializationStep === 1) {
+      console.log('🚀 Setting up auth state listener');
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log('🔄 Auth state changed:', event, !!session);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            console.log('👤 User authenticated, fetching profile');
+            // Use setTimeout to prevent hook call issues during auth state change
+            setTimeout(() => {
+              fetchUserProfile(session.user.id);
+            }, 0);
+          } else {
+            console.log('👤 User not authenticated, clearing profile');
+            setUserProfile(null);
+          }
+          
+          if (event === 'SIGNED_OUT') {
+            setError(null);
+          }
         }
-        
-        if (event === 'SIGNED_OUT') {
-          setError(null);
+      );
+
+      // Initialize auth after setting up listener
+      setTimeout(() => {
+        initializeAuth();
+      }, 100);
+
+      // Online/offline detection
+      const handleOnline = () => {
+        console.log('🌐 Back online, retrying auth');
+        if (error && error.includes('offline')) {
+          retry();
         }
-      }
-    );
+      };
 
-    // Initialize auth after a small delay to ensure React is fully ready
-    setTimeout(() => {
-      initializeAuth();
-    }, 100);
+      const handleOffline = () => {
+        console.log('📴 Gone offline');
+        setError('You are currently offline');
+      };
 
-    // Online/offline detection
-    const handleOnline = () => {
-      console.log('🌐 Back online, retrying auth');
-      if (error && error.includes('offline')) {
-        retry();
-      }
-    };
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
 
-    const handleOffline = () => {
-      console.log('📴 Gone offline');
-      setError('You are currently offline');
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      console.log('🧹 Cleaning up auth subscription');
-      subscription.unsubscribe();
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+      return () => {
+        console.log('🧹 Cleaning up auth subscription');
+        subscription.unsubscribe();
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, [initializationStep, error]);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
     console.log('📝 Signing up user:', email, role);
@@ -202,6 +229,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
   };
+
+  // Show loading state during initialization
+  if (initializationStep === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Starting up...</p>
+        </div>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
