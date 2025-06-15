@@ -11,10 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import AvatarUpload from '@/components/AvatarUpload';
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -33,6 +33,7 @@ const Profile = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   
   const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId'));
   const [householdName, setHouseholdName] = useState('');
@@ -46,6 +47,7 @@ const Profile = () => {
       console.log('👤 Setting profile form values:', userProfile);
       setFirstName(userProfile.first_name || '');
       setLastName(userProfile.last_name || '');
+      setAvatarUrl(userProfile.avatar_url || null);
     }
   }, [userProfile]);
 
@@ -118,6 +120,10 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarUpdate = (newAvatarUrl: string | null) => {
+    setAvatarUrl(newAvatarUrl);
+  };
+
   const getRoleDisplay = (role?: string) => {
     switch (role) {
       case 'parent': return 'Parent';
@@ -165,6 +171,13 @@ const Profile = () => {
 
   console.log('✅ Rendering profile page');
 
+  const getAvatarFallback = () => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    return user?.email?.[0].toUpperCase() || 'U';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 dark:from-background dark:to-muted/20">
       <div className="container max-w-4xl mx-auto p-6">
@@ -184,12 +197,12 @@ const Profile = () => {
         <div className="space-y-8">
           {/* Profile Header */}
           <div className="text-center space-y-4">
-            <Avatar className="h-24 w-24 mx-auto">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback className="text-2xl">
-                {user?.email?.[0].toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarUpload
+              currentAvatarUrl={avatarUrl}
+              fallbackText={getAvatarFallback()}
+              onAvatarUpdate={handleAvatarUpdate}
+              size="lg"
+            />
             <div>
               <h1 className="text-3xl font-bold">Profile Settings</h1>
               <p className="text-muted-foreground">
@@ -357,7 +370,6 @@ const Profile = () => {
             </Card>
           )}
 
-          {/* Theme Settings */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

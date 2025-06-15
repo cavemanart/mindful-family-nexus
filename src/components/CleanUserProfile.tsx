@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Settings } from 'lucide-react';
@@ -33,6 +32,13 @@ const CleanUserProfile: React.FC<CleanUserProfileProps> = ({
     }
   };
 
+  const getAvatarFallback = () => {
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase();
+    }
+    return user?.email?.[0].toUpperCase() || 'U';
+  };
+
   return (
     <div className="relative">
       <Button 
@@ -41,16 +47,42 @@ const CleanUserProfile: React.FC<CleanUserProfileProps> = ({
         className="h-8 w-8 px-0"
         onClick={() => setShowProfile(!showProfile)}
       >
-        <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-          {user?.email?.[0].toUpperCase()}
+        {userProfile?.avatar_url ? (
+          <img 
+            src={userProfile.avatar_url} 
+            alt="Profile" 
+            className="h-8 w-8 rounded-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.nextElementSibling?.removeAttribute('style');
+            }}
+          />
+        ) : null}
+        <div 
+          className={`h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium ${userProfile?.avatar_url ? 'hidden' : ''}`}
+        >
+          {getAvatarFallback()}
         </div>
       </Button>
 
       {showProfile && (
         <div className="absolute right-0 top-10 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-              {user?.email?.[0].toUpperCase()}
+            {userProfile?.avatar_url ? (
+              <img 
+                src={userProfile.avatar_url} 
+                alt="Profile" 
+                className="h-12 w-12 rounded-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.removeAttribute('style');
+                }}
+              />
+            ) : null}
+            <div 
+              className={`h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium ${userProfile?.avatar_url ? 'hidden' : ''}`}
+            >
+              {getAvatarFallback()}
             </div>
             <div>
               <p className="text-lg font-semibold">

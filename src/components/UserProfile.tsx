@@ -68,7 +68,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
     if (isChildMode && activeChild) {
       return activeChild.first_name[0].toUpperCase();
     }
+    if (userProfile?.first_name && userProfile?.last_name) {
+      return `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase();
+    }
     return user?.email?.[0].toUpperCase() || activeUserName[0].toUpperCase();
+  };
+
+  const getAvatarUrl = () => {
+    if (isChildMode) {
+      return null; // Children don't have uploaded avatars yet
+    }
+    return userProfile?.avatar_url;
   };
 
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
@@ -80,7 +90,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
         <SheetTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="https://github.com/shadcn.png" />
+              <AvatarImage src={getAvatarUrl() || undefined} />
               <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
             </Avatar>
           </Button>
@@ -89,7 +99,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
           <SheetHeader>
             <SheetTitle className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarImage src={getAvatarUrl() || undefined} />
                 <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
               </Avatar>
               <div className="text-left">
@@ -127,7 +137,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Children Management - Only for authenticated parents */}
             {canManageChildren && selectedHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Children ({children.length})</h3>
@@ -156,7 +165,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Admin Actions - Only for authenticated admins */}
             {isAdminOrOwner && selectedHousehold && canManageHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Admin Actions</h3>
