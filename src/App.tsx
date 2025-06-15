@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -73,15 +72,6 @@ const App = () => {
     return (
       <div>
         <ChildModeDashboard />
-        {/* Debug info */}
-        {DEBUG && (
-          <div className="fixed bottom-0 left-0 bg-gray-100 dark:bg-gray-900 px-2 py-1 text-xs rounded-tr z-50 border-t border-r border-gray-200 dark:border-gray-800">
-            <div>DEBUG: Child Device Mode</div>
-            <div>deviceId: <span className="font-mono">{deviceId}</span></div>
-            <div>authToken: {authToken ? "SET" : "NONE"}</div>
-            <div>route: {window.location.pathname}</div>
-          </div>
-        )}
       </div>
     );
   }
@@ -108,15 +98,6 @@ const App = () => {
                     <Route path="/join-household" element={<JoinHousehold />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                  {/* Debug info for parent mode */}
-                  {DEBUG && (
-                    <div className="fixed bottom-0 left-0 bg-purple-100 dark:bg-purple-900 px-2 py-1 text-xs rounded-tr z-50 border-t border-r border-purple-200 dark:border-purple-800">
-                      <div>DEBUG: Parent Mode</div>
-                      <div>deviceId: <span className="font-mono">{deviceId}</span></div>
-                      <div>authToken: {authToken ? "SET" : "NONE"}</div>
-                      <div>route: {window.location.pathname}</div>
-                    </div>
-                  )}
                   <PWAInstallPrompt />
                 </ChildSessionProvider>
               </AuthProvider>
@@ -129,4 +110,3 @@ const App = () => {
 };
 
 export default App;
-
