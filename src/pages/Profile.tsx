@@ -17,6 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import NotificationPreferencesCard from "@/components/NotificationPreferencesCard";
 import CleanMobileNavigation from '@/components/CleanMobileNavigation';
 import { useSafeAuth } from '@/hooks/useSafeAuth';
+import ProfileHeader from "./profile/ProfileHeader";
+import PersonalInfoCard from "./profile/PersonalInfoCard";
+import PageVisibilityCard from "./profile/PageVisibilityCard";
+import HouseholdSettingsCard from "./profile/HouseholdSettingsCard";
+import AppearanceCard from "./profile/AppearanceCard";
+import AccountActionsCard from "./profile/AccountActionsCard";
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -209,7 +215,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 dark:from-background dark:to-muted/20 flex flex-col relative">
-      <div className="container max-w-4xl mx-auto p-6 pb-28"> {/* pb-28 ensures bottom nav space on mobile */}
+      <div className="container max-w-4xl mx-auto p-6 pb-28">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button 
@@ -225,230 +231,56 @@ const Profile = () => {
 
         <div className="space-y-8">
           {/* Profile Header */}
-          <div className="text-center space-y-4">
-            <Avatar className="h-24 w-24 mx-auto">
-              <AvatarImage src={userProfile?.avatar_url || undefined} />
-              <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold">Profile Settings</h1>
-              <p className="text-muted-foreground">
-                Manage your account and household preferences
-              </p>
-            </div>
-          </div>
+          <ProfileHeader 
+            userProfile={userProfile}
+            firstName={firstName}
+            lastName={lastName}
+            getAvatarFallback={getAvatarFallback}
+          />
 
           {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Personal Information
-              </CardTitle>
-              <CardDescription>
-                Update your personal details and profile information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Enter your first name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Enter your last name"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={user?.email || ''} disabled className="bg-muted" />
-                <p className="text-sm text-muted-foreground">
-                  Email cannot be changed at this time
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Input 
-                  value={getRoleDisplay(userProfile?.role)} 
-                  disabled 
-                  className="bg-muted" 
-                />
-              </div>
-              <Button 
-                onClick={handleUpdateProfile}
-                disabled={isUpdatingProfile}
-                className="w-full md:w-auto"
-              >
-                {isUpdatingProfile ? 'Updating...' : 'Update Profile'}
-              </Button>
-            </CardContent>
-          </Card>
+          <PersonalInfoCard 
+            firstName={firstName}
+            lastName={lastName}
+            setFirstName={setFirstName}
+            setLastName={setLastName}
+            user={user}
+            userProfile={userProfile}
+            isUpdatingProfile={isUpdatingProfile}
+            handleUpdateProfile={handleUpdateProfile}
+            getRoleDisplay={getRoleDisplay}
+          />
 
           {/* Page Visibility Preferences */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                Page Visibility
-              </CardTitle>
-              <CardDescription>
-                Choose which features appear in your navigation and quick actions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {preferencesLoading ? (
-                <div className="text-center py-4">
-                  <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2" />
-                  <p className="text-muted-foreground">Loading preferences...</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedPages).map(([category, pages]) => (
-                    <div key={category} className="space-y-3">
-                      <h4 className="font-medium text-sm uppercase tracking-wide text-muted-foreground">
-                        {category} Features
-                      </h4>
-                      <div className="space-y-3">
-                        {pages.map((page) => (
-                          <div key={page.key} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                            <div className="space-y-1">
-                              <Label className="font-medium">{page.label}</Label>
-                              <p className="text-sm text-muted-foreground">{page.description}</p>
-                            </div>
-                            <Switch
-                              checked={isPageVisible(page.key)}
-                              onCheckedChange={() => togglePageVisibility(page.key)}
-                              disabled={page.alwaysVisible}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <PageVisibilityCard 
+            preferencesLoading={preferencesLoading}
+            groupedPages={groupedPages}
+            isPageVisible={isPageVisible}
+            togglePageVisibility={togglePageVisibility}
+          />
 
           {/* Notification Preferences Card (NEW) */}
           <NotificationPreferencesCard />
 
           {/* Household Management */}
-          {selectedHousehold && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Home className="h-5 w-5" />
-                  Household Settings
-                </CardTitle>
-                <CardDescription>
-                  Manage your current household settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="householdName">Household Name</Label>
-                  <Input
-                    id="householdName"
-                    value={householdName}
-                    onChange={(e) => setHouseholdName(e.target.value)}
-                    disabled={!isAdminOrOwner}
-                    placeholder="Enter household name"
-                  />
-                  {!isAdminOrOwner && (
-                    <p className="text-sm text-muted-foreground">
-                      Only household admins can change the household name
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Your Role in Household</Label>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    <span className="capitalize font-medium">
-                      {selectedHousehold.role}
-                    </span>
-                  </div>
-                </div>
-                {isAdminOrOwner && (
-                  <Button 
-                    onClick={handleUpdateHousehold}
-                    disabled={isUpdatingHousehold}
-                    className="w-full md:w-auto"
-                  >
-                    {isUpdatingHousehold ? 'Updating...' : 'Update Household'}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          <HouseholdSettingsCard
+            selectedHousehold={selectedHousehold}
+            householdName={householdName}
+            setHouseholdName={setHouseholdName}
+            isAdminOrOwner={isAdminOrOwner}
+            isUpdatingHousehold={isUpdatingHousehold}
+            handleUpdateHousehold={handleUpdateHousehold}
+          />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="h-5 w-5" />
-                Appearance
-              </CardTitle>
-              <CardDescription>
-                Customize how the app looks and feels
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Toggle between light and dark themes
-                  </p>
-                </div>
-                <Switch
-                  checked={theme === 'dark'}
-                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-                />
-              </div>
-              <Separator />
-              <div className="space-y-2">
-                <Label>Current Theme</Label>
-                <div className="flex items-center gap-2">
-                  <div className={`w-4 h-4 rounded-full ${theme === 'dark' ? 'bg-slate-800' : 'bg-white border'}`} />
-                  <span className="capitalize font-medium">{theme} Mode</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AppearanceCard 
+            theme={theme}
+            setTheme={setTheme}
+          />
 
-          {/* === Account Actions (Mobile logout/fallback) === */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Account Actions
-              </CardTitle>
-              <CardDescription>
-                General account options
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                variant="destructive"
-                onClick={handleLogout}
-                className="w-full"
-              >
-                {safeAuth.isChildMode ? "Switch User" : "Sign Out"}
-              </Button>
-            </CardContent>
-          </Card>
+          <AccountActionsCard 
+            safeAuth={safeAuth}
+            handleLogout={handleLogout}
+          />
         </div>
       </div>
 
