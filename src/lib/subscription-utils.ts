@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { SUBSCRIPTION_PLANS, type PlanType, type FeatureName, isUnlimited, isWithinLimit } from "./subscription-config";
 
@@ -22,16 +23,21 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
     .from('user_subscriptions')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .order('updated_at', { ascending: false })
+    .limit(1);
 
   if (error) {
     console.error('Error fetching user subscription:', error);
     return null;
   }
 
+  // data can be an array or null; take first item if available
+  const record = Array.isArray(data) ? data[0] : null;
+  if (!record) return null;
+
   return {
-    ...data,
-    plan_type: data.plan_type as PlanType
+    ...record,
+    plan_type: record.plan_type as PlanType
   };
 }
 
@@ -211,3 +217,4 @@ export async function ensureUserSubscription(userId: string): Promise<UserSubscr
   
   return subscription;
 }
+
