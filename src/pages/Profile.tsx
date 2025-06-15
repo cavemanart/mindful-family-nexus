@@ -14,6 +14,7 @@ import { ArrowLeft, User, Home, Palette, Shield, Loader2, Eye } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import NotificationPreferencesCard from "@/components/NotificationPreferencesCard";
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -298,6 +299,9 @@ const Profile = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Notification Preferences Card (NEW) */}
+          <NotificationPreferencesCard />
 
           {/* Household Management */}
           {selectedHousehold && (
