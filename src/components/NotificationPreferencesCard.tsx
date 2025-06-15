@@ -10,7 +10,6 @@ import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
 export default function NotificationPreferencesCard() {
   const { prefs, loading, saving, error, upsertPreferences } = useNotificationPreferences();
   const [pushEnabled, setPushEnabled] = useState(false);
-  const [emailEnabled, setEmailEnabled] = useState(false);
   const [isPushSupported, setIsPushSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
 
@@ -29,7 +28,6 @@ export default function NotificationPreferencesCard() {
   useEffect(() => {
     if (prefs) {
       setPushEnabled(prefs.push_enabled);
-      setEmailEnabled(prefs.email_enabled);
     }
   }, [prefs]);
 
@@ -55,11 +53,6 @@ export default function NotificationPreferencesCard() {
     }
     setPushEnabled(state);
     await upsertPreferences({ push_enabled: state });
-  };
-
-  const handleEmailToggle = async (state: boolean) => {
-    setEmailEnabled(state);
-    await upsertPreferences({ email_enabled: state });
   };
 
   if (loading) {
@@ -91,23 +84,10 @@ export default function NotificationPreferencesCard() {
           Notifications
         </CardTitle>
         <CardDescription>
-          Manage how you receive important notifications from the app.
+          Manage how you receive push notifications from the app.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <Label>Email Notifications</Label>
-            <p className="text-sm text-muted-foreground">
-              Get updates about account activity by email.
-            </p>
-          </div>
-          <Switch
-            checked={emailEnabled}
-            onCheckedChange={handleEmailToggle}
-            disabled={saving}
-          />
-        </div>
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Label>Push Notifications</Label>
