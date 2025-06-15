@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,18 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     isRefreshing,
     subscriptionStatus 
   } = useChildren(selectedHousehold?.id, true /* allow even without parent login */);
+
+  // ADDED HOOKS TO FIX BUILD ERRORS:
+  const {
+    chores,
+    loading: choresLoading,
+    toggleChore,
+  } = useChores(selectedHousehold?.id || null);
+
+  const {
+    messages,
+    loading: messagesLoading,
+  } = useFamilyMessages(selectedHousehold?.id || null);
 
   const [selectedChild, setSelectedChild] = useState('');
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
