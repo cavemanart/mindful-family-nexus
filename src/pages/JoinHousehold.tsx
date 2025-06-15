@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useHouseholds } from "@/hooks/useHouseholds";
+import { useNavigate } from "react-router-dom";
 
 const avatarOptions = [
   { value: "child-1", emoji: "👶" },
@@ -26,8 +27,8 @@ export default function JoinHousehold() {
   const [submitting, setSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  // Get the fetchHouseholds util/provide manual refresh after joining
   const { fetchHouseholds } = useHouseholds();
+  const navigate = useNavigate();
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,6 +181,14 @@ export default function JoinHousehold() {
               </div>
               <Button type="submit" className="w-full" disabled={submitting}>
                 {submitting ? (<Loader2 className="animate-spin w-4 h-4" />) : "Join Household"}
+              </Button>
+              <Button 
+                type="button" 
+                className="w-full mt-2" 
+                variant="outline" 
+                onClick={() => navigate("/auth")}
+              >
+                Back to Login
               </Button>
             </form>
           )}
