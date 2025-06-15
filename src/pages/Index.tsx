@@ -17,6 +17,7 @@ import ChildrenDashboard from '@/components/ChildrenDashboard';
 import MVPOfTheDay from '@/components/MVPOfTheDay';
 import SubscriptionManager from '@/components/SubscriptionManager';
 import NannyMode from '@/components/NannyMode';
+import MentalLoad from '@/components/MentalLoad'; // <-- Add this import
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 const Index = () => {
@@ -114,6 +115,8 @@ const Index = () => {
         return <SubscriptionManager />;
       case 'nanny':
         return isVisible('nanny') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
+      case 'mental-load':
+        return isVisible('mental-load') ? <MentalLoad /> : null; // <-- Add this line
       default:
         // fallback still passes real navigation
         return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={setCurrentPage} />;
