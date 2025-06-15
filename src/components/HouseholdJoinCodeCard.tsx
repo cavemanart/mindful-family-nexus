@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -41,9 +41,9 @@ interface Props {
 }
 
 export default function HouseholdJoinCodeCard({ householdId }: Props) {
-  const [joinCode, setJoinCode] = React.useState<string | null>(null);
-  const [expiresAt, setExpiresAt] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
+  const [joinCode, setJoinCode] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const generateCode = async () => {
