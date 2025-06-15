@@ -69,11 +69,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/30 dark:to-cyan-950/30'
     },
     {
-      key: 'nanny-mode',
+      key: 'nanny', // <-- Changed from 'nanny-mode' to 'nanny'
       title: 'Nanny Mode',
       description: 'Caregiver information hub',
       icon: Baby,
-      action: () => setActiveSection('nanny-mode'),
+      action: () => setActiveSection('nanny'), // <-- Changed as well
       color: 'from-orange-500 to-red-500',
       bgColor: 'bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/30 dark:to-red-950/30'
     },
@@ -122,3 +122,4 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
 };
 
 export default QuickActions;
+

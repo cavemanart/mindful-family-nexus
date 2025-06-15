@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
 import QuickActions from './QuickActions';
 import OverviewCards from './OverviewCards';
-import NannyTokenGenerator from './NannyTokenGenerator';
 import SubscriptionStatusCard from './SubscriptionStatusCard';
 import ChoresOverviewCard from './ChoresOverviewCard';
 import AddChoreDialog from './AddChoreDialog';
@@ -95,12 +93,6 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
               />
             </div>
           )}
-
-          {/* Nanny Access Generator */}
-          <div className="bg-card rounded-2xl border shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Nanny Access</h2>
-            <NannyTokenGenerator householdId={selectedHousehold.id} />
-          </div>
         </div>
 
         {/* Right column - Subscription status */}
