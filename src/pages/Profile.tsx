@@ -15,13 +15,43 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import NotificationPreferencesCard from "@/components/NotificationPreferencesCard";
+import CleanMobileNavigation from '@/components/CleanMobileNavigation';
+import { useSafeAuth } from '@/hooks/useSafeAuth';
 
 const Profile = () => {
   const { user, userProfile, loading: authLoading } = useAuth();
+  const safeAuth = useSafeAuth();
   const { households } = useHouseholds();
   const { theme, setTheme } = useTheme();
   const { availablePages, isPageVisible, togglePageVisibility, loading: preferencesLoading } = usePagePreferences();
   const navigate = useNavigate();
+
+  // === New: mobile navigation active tab logic ===
+  // "profile" tab to match profile state in navbar
+  const [activeTab, setActiveTab] = useState('profile');
+
+  // In case user uses nav to switch tabs, handle navigation accordingly
+  useEffect(() => {
+    if (activeTab && activeTab !== 'profile') {
+      // Define routing for standard tabs
+      const routeMap: Record<string, string> = {
+        dashboard: '/dashboard',
+        mvp: '/dashboard?tab=mvp',
+        bills: '/dashboard?tab=bills',
+        notes: '/dashboard?tab=notes',
+        calendar: '/dashboard?tab=calendar',
+        'mental-load': '/dashboard?tab=mental-load',
+        nanny: '/dashboard?tab=nanny-mode',
+        children: '/dashboard?tab=children',
+        'weekly-sync': '/dashboard?tab=weekly-sync',
+        subscription: '/subscription',
+      };
+      const to = routeMap[activeTab];
+      if (to) navigate(to);
+    }
+  }, [activeTab, navigate]);
+
+  // === END new nav logic ===
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -130,6 +160,17 @@ const Profile = () => {
     return acc;
   }, {} as Record<string, typeof availablePages>);
 
+  // --- Logout function (handles child and parent) ---
+  const handleLogout = async () => {
+    if (safeAuth.isChildMode) {
+      safeAuth.signOut();
+      // No redirect: let app handle session
+    } else {
+      await safeAuth.signOut();
+      navigate('/auth');
+    }
+  };
+
   // Show loading state while authentication is loading
   if (authLoading) {
     console.log('⏳ Auth loading, showing spinner');
@@ -167,8 +208,8 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 dark:from-background dark:to-muted/20">
-      <div className="container max-w-4xl mx-auto p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 dark:from-background dark:to-muted/20 flex flex-col relative">
+      <div className="container max-w-4xl mx-auto p-6 pb-28"> {/* pb-28 ensures bottom nav space on mobile */}
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button 
@@ -386,7 +427,37 @@ const Profile = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* === Account Actions (Mobile logout/fallback) === */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Account Actions
+              </CardTitle>
+              <CardDescription>
+                General account options
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="destructive"
+                onClick={handleLogout}
+                className="w-full"
+              >
+                {safeAuth.isChildMode ? "Switch User" : "Sign Out"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+      </div>
+
+      {/* === Mobile Navigation (fixed at bottom on mobile screens only) === */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
+        <CleanMobileNavigation 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
       </div>
     </div>
   );
