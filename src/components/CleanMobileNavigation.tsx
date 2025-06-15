@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User } from 'lucide-react';
+import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
@@ -32,6 +32,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
     { key: 'nanny', label: 'Nanny', icon: Baby }, // Changed from 'nanny-mode' to 'nanny'
     { key: 'children', label: 'Kids', icon: Users },
     { key: 'weekly-sync', label: 'Goals', icon: Calendar },
+    { key: 'subscription', label: 'Subscription', icon: CreditCard }, // <-- Subscription added here
   ];
 
   // Filter items based on user preferences
@@ -187,3 +188,4 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
 };
 
 export default CleanMobileNavigation;
+
