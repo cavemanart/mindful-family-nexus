@@ -6,11 +6,11 @@ import { useAuth } from '@/hooks/useAuth';
 export interface Child {
   id: string;
   first_name: string;
-  last_name: string;
+  last_name: string | null;
   avatar_selection: string;
   is_child_account: boolean;
   parent_id?: string;
-  pin?: string;
+  device_id?: string;
   created_at?: string;
 }
 
@@ -48,7 +48,7 @@ export const useChildren = (householdId: string | undefined) => {
             avatar_selection,
             is_child_account,
             parent_id,
-            pin,
+            device_id,
             created_at
           )
         `)
@@ -64,22 +64,15 @@ export const useChildren = (householdId: string | undefined) => {
       // Filter and map to Child objects without type predicate
       const childrenData = data
         ?.map(member => member.profiles)
-        .filter(profile => {
-          return profile !== null && 
-                 profile.is_child_account === true &&
-                 typeof profile.id === 'string' &&
-                 typeof profile.first_name === 'string' &&
-                 typeof profile.last_name === 'string' &&
-                 typeof profile.avatar_selection === 'string';
-        })
+        .filter(profile => profile !== null && profile.is_child_account)
         .map(profile => ({
           id: profile.id,
           first_name: profile.first_name,
-          last_name: profile.last_name,
+          last_name: profile.last_name ?? null,
           avatar_selection: profile.avatar_selection,
           is_child_account: profile.is_child_account,
           parent_id: profile.parent_id || undefined,
-          pin: profile.pin || undefined,
+          device_id: profile.device_id || undefined,
           created_at: profile.created_at || undefined
         } as Child)) || [];
 
@@ -114,64 +107,6 @@ export const useChildren = (householdId: string | undefined) => {
       setIsRefreshing(false);
     }
   }, [householdId, user?.id, retryCount, toast]);
-
-  const createChild = useCallback(async (childData: {
-    firstName: string;
-    lastName: string;
-    pin: string;
-    avatarSelection: string;
-  }) => {
-    if (!householdId || !user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add children",
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    setCreating(true);
-
-    try {
-      console.log('🔄 useChildren: Creating child:', childData);
-
-      const { data, error } = await supabase.rpc('create_child_profile', {
-        p_first_name: childData.firstName,
-        p_last_name: childData.lastName,
-        p_pin: childData.pin,
-        p_avatar_selection: childData.avatarSelection,
-        p_parent_id: user.id,
-        p_household_id: householdId
-      });
-
-      if (error) {
-        console.error('❌ useChildren: Error creating child:', error);
-        throw error;
-      }
-
-      console.log('✅ useChildren: Child created successfully:', data);
-
-      toast({
-        title: "Success",
-        description: "Child account created successfully!",
-      });
-
-      // Refresh the children list
-      await fetchChildren();
-      return true;
-
-    } catch (error: any) {
-      console.error('❌ useChildren: Create child error:', error);
-      toast({
-        title: "Error creating child",
-        description: error.message,
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setCreating(false);
-    }
-  }, [householdId, user?.id, fetchChildren, toast]);
 
   const addOptimisticChild = useCallback((newChild: Omit<Child, 'id'>) => {
     const optimisticChild: Child = {
@@ -271,10 +206,10 @@ export const useChildren = (householdId: string | undefined) => {
   return {
     children,
     loading,
-    creating,
+    creating: false,
     refreshChildren,
-    addOptimisticChild,
-    createChild,
+    addOptimisticChild: () => {},
+    createChild: undefined,
     isRefreshing,
     subscriptionStatus,
     lastFetchTime,

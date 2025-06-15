@@ -483,6 +483,51 @@ export type Database = {
           },
         ]
       }
+      household_join_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          household_id: string
+          id: string
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          household_id: string
+          id?: string
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          household_id?: string
+          id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_join_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_join_codes_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       household_members: {
         Row: {
           household_id: string | null
@@ -975,6 +1020,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      generate_household_join_code: {
+        Args: { _household_id: string }
+        Returns: string
+      }
       generate_invite_code: {
         Args:
           | Record<PropertyKey, never>
@@ -1005,6 +1054,15 @@ export type Database = {
       is_user_member_of_household: {
         Args: { hh_id: string } | { user_id: string; household_id: string }
         Returns: boolean
+      }
+      join_household_with_code: {
+        Args: {
+          _code: string
+          _name: string
+          _avatar_selection: string
+          _device_id: string
+        }
+        Returns: string
       }
       process_recurring_bills: {
         Args: Record<PropertyKey, never>

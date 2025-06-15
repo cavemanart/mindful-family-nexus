@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Sheet,
@@ -19,6 +18,7 @@ import { useChildren } from '@/hooks/useChildren';
 import LeaveHouseholdDialog from './LeaveHouseholdDialog';
 import AddChildDialog from './AddChildDialog';
 import UserProfileErrorBoundary from './UserProfileErrorBoundary';
+import HouseholdJoinCodeCard from "./HouseholdJoinCodeCard";
 
 interface UserProfileProps {
   selectedHousehold: Household | null;
@@ -137,6 +137,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
+            {/* Remove AddChildDialog section, replace with JoinCode card */}
             {canManageChildren && selectedHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Children ({children.length})</h3>
@@ -146,21 +147,13 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       <div className="space-y-1">
                         {children.map((child) => (
                           <p key={child.id} className="text-sm">
-                            {child.first_name} {child.last_name}
+                            {child.first_name}
                           </p>
                         ))}
                       </div>
                     </div>
                   )}
-                  <AddChildDialog 
-                    householdId={selectedHousehold.id}
-                    trigger={
-                      <Button variant="outline" className="w-full justify-start">
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Add Child
-                      </Button>
-                    }
-                  />
+                  <HouseholdJoinCodeCard householdId={selectedHousehold.id} />
                 </div>
               </div>
             )}
