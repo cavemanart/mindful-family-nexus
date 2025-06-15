@@ -18,7 +18,7 @@ const avatarOptions = [
 
 export default function JoinHousehold() {
   const { toast } = useToast();
-  const [childPin, setChildPin] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [childName, setChildName] = useState("");
   const [avatar, setAvatar] = useState("child-1");
   const [submitting, setSubmitting] = useState(false);
@@ -45,9 +45,9 @@ export default function JoinHousehold() {
     e.preventDefault();
     setSubmitting(true);
 
-    // 1. Attempt join with PIN
-    const { data, error } = await supabase.rpc("join_household_with_pin", {
-      _pin: childPin.trim(),
+    // 1. Attempt join with join code
+    const { data, error } = await supabase.rpc("join_household_with_code", {
+      _code: joinCode.trim(),
       _name: childName.trim(),
       _avatar_selection: avatar,
       _device_id: deviceId,
@@ -85,7 +85,7 @@ export default function JoinHousehold() {
                 {postSuccessLoading
                   ? "Logging you in as child…"
                   : submitting
-                  ? "Submitting PIN…"
+                  ? "Submitting your code…"
                   : "Checking your session…"}
               </div>
             </div>
@@ -98,13 +98,12 @@ export default function JoinHousehold() {
           {!deviceChild && !submitting && !postSuccessLoading && (
             <form className="space-y-4" onSubmit={handleJoin}>
               <Input
-                placeholder="Enter 4-digit PIN"
-                value={childPin}
-                onChange={(e) => setChildPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="Enter Join Code (e.g. Blue-Sun-42)"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value)}
                 required
-                inputMode="numeric"
-                pattern="\d{4}"
-                maxLength={4}
+                autoCapitalize="characters"
+                spellCheck={false}
               />
               <Input
                 placeholder="First Name"
@@ -137,7 +136,9 @@ export default function JoinHousehold() {
           )}
           {!deviceChild && (
             <div className="text-xs text-muted-foreground mt-4">
-              Ask your parent for a PIN. Enter your PIN, name and choose an avatar to join the household. PINs are one-time use only.
+              Ask your parent for a <span className="font-semibold">Join Code</span>.<br />
+              Enter your code, name, and choose an avatar to join the household.<br />
+              Codes are one-time use only and expire after 24 hours.
             </div>
           )}
         </CardContent>

@@ -9,16 +9,17 @@ interface ChildPinLoginProps {
   onBack: () => void;
 }
 
-// This component is now basically a placeholder for the new join experience.
+// This component is now a placeholder for the join code experience.
 // Instruct user to use the Join Household flow.
 const ChildPinLogin: React.FC<ChildPinLoginProps> = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh]">
-      <h1 className="text-2xl font-bold mb-2">Kid's Login Moved</h1>
+      <h1 className="text-2xl font-bold mb-2">Kid Registration</h1>
       <p className="mb-4 text-center">
-        The PIN-based login is no longer available.<br />
-        Please use the new <span className="font-semibold">"Join Household"</span> page to add a child.<br/>
-        If you need to join, tap "Join Household" and enter the join code.
+        The old PIN-based login has been replaced.<br />
+        Please use the new <span className="font-semibold">"Join Household"</span> page with your<br/>
+        <span className="font-bold">Join Code</span>.<br />
+        Ask your parent or guardian for a code. One-time use, expires in 24 hours!
       </p>
     </div>
   );
