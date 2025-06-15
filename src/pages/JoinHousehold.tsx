@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useHouseholds } from "@/hooks/useHouseholds";
 
 const avatarOptions = [
   { value: "child-1", emoji: "👶" },
@@ -23,9 +24,10 @@ export default function JoinHousehold() {
   const [childPassword, setChildPassword] = useState("");
   const [avatar, setAvatar] = useState("child-1");
   const [submitting, setSubmitting] = useState(false);
-
-  // When join is successful, finished = true
   const [finished, setFinished] = useState(false);
+
+  // Get the fetchHouseholds util/provide manual refresh after joining
+  const { fetchHouseholds } = useHouseholds();
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,15 +58,18 @@ export default function JoinHousehold() {
       setSubmitting(false);
       return;
     }
-    const userId = signUpData.user?.id;
+
+    // Wait for signup to be reflected in auth.uid()
+    // (Supabase will sign user in automatically if email confirm is disabled)
+    // Small wait to ensure session sync
+    await new Promise(res => setTimeout(res, 600));
 
     // 2. Use join code to add child profile to household
-    // (Backend will use auth.uid() for the correct user)
     const { error: joinError } = await supabase.rpc("join_household_with_code", {
       _code: joinCode.trim(),
       _name: childName.trim(),
       _avatar_selection: avatar,
-      _device_id: null, // No longer used
+      _device_id: null,
     });
 
     if (joinError) {
@@ -73,7 +78,23 @@ export default function JoinHousehold() {
       return;
     }
 
-    // 3. Success feedback
+    // 3. Force refetch of households and check membership before redirecting
+    await fetchHouseholds();
+
+    // Check membership
+    const { data: households, error: checkError } = await supabase
+      .from('household_members')
+      .select('household_id')
+      .eq('user_id', signUpData.user?.id || supabase.auth.getUser().then(u => u?.user?.id))
+      .limit(1);
+
+    if (checkError || !households || households.length === 0) {
+      toast({ title: "Error", description: "Joined, but this account is not a member of any household. Please try again or contact support.", variant: "destructive" });
+      setSubmitting(false);
+      return;
+    }
+
+    // 4. Success feedback
     toast({ title: "Success!", description: "You have joined the household!" });
     setFinished(true);
 
@@ -161,4 +182,3 @@ export default function JoinHousehold() {
     </div>
   );
 }
-
