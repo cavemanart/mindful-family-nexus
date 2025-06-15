@@ -6,6 +6,36 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Copy } from "lucide-react";
 
+// Helper for formatting date/time and relative expiry
+function formatExpiration(expiresAtString: string | null): { formatted: string; relative: string } {
+  if (!expiresAtString) return { formatted: "", relative: "" };
+  const expiresAt = new Date(expiresAtString);
+  const now = new Date();
+  // Format: Jun 17, 2025, 3:45 PM
+  const formatted =
+    expiresAt.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) +
+    ", " +
+    expiresAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+  // Relative (e.g., "in 24 hours", "in N hours", etc.)
+  const ms = expiresAt.getTime() - now.getTime();
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  let relative = "";
+  if (ms <= 0) {
+    relative = "Expired";
+  } else if (hours > 0) {
+    if (minutes > 0) {
+      relative = `in ${hours}h ${minutes}m`;
+    } else {
+      relative = `in ${hours} hour${hours === 1 ? "" : "s"}`;
+    }
+  } else {
+    relative = `in ${minutes} minute${minutes === 1 ? "" : "s"}`;
+  }
+  return { formatted, relative };
+}
+
 interface Props {
   householdId: string;
 }
@@ -48,6 +78,8 @@ export default function HouseholdJoinCodeCard({ householdId }: Props) {
     }
   };
 
+  const expiryInfo = expiresAt ? formatExpiration(expiresAt) : null;
+
   return (
     <Card className="my-4">
       <CardHeader>
@@ -58,12 +90,19 @@ export default function HouseholdJoinCodeCard({ householdId }: Props) {
           {loading ? "Generating..." : "Generate Join Code"}
         </Button>
         {joinCode && (
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
             <span className="font-mono">{joinCode}</span>
             <Button size="icon" variant="ghost" onClick={copyCode}>
               <Copy className="w-4 h-4" />
             </Button>
-            {expiresAt && <span className="text-xs text-muted-foreground">Expires: {new Date(expiresAt).toLocaleTimeString()}</span>}
+            {expiresAt && (
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                Expires:&nbsp;
+                <span title={expiryInfo?.formatted}>
+                  {expiryInfo?.formatted} ({expiryInfo?.relative})
+                </span>
+              </span>
+            )}
           </div>
         )}
         <div className="text-xs text-muted-foreground mt-2">

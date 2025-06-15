@@ -100,7 +100,7 @@ export default function JoinHousehold() {
           {!deviceChild && !submitting && !postSuccessLoading && (
             <form className="space-y-4" onSubmit={handleJoin}>
               <Input
-                placeholder="Enter 1-hour Join Code"
+                placeholder="Enter 24-hour Join Code"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 required
@@ -139,3 +139,4 @@ export default function JoinHousehold() {
     </div>
   );
 }
+

@@ -1,6 +1,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 
+const SUPABASE_FUNCTIONS_URL = "https://gnuclticnlrlpkqhzrpa.supabase.co/functions/v1";
+
 interface Result {
   loading: boolean;
   child: any | null;
@@ -19,11 +21,20 @@ export function useChildDeviceLogin(): Result {
     const deviceId = localStorage.getItem("child_device_id");
     if (deviceId) {
       try {
-        const resp = await fetch("/functions/v1/child-device-login", {
+        // Use full URL for Supabase Edge Function
+        const resp = await fetch(`${SUPABASE_FUNCTIONS_URL}/child-device-login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ device_id: deviceId }),
         });
+        // If response is not JSON, attempt to handle error
+        const contentType = resp.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          setChild(null);
+          setError("Unexpected server response. Try again later.");
+          setLoading(false);
+          return;
+        }
         const result = await resp.json();
         if (result.child) {
           setChild(result.child);
