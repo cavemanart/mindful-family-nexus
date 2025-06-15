@@ -1,17 +1,10 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Result {
   loading: boolean;
   child: any | null;
   error: string | null;
-}
-
-// Defensive check: If React is unavailable, throw a clear error (extremely rare with correct project setup)
-if (!React || !React.useState || !React.useEffect) {
-  throw new Error(
-    "React or its hooks are not available. Ensure React is installed and properly imported."
-  );
 }
 
 export function useChildDeviceLogin() {
@@ -47,3 +40,4 @@ export function useChildDeviceLogin() {
 
   return { loading, child, error };
 }
+
