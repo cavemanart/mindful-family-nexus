@@ -59,8 +59,6 @@ export default function JoinHousehold() {
       return;
     }
 
-    // Wait for signup to be reflected in auth.uid()
-    // (Supabase will sign user in automatically if email confirm is disabled)
     // Small wait to ensure session sync
     await new Promise(res => setTimeout(res, 600));
 
@@ -81,14 +79,27 @@ export default function JoinHousehold() {
     // 3. Force refetch of households and check membership before redirecting
     await fetchHouseholds();
 
-    // Check membership
-    const { data: households, error: checkError } = await supabase
-      .from('household_members')
-      .select('household_id')
-      .eq('user_id', signUpData.user?.id || supabase.auth.getUser().then(u => u?.user?.id))
-      .limit(1);
+    // Find the current user ID: prefer signUpData.user.id, fallback to supabase.auth.getUser()
+    let userId = signUpData.user?.id;
+    if (!userId) {
+      const { data: userResp } = await supabase.auth.getUser();
+      userId = userResp?.user?.id ?? null;
+    }
 
-    if (checkError || !households || households.length === 0) {
+    // Check membership
+    let householdsData: any[] | null = null;
+    let checkError: any = null;
+    if (userId) {
+      const { data, error } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId)
+        .limit(1);
+      householdsData = data;
+      checkError = error;
+    }
+
+    if (checkError || !householdsData || householdsData.length === 0) {
       toast({ title: "Error", description: "Joined, but this account is not a member of any household. Please try again or contact support.", variant: "destructive" });
       setSubmitting(false);
       return;
