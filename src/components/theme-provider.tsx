@@ -1,30 +1,29 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react"
+import React from "react";
 
-console.log('[theme-provider] ThemeProvider module loaded. React hooks available:', !!useState && !!useEffect);
+console.log('[theme-provider] ThemeProvider module loaded. React namespace imported:', !!React);
 
-type Theme = "dark" | "light" | "system"
+type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
-  children: React.ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
-}
+  children: React.ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
+};
 
 type ThemeProviderState = {
-  theme: Theme
-  setTheme: (theme: Theme) => void
-}
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+};
 
 const initialState: ThemeProviderState = {
   theme: "system",
   setTheme: () => null,
-}
+};
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
+const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
 
 function ThemeProviderFallback({ children }: { children: React.ReactNode }) {
-  // Fallback rendering when React hooks are unavailable
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
@@ -33,7 +32,7 @@ function ThemeProviderFallback({ children }: { children: React.ReactNode }) {
       </div>
       {children}
     </div>
-  )
+  );
 }
 
 export function ThemeProvider({
@@ -42,37 +41,38 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Defensive: Check if React hooks are available
+  // ONLY call hooks if React provides them (prevents critical errors)
   const hooksAvailable =
-    typeof useState === 'function' && typeof useEffect === 'function' && React !== undefined;
+    React &&
+    typeof React.useState === "function" &&
+    typeof React.useEffect === "function";
 
   if (!hooksAvailable) {
     console.warn("[theme-provider] Hooks not available, rendering fallback.");
     return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
   }
 
-  const [theme, setTheme] = useState<Theme>(() => {
+  const [theme, setTheme] = React.useState<Theme>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
-        const stored = localStorage.getItem(storageKey);
-        if (stored && (stored === "dark" || stored === "light" || stored === "system")) {
+        const stored = window.localStorage.getItem(storageKey);
+        if (stored === "dark" || stored === "light" || stored === "system") {
           return stored as Theme;
         }
       }
     } catch (error) {
-      console.warn("Failed to read theme from localStorage:", error);
+      console.warn("[theme-provider] Failed to read theme from localStorage:", error);
     }
     return defaultTheme;
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     try {
       const root = window.document.documentElement;
       root.classList.remove("light", "dark");
 
       if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light";
         root.classList.add(systemTheme);
@@ -80,36 +80,36 @@ export function ThemeProvider({
       }
 
       root.classList.add(theme);
-      console.log('🎨 Applied theme to DOM:', theme);
+      console.log("🎨 Applied theme to DOM:", theme);
     } catch (error) {
-      console.warn("Failed to apply theme to DOM:", error);
+      console.warn("[theme-provider] Failed to apply theme to DOM:", error);
     }
   }, [theme]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
-        localStorage.setItem(storageKey, theme);
+        window.localStorage.setItem(storageKey, theme);
       }
     } catch (error) {
-      console.warn("Failed to save theme to localStorage:", error);
+      console.warn("[theme-provider] Failed to save theme to localStorage:", error);
     }
   }, [theme, storageKey]);
 
-  const value = {
+  const value: ThemeProviderState = React.useMemo(() => ({
     theme,
     setTheme,
-  };
+  }), [theme]);
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
       {children}
     </ThemeProviderContext.Provider>
-  )
+  );
 }
 
 export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
+  const context = React.useContext(ThemeProviderContext);
 
   if (context === undefined) {
     console.warn("useTheme must be used within a ThemeProvider, using fallback");
@@ -122,4 +122,4 @@ export const useTheme = () => {
   }
 
   return context;
-}
+};
