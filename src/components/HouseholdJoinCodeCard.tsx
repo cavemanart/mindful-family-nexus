@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -62,7 +63,7 @@ export default function HouseholdJoinCodeCard({ householdId }: Props) {
             <Button size="icon" variant="ghost" onClick={copyCode}>
               <Copy className="w-4 h-4" />
             </Button>
-            <span className="text-xs text-muted-foreground">Expires: {new Date(expiresAt!).toLocaleTimeString()}</span>
+            {expiresAt && <span className="text-xs text-muted-foreground">Expires: {new Date(expiresAt).toLocaleTimeString()}</span>}
           </div>
         )}
         <div className="text-xs text-muted-foreground mt-2">
