@@ -72,7 +72,13 @@ export default function JoinHousehold() {
     });
 
     if (joinError) {
-      toast({ title: "Join Household Failed", description: joinError.message, variant: "destructive" });
+      // Frontend now shows backend error message to the user and logs the error object deeply for debugging:
+      console.error("Join Household Backend Error:", joinError);
+      toast({ 
+        title: "Join Household Failed",
+        description: joinError.message || "An unknown error occurred. Please try again.",
+        variant: "destructive"
+      });
       setSubmitting(false);
       return;
     }
@@ -101,6 +107,7 @@ export default function JoinHousehold() {
     }
 
     if (checkError || !householdsData || householdsData.length === 0) {
+      console.error('Household membership check failed:', checkError, householdsData);
       toast({ title: "Error", description: "Joined, but this account is not a member of any household. Please try again or contact support.", variant: "destructive" });
       setSubmitting(false);
       return;
