@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +16,8 @@ import ChildrenDashboard from '@/components/ChildrenDashboard';
 import MVPOfTheDay from '@/components/MVPOfTheDay';
 import SubscriptionManager from '@/components/SubscriptionManager';
 import NannyMode from '@/components/NannyMode';
-import MentalLoad from '@/components/MentalLoad'; // <-- Add this import
+import MentalLoad from '@/components/MentalLoad';
+import WeeklySyncOverview from '@/components/WeeklySyncOverview';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 const Index = () => {
@@ -105,8 +105,8 @@ const Index = () => {
         return isVisible('notes') ? <FamilyNotes selectedHousehold={selectedHousehold} /> : null;
       case 'rules':
         return isVisible('rules') ? <HouseRulesManager householdId={selectedHousehold.id} canEdit={true} /> : null;
-      case 'weekly':
-        return isVisible('weekly') ? <WeeklySync selectedHousehold={selectedHousehold} /> : null;
+      case 'weekly-sync':
+        return isVisible('weekly-sync') ? <WeeklySync selectedHousehold={selectedHousehold} /> : null;
       case 'children':
         return isVisible('children') ? <ChildrenDashboard selectedHousehold={selectedHousehold} /> : null;
       case 'mvp':
@@ -116,9 +116,8 @@ const Index = () => {
       case 'nanny':
         return isVisible('nanny') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
       case 'mental-load':
-        return isVisible('mental-load') ? <MentalLoad /> : null; // <-- Add this line
+        return isVisible('mental-load') ? <MentalLoad /> : null;
       default:
-        // fallback still passes real navigation
         return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={setCurrentPage} />;
     }
   };
@@ -137,7 +136,20 @@ const Index = () => {
       />
       
       <main className="max-w-7xl mx-auto pt-20 pb-20 px-4">
-        {renderPage()}
+        {currentPage === 'overview' && selectedHousehold ? (
+          <Dashboard
+            selectedHousehold={selectedHousehold}
+            setActiveSection={setCurrentPage}
+            WeeklySyncOverviewSlot={
+              <WeeklySyncOverview
+                householdId={selectedHousehold.id}
+                onViewFullSync={() => setCurrentPage('weekly-sync')}
+              />
+            }
+          />
+        ) : (
+          renderPage()
+        )}
       </main>
 
       <CleanMobileNavigation 

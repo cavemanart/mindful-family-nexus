@@ -11,9 +11,10 @@ import { useChildren } from '@/hooks/useChildren';
 interface DashboardProps {
   setActiveSection: (section: string) => void;
   selectedHousehold?: Household | null;
+  WeeklySyncOverviewSlot?: React.ReactNode;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold }) => {
+const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold, WeeklySyncOverviewSlot }) => {
   const { user } = useAuth();
   const { children } = useChildren(selectedHousehold?.id);
 
@@ -101,6 +102,10 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
             <h2 className="text-xl font-semibold text-foreground mb-4">Your Plan</h2>
             <SubscriptionStatusCard />
           </div>
+          {/* Weekly Sync Overview */}
+          {WeeklySyncOverviewSlot ? (
+            <div>{WeeklySyncOverviewSlot}</div>
+          ) : null}
         </div>
       </div>
     </div>
