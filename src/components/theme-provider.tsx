@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react"
 
 console.log('[theme-provider] ThemeProvider module loaded. React hooks available:', !!useState && !!useEffect);
@@ -22,13 +23,34 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
+function ThemeProviderFallback({ children }: { children: React.ReactNode }) {
+  // Fallback rendering when React hooks are unavailable
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
+        <h2 className="text-2xl font-bold text-gray-700 mb-4">App Initializing...</h2>
+        <p className="text-gray-500 mb-4">Please wait while we load the application.</p>
+      </div>
+      {children}
+    </div>
+  )
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  console.log('[theme-provider] Rendering ThemeProvider. useState defined:', typeof useState === 'function');
+  // Defensive: Check if React hooks are available
+  const hooksAvailable =
+    typeof useState === 'function' && typeof useEffect === 'function' && React !== undefined;
+
+  if (!hooksAvailable) {
+    console.warn("[theme-provider] Hooks not available, rendering fallback.");
+    return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
+  }
+
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
