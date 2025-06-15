@@ -8,7 +8,6 @@ import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useChildren } from '@/hooks/useChildren';
 import AddChildDialog from './AddChildDialog';
 import AddKidModal from "./AddKidModal";
-import { UserPlus } from "lucide-react";
 
 interface ChildrenDashboardProps {
   selectedHousehold: { id: string } | null;
