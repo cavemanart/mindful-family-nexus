@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 
 const SUPABASE_FUNCTIONS_URL = "https://gnuclticnlrlpkqhzrpa.supabase.co/functions/v1";
@@ -18,7 +17,14 @@ export function useChildDeviceLogin(): Result {
   const runCheck = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const deviceId = localStorage.getItem("child_device_id");
+    let deviceId: string | null = null;
+
+    try {
+      deviceId = localStorage.getItem("child_device_id");
+    } catch (e) {
+      console.error("❌ [useChildDeviceLogin] Could not access localStorage:", e);
+    }
+    console.log("🔎 [useChildDeviceLogin] Checking deviceId:", deviceId);
     if (deviceId) {
       try {
         // Use full URL for Supabase Edge Function
@@ -39,19 +45,25 @@ export function useChildDeviceLogin(): Result {
         if (result.child) {
           setChild(result.child);
           setError(null);
+          console.log("[useChildDeviceLogin] Login successful. Child:", result.child);
         } else if (result.error) {
           setChild(null);
           setError(result.error);
+          console.warn("[useChildDeviceLogin] Server error:", result.error);
         } else {
           setChild(null);
           setError("No such child found.");
+          console.warn("[useChildDeviceLogin] No such child found in DB.");
         }
       } catch (e: any) {
         setChild(null);
         setError(e.message || "Error fetching device status");
+        console.error("[useChildDeviceLogin] Exception in fetch:", e);
       }
     } else {
       setChild(null);
+      setError("Device ID not found. Please try rejoining or reset device ID.");
+      console.error("[useChildDeviceLogin] Device ID is missing in localStorage.");
     }
     setLoading(false);
   }, []);

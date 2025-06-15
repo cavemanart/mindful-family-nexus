@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { useChildDeviceLogin } from "@/hooks/useChildDeviceLogin";
 
 const avatarOptions = [
@@ -16,6 +15,23 @@ const avatarOptions = [
   { value: "child-5", emoji: "🧑" },
 ];
 
+function getOrSetDeviceId() {
+  let deviceId = null;
+  try {
+    deviceId = localStorage.getItem("child_device_id");
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem("child_device_id", deviceId);
+      console.log("Generated new device_id and stored in localStorage:", deviceId);
+    } else {
+      console.log("Found device_id in localStorage:", deviceId);
+    }
+  } catch (e) {
+    console.warn("Failed to access localStorage for device_id:", e);
+  }
+  return deviceId;
+}
+
 export default function JoinHousehold() {
   const { toast } = useToast();
   const [joinCode, setJoinCode] = useState("");
@@ -24,17 +40,26 @@ export default function JoinHousehold() {
   const [submitting, setSubmitting] = useState(false);
   const [postSuccessLoading, setPostSuccessLoading] = useState(false);
 
-  const { child: deviceChild, loading: childLoginLoading, error: deviceLoginError, refresh: triggerDeviceLogin } = useChildDeviceLogin();
-
-  // Generate/store device id for auto-login (uuid)
+  const [recoveryTriggered, setRecoveryTriggered] = useState(false);
+  // Use effect to guarantee deviceId is set on mount
   useEffect(() => {
-    if (!localStorage.getItem("child_device_id")) {
-      localStorage.setItem("child_device_id", crypto.randomUUID());
+    const did = getOrSetDeviceId();
+    // Could be null due to browser storage issues
+    if (!did) {
+      toast({
+        title: "Storage Error",
+        description: "Unable to set a device ID. Make sure your browser is not in private mode.",
+        variant: "destructive"
+      });
     }
   }, []);
-  const deviceId = localStorage.getItem("child_device_id");
 
-  // If user is already logged in as a child on this device, redirect now
+  const deviceId = getOrSetDeviceId();
+
+  // See if user already logged in as child on device
+  const { child: deviceChild, loading: childLoginLoading, error: deviceLoginError, refresh: triggerDeviceLogin } = useChildDeviceLogin();
+
+  // Redirect if child login is successful
   useEffect(() => {
     if (!childLoginLoading && deviceChild) {
       window.location.href = "/dashboard";
@@ -45,7 +70,16 @@ export default function JoinHousehold() {
     e.preventDefault();
     setSubmitting(true);
 
-    // 1. Attempt join with join code
+    // Log join attempt parameters
+    console.log("🔑 Attempting join with code:", joinCode, "name:", childName, "avatar:", avatar, "deviceId:", deviceId);
+
+    if (!deviceId) {
+      toast({ title: "Device Error", description: "Could not find or create a device ID. Try reloading the page." });
+      setSubmitting(false);
+      return;
+    }
+
+    // Call join with join code
     const { data, error } = await supabase.rpc("join_household_with_code", {
       _code: joinCode.trim(),
       _name: childName.trim(),
@@ -61,7 +95,7 @@ export default function JoinHousehold() {
 
     toast({ title: "Success", description: "Welcome to your family! Finalizing login..." });
 
-    // 2. After join, try device login to retrieve the new child profile
+    // After join, reload device child profile
     setPostSuccessLoading(true);
     await triggerDeviceLogin();
 
@@ -69,6 +103,23 @@ export default function JoinHousehold() {
       setPostSuccessLoading(false);
       window.location.href = "/dashboard";
     }, 1000);
+  };
+
+  // Handler to recover by regenerating device id (for rare edge case)
+  const manualDeviceIdReset = () => {
+    try {
+      localStorage.removeItem("child_device_id");
+      const newId = crypto.randomUUID();
+      localStorage.setItem("child_device_id", newId);
+      setRecoveryTriggered(true);
+      toast({
+        title: "Device ID Reset",
+        description: "A new device ID was issued. Try joining again."
+      });
+      window.location.reload();
+    } catch (e) {
+      toast({ title: "Failed", description: `Could not regenerate device ID: ${String(e)}` });
+    }
   };
 
   return (
@@ -93,6 +144,22 @@ export default function JoinHousehold() {
           {deviceLoginError && (
             <div className="text-red-600 bg-red-100 rounded p-2 text-center text-sm mb-3">
               {deviceLoginError}
+              {deviceLoginError?.includes("No such child") && (
+                <div className="mt-2 flex flex-col items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={manualDeviceIdReset}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-1" />
+                    Regenerate Device ID &amp; Retry
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    If you recently joined, it's possible your device ID changed or was lost.<br />
+                    Try to join again or reset device ID above.
+                  </span>
+                </div>
+              )}
             </div>
           )}
           {!deviceChild && !submitting && !postSuccessLoading && (
@@ -141,6 +208,15 @@ export default function JoinHousehold() {
               Codes are one-time use only and expire after 24 hours.
             </div>
           )}
+          <div className="mt-4 text-xs text-muted-foreground">
+            <b>Debug Info:</b>
+            <div>
+              Device ID: <span className="font-mono bg-gray-100 dark:bg-gray-800 px-1 rounded">{deviceId || "N/A"}</span>
+            </div>
+            <div>
+              Recovery Triggered: <span className="font-mono">{String(recoveryTriggered)}</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
