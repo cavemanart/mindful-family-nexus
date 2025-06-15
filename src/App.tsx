@@ -18,8 +18,6 @@ import Success from "./pages/Success";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 import JoinHousehold from './pages/JoinHousehold';
-import ChildModeDashboard from "@/components/ChildModeDashboard";
-import { useChildDeviceLogin } from "@/hooks/useChildDeviceLogin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
