@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -235,6 +234,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         onEventUpdate={updateEvent}
         onEventDelete={deleteEvent}
         canEdit={canCreateEvents}
+        householdId={selectedHousehold.id}
       />
 
       {/* Day Events Modal */}
@@ -263,6 +263,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         />
       )}
 
+      {/* Alert for non-creators */}
       {!canCreateEvents && (
         <Alert className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
           <AlertDescription className="text-blue-800 dark:text-blue-200">
