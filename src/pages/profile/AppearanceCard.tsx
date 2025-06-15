@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+// CORRECT the import below:
 import { Separator } from "@/components/ui/separator";
 import { Palette } from "lucide-react";
 import { Label } from "@/components/ui/label";
