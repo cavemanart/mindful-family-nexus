@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Users, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +15,7 @@ interface AdvancedEventFormProps {
   categories: EventCategory[];
   householdId: string;
   initialEvent?: AdvancedCalendarEvent;
+  buttonLabel?: string; // Optional: support custom submit label
 }
 
 const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
@@ -24,6 +24,7 @@ const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
   categories,
   householdId,
   initialEvent,
+  buttonLabel,
 }) => {
   const [formData, setFormData] = useState({
     title: initialEvent?.title || '',
@@ -215,7 +216,7 @@ const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
             {/* Form Actions */}
             <div className="flex gap-2 pt-4">
               <Button type="submit" className="flex-1">
-                {initialEvent ? 'Update Event' : 'Create Event'}
+                {buttonLabel ? buttonLabel : (initialEvent ? 'Update Event' : 'Create Event')}
               </Button>
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel

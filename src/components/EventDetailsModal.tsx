@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Calendar, User, Tag, Edit, Save, X } from 'lucide-react';
 
+// NEW: Import AdvancedEventForm
+import AdvancedEventForm from "@/components/AdvancedEventForm";
+
 interface EventDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +20,7 @@ interface EventDetailsModalProps {
   onEventUpdate: (eventId: string, updates: Partial<AdvancedCalendarEvent>) => Promise<any>;
   onEventDelete: (eventId: string) => Promise<boolean>;
   canEdit: boolean;
+  householdId: string; // required for AdvancedEventForm
 }
 
 const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
@@ -26,10 +30,10 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   categories,
   onEventUpdate,
   onEventDelete,
-  canEdit
+  canEdit,
+  householdId,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedEvent, setEditedEvent] = useState<Partial<AdvancedCalendarEvent>>({});
 
   if (!event) return null;
 
@@ -50,21 +54,11 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     });
   };
 
-  const handleEdit = () => {
-    setEditedEvent({
-      title: event.title,
-      description: event.description || '',
-      category: event.category || ''
-    });
-    setIsEditing(true);
-  };
-
-  const handleSave = async () => {
-    if (editedEvent.title?.trim()) {
-      await onEventUpdate(event.id, editedEvent);
-      setIsEditing(false);
-      onClose();
-    }
+  // NEW: Handler for updating the event from AdvancedEventForm
+  const handleUpdateEvent = async (formEventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
+    await onEventUpdate(event.id, formEventData);
+    setIsEditing(false);
+    onClose();
   };
 
   const handleDelete = async () => {
@@ -83,78 +77,60 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             {isEditing ? 'Edit Event' : 'Event Details'}
           </DialogTitle>
         </DialogHeader>
-
-        <Card className="border-l-4" style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}>
-          <CardContent className="p-6 space-y-4">
-            {isEditing ? (
-              <>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
-                  <Input
-                    value={editedEvent.title || ''}
-                    onChange={(e) => setEditedEvent({ ...editedEvent, title: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
-                  <Textarea
-                    value={editedEvent.description || ''}
-                    onChange={(e) => setEditedEvent({ ...editedEvent, description: e.target.value })}
-                    rows={3}
-                    className="mt-1"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
+        <div>
+          {isEditing ? (
+            <AdvancedEventForm
+              onEventCreated={handleUpdateEvent}
+              onCancel={() => setIsEditing(false)}
+              categories={categories}
+              householdId={householdId}
+              initialEvent={event}
+            />
+          ) : (
+            <Card className="border-l-4" style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}>
+              <CardContent className="p-6 space-y-4">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{event.title}</h3>
-                
                 {event.description && (
                   <p className="text-gray-600 dark:text-gray-400">{event.description}</p>
                 )}
-              </>
-            )}
-
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <Clock className="h-4 w-4" />
-              <span>{formatDateTime(event.start_datetime)}</span>
-              {event.end_datetime && (
-                <span> - {new Date(event.end_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-              )}
-            </div>
-
-            {event.category && (
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-gray-500" />
-                <Badge 
-                  variant="outline" 
-                  style={{ 
-                    borderColor: getCategoryColor(event.category),
-                    color: getCategoryColor(event.category)
-                  }}
-                >
-                  {event.category}
-                </Badge>
-              </div>
-            )}
-
-            {event.assigned_to && event.assigned_to.length > 0 && (
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Assigned to: {event.assigned_to.join(', ')}
-                </span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Clock className="h-4 w-4" />
+                  <span>{formatDateTime(event.start_datetime)}</span>
+                  {event.end_datetime && (
+                    <span> - {new Date(event.end_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                  )}
+                </div>
+                {event.category && (
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-gray-500" />
+                    <Badge 
+                      variant="outline" 
+                      style={{ 
+                        borderColor: getCategoryColor(event.category),
+                        color: getCategoryColor(event.category)
+                      }}
+                    >
+                      {event.category}
+                    </Badge>
+                  </div>
+                )}
+                {event.assigned_to && event.assigned_to.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Assigned to: {event.assigned_to.join(', ')}
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
         <div className="flex justify-between pt-4">
           <div>
             {canEdit && !isEditing && (
               <div className="flex gap-2">
-                <Button onClick={handleEdit} variant="outline">
+                <Button onClick={() => setIsEditing(true)} variant="outline">
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
@@ -165,23 +141,12 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               </div>
             )}
           </div>
-          
           <div className="flex gap-2">
-            {isEditing ? (
-              <>
-                <Button onClick={handleSave}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
-                </Button>
-                <Button onClick={() => setIsEditing(false)} variant="outline">
-                  Cancel
-                </Button>
-              </>
-            ) : (
+            {!isEditing ? (
               <Button onClick={onClose} variant="outline">
                 Close
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </DialogContent>
