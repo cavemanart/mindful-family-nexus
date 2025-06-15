@@ -11,31 +11,32 @@ interface Props {
 }
 
 export default function HouseholdJoinCodeCard({ householdId }: Props) {
-  const [childPin, setChildPin] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const generatePin = async () => {
+  const generateJoinCode = async () => {
     setLoading(true);
-    setChildPin(null);
+    setJoinCode(null);
 
-    const { data, error } = await supabase.rpc("generate_child_pin", {
+    // Call the Supabase database function for join codes
+    const { data, error } = await supabase.rpc("generate_household_join_code", {
       _household_id: householdId,
     });
 
     if (error) {
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     } else {
-      setChildPin(data);
-      toast({ title: "PIN created!", description: data });
+      setJoinCode(data);
+      toast({ title: "Join code created!", description: data });
     }
     setLoading(false);
   };
 
-  const copyPin = () => {
-    if (childPin) {
-      navigator.clipboard.writeText(childPin);
-      toast({ title: "Copied", description: "Child PIN copied to clipboard." });
+  const copyJoinCode = () => {
+    if (joinCode) {
+      navigator.clipboard.writeText(joinCode);
+      toast({ title: "Copied", description: "Join code copied to clipboard." });
     }
   };
 
@@ -45,19 +46,19 @@ export default function HouseholdJoinCodeCard({ householdId }: Props) {
         <CardTitle>Invite a Child</CardTitle>
       </CardHeader>
       <CardContent>
-        <Button onClick={generatePin} disabled={loading}>
-          {loading ? "Generating..." : "Generate 4-digit PIN"}
+        <Button onClick={generateJoinCode} disabled={loading}>
+          {loading ? "Generating..." : "Generate Join Code"}
         </Button>
-        {childPin && (
+        {joinCode && (
           <div className="mt-4 flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-lg">{childPin}</span>
-            <Button size="icon" variant="ghost" onClick={copyPin}>
+            <span className="font-mono text-lg">{joinCode}</span>
+            <Button size="icon" variant="ghost" onClick={copyJoinCode}>
               <Copy className="w-4 h-4" />
             </Button>
           </div>
         )}
         <div className="text-xs text-muted-foreground mt-2">
-          Share this PIN with your child. They can use it once, on any device. Permanent unless used.
+          Share this code with your child. They can use it once to join your household, on any device. Code expires in 24 hours or after use.
         </div>
       </CardContent>
     </Card>
