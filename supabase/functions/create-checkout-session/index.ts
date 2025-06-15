@@ -49,16 +49,16 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Define prices based on plan
+    // Define prices based on plan -- UPDATED HERE!
     const priceData = plan_type === 'pro_annual' ? {
       currency: "usd",
       product_data: { name: "Family Pro Annual" },
-      unit_amount: 6999, // $69.99
+      unit_amount: 4999, // $49.99
       recurring: { interval: "year" },
     } : {
       currency: "usd", 
       product_data: { name: "Family Pro" },
-      unit_amount: 799, // $7.99
+      unit_amount: 499, // $4.99
       recurring: { interval: "month" },
     };
 

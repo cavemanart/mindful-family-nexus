@@ -1,4 +1,3 @@
-
 export const SUBSCRIPTION_PLANS = {
   free: {
     name: 'Free Plan',
@@ -22,7 +21,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro: {
     name: 'Family Pro',
-    price: 799, // $7.99 in cents
+    price: 499, // $4.99 in cents
     households: 1 as const,
     bills_per_month: -1 as const, // unlimited
     vent_tasks: -1 as const, // unlimited
@@ -41,7 +40,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro_annual: {
     name: 'Family Pro Annual',
-    price: 6999, // $69.99 in cents (about $5.83/month)
+    price: 4999, // $49.99 in cents (about $4.17/month)
     households: 1 as const,
     bills_per_month: -1 as const, // unlimited
     vent_tasks: -1 as const, // unlimited
