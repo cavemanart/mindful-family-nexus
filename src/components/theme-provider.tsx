@@ -27,32 +27,44 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-  const [mounted, setMounted] = useState(false);
+  // Check if React hooks are available before using them
+  if (!React || !React.useState) {
+    console.warn('React hooks not available, using fallback rendering');
+    return (
+      <div className="opacity-0" style={{ visibility: 'hidden' }}>
+        {children}
+      </div>
+    );
+  }
 
-  // Simple initialization without complex React readiness checks
-  useEffect(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Safe initialization
     try {
-      console.log('🎨 Initializing theme provider');
-      
-      // Safe localStorage access
-      let storedTheme = defaultTheme;
       if (typeof window !== "undefined" && window.localStorage) {
         const stored = localStorage.getItem(storageKey);
         if (stored && (stored === "dark" || stored === "light" || stored === "system")) {
-          storedTheme = stored as Theme;
+          return stored as Theme;
         }
       }
-      
-      setTheme(storedTheme);
-      setMounted(true);
-      console.log('✅ Theme provider initialized with theme:', storedTheme);
     } catch (error) {
-      console.warn("Failed to initialize theme:", error);
-      setTheme(defaultTheme);
-      setMounted(true);
+      console.warn("Failed to read theme from localStorage:", error);
     }
-  }, [defaultTheme, storageKey]);
+    return defaultTheme;
+  });
+
+  const [mounted, setMounted] = useState(false);
+
+  // Safe initialization effect
+  useEffect(() => {
+    try {
+      console.log('🎨 Theme provider mounting');
+      setMounted(true);
+      console.log('✅ Theme provider mounted successfully');
+    } catch (error) {
+      console.warn("Failed to mount theme provider:", error);
+      setMounted(true); // Still set mounted to prevent infinite loading
+    }
+  }, []);
 
   // Apply theme to DOM
   useEffect(() => {
@@ -93,17 +105,17 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
+    setTheme: (newTheme: Theme) => {
       if (mounted) {
-        setTheme(theme);
+        setTheme(newTheme);
       }
     },
   };
 
-  // Simple loading state without complex visibility handling
+  // Show loading state while not mounted
   if (!mounted) {
     return (
-      <div className="opacity-0">
+      <div className="opacity-0" style={{ visibility: 'hidden' }}>
         {children}
       </div>
     );
