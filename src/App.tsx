@@ -18,6 +18,8 @@ import Success from "./pages/Success";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 import JoinHousehold from './pages/JoinHousehold';
+import ChildModeDashboard from "@/components/ChildModeDashboard";
+import { useChildDeviceLogin } from "@/hooks/useChildDeviceLogin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +32,18 @@ const queryClient = new QueryClient({
 
 const App = () => {
   console.log('[App] App component rendering. React.useState available:', typeof React.useState === 'function');
+
+  // Detect device-based child session
+  const isChildDeviceRoute = window.location.pathname.startsWith("/child-dashboard") || window.location.pathname === "/dashboard";
+  const deviceId = typeof window !== "undefined" ? localStorage.getItem("child_device_id") : null;
+
+  // If this is a child device (by deviceId and currently no authenticated user), and deviceChild exists, render ChildModeDashboard directly
+  if (isChildDeviceRoute && deviceId && !localStorage.getItem("supabase.auth.token")) {
+    // Note: direct rendering, avoid auth providers
+    return (
+      <ChildModeDashboard />
+    );
+  }
 
   return (
     <ErrorBoundary>

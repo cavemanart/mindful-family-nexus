@@ -14,16 +14,15 @@ interface ChildrenDashboardProps {
 }
 
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
-  const { chores, loading: choresLoading, toggleChore } = useChores(selectedHousehold?.id || null);
-  const { messages, loading: messagesLoading } = useFamilyMessages(selectedHousehold?.id || null);
+  // Use allowUnauthenticated for device-child accounts
   const { 
     children, 
     loading: childrenLoading, 
     refreshChildren, 
     isRefreshing,
     subscriptionStatus 
-  } = useChildren(selectedHousehold?.id);
-  
+  } = useChildren(selectedHousehold?.id, true /* allow even without parent login */);
+
   const [selectedChild, setSelectedChild] = useState('');
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
   

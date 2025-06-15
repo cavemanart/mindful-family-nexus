@@ -14,7 +14,7 @@ export interface Child {
   created_at?: string;
 }
 
-export const useChildren = (householdId: string | undefined) => {
+export const useChildren = (householdId: string | undefined, allowUnauthenticated = false) => {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -29,8 +29,8 @@ export const useChildren = (householdId: string | undefined) => {
   const RETRY_DELAY = 1000;
 
   const fetchChildren = useCallback(async (showToast = false) => {
-    if (!householdId || !user?.id) {
-      console.log('❌ useChildren: Missing householdId or user.id');
+    if (!householdId || (!user?.id && !allowUnauthenticated)) {
+      console.log('❌ useChildren: Missing householdId or user.id (and not allowUnauthenticated)');
       setLoading(false);
       return;
     }
@@ -106,7 +106,7 @@ export const useChildren = (householdId: string | undefined) => {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [householdId, user?.id, retryCount, toast]);
+  }, [householdId, user?.id, retryCount, toast, allowUnauthenticated]);
 
   const addOptimisticChild = useCallback((newChild: Omit<Child, 'id'>) => {
     const optimisticChild: Child = {
