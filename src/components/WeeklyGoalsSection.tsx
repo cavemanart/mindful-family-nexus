@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { Target, Plus, Check } from "lucide-react";
+import { Target, Plus, Check, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +13,11 @@ interface WeeklyGoalsSectionProps {
   addGoal: (data: { title: string; description: string; assigned_to: string; completed: boolean }) => Promise<boolean>;
   toggleGoal: (id: string) => void;
   familyMembers: string[];
+  deleteGoal: (id: string) => Promise<boolean>;
+  editGoal: (
+    id: string,
+    data: Partial<Omit<WeeklyGoal, 'id' | 'household_id' | 'created_at' | 'updated_at'>>
+  ) => Promise<boolean>;
 }
 
 const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
@@ -22,9 +26,15 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
   addGoal,
   toggleGoal,
   familyMembers,
+  deleteGoal,
+  editGoal,
 }) => {
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState({ title: "", description: "", assigned_to: "" });
+
+  // For editing:
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ title: "", description: "", assigned_to: "" });
 
   const handleAddGoal = async () => {
     if (newGoal.title.trim() && newGoal.assigned_to) {
@@ -34,6 +44,28 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
         setIsAddingGoal(false);
       }
     }
+  };
+
+  const onEditClick = (goal: WeeklyGoal) => {
+    setEditingId(goal.id);
+    setEditData({
+      title: goal.title,
+      description: goal.description,
+      assigned_to: goal.assigned_to
+    });
+  };
+
+  const handleEditSave = async (id: string) => {
+    if (editData.title.trim() && editData.assigned_to) {
+      const success = await editGoal(id, editData);
+      if (success) {
+        setEditingId(null);
+      }
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteGoal(id);
   };
 
   return (
@@ -102,18 +134,75 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
                     <Check size={20} />
                   </Button>
                   <div className="flex-1">
-                    <h4 className={`font-semibold ${goal.completed ? 'text-green-800 dark:text-green-200 line-through' : 'text-foreground'}`}>
-                      {goal.title}
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-2">Assigned to {goal.assigned_to}</p>
-                    <p className={`text-sm ${goal.completed ? 'text-green-700 dark:text-green-300' : 'text-foreground'}`}>
-                      {goal.description}
-                    </p>
+                    {editingId === goal.id ? (
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Goal title..."
+                          value={editData.title}
+                          onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                          className="mb-1"
+                        />
+                        <Textarea
+                          placeholder="Describe the goal..."
+                          value={editData.description}
+                          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                          rows={2}
+                        />
+                        <select
+                          className="w-full p-2 border rounded-md bg-background text-foreground border-border"
+                          value={editData.assigned_to}
+                          onChange={(e) => setEditData({ ...editData, assigned_to: e.target.value })}
+                        >
+                          <option value="">Assign to...</option>
+                          {familyMembers.map(member => (
+                            <option key={member} value={member}>{member}</option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            onClick={() => handleEditSave(goal.id)}
+                            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                            size="sm"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setEditingId(null)}
+                            size="sm"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <h4 className={`font-semibold ${goal.completed ? 'text-green-800 dark:text-green-200 line-through' : 'text-foreground'}`}>
+                          {goal.title}
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-2">Assigned to {goal.assigned_to}</p>
+                        <p className={`text-sm ${goal.completed ? 'text-green-700 dark:text-green-300' : 'text-foreground'}`}>
+                          {goal.description}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
-                <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs">
-                  {goal.completed ? 'Completed' : 'In Progress'}
-                </Badge>
+                <div className="flex flex-col items-end gap-2 ml-2">
+                  <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs mb-2">
+                    {goal.completed ? 'Completed' : 'In Progress'}
+                  </Badge>
+                  {editingId !== goal.id && (
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => onEditClick(goal)}>
+                        <Edit className="w-4 h-4 text-blue-600" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleDelete(goal.id)}>
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

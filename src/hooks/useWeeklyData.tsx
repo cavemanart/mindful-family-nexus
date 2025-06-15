@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -147,6 +146,64 @@ export const useWeeklyData = (householdId: string | null) => {
     }
   };
 
+  const deleteGoal = async (id: string) => {
+    if (!householdId) return false;
+    try {
+      const { error } = await supabase
+        .from('weekly_goals')
+        .delete()
+        .eq('id', id)
+        .eq('household_id', householdId);
+      if (error) throw error;
+      toast({
+        title: "Goal deleted",
+        description: "The goal has been deleted.",
+        variant: "default"
+      });
+      fetchWeeklyData();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error deleting goal",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const editGoal = async (
+    id: string, 
+    data: Partial<Omit<WeeklyGoal, 'id' | 'household_id' | 'created_at' | 'updated_at'>>
+  ) => {
+    if (!householdId) return false;
+    try {
+      const { error } = await supabase
+        .from('weekly_goals')
+        .update({
+          ...data,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .eq('household_id', householdId);
+      if (error) throw error;
+      toast({
+        title: "Goal updated",
+        description: "The goal has been updated.",
+        variant: "default"
+      });
+      fetchWeeklyData();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error updating goal",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchWeeklyData();
   }, [householdId]);
@@ -158,6 +215,8 @@ export const useWeeklyData = (householdId: string | null) => {
     addWin,
     addGoal,
     toggleGoal,
+    deleteGoal,
+    editGoal,
     refetch: fetchWeeklyData
   };
 };

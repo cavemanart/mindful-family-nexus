@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, Loader2 } from 'lucide-react';
 import WeeklyWinsSection from './WeeklyWinsSection';
@@ -10,7 +9,7 @@ interface WeeklySyncProps {
 }
 
 const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
-  const { wins, goals, loading, addWin, addGoal, toggleGoal } = useWeeklyData(selectedHousehold?.id || null);
+  const { wins, goals, loading, addWin, addGoal, toggleGoal, deleteGoal, editGoal } = useWeeklyData(selectedHousehold?.id || null);
 
   // In a real app, familyMembers would be fetched from household data.
   const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
@@ -45,6 +44,8 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
         addGoal={addGoal}
         toggleGoal={toggleGoal}
         familyMembers={familyMembers}
+        deleteGoal={deleteGoal}
+        editGoal={editGoal}
       />
     </div>
   );
