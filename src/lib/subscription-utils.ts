@@ -19,25 +19,27 @@ export interface UserSubscription {
 
 // Simple utility functions - NO HOOKS
 export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
+  // Fetch all for safety due to possible legacy duplicates, but will usually return 1 row due to unique constraint.
   const { data, error } = await supabase
     .from('user_subscriptions')
     .select('*')
-    .eq('user_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(1);
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error fetching user subscription:', error);
     return null;
   }
 
-  // data can be an array or null; take first item if available
-  const record = Array.isArray(data) ? data[0] : null;
-  if (!record) return null;
+  if (!Array.isArray(data) || data.length === 0) return null;
+
+  // Choose active paid plan first, then any active plan, then most recent record
+  const best = data.find(row => (row.plan_type === 'pro_annual' || row.plan_type === 'pro') && row.is_active)
+    || data.find(row => row.is_active)
+    || data[0];
 
   return {
-    ...record,
-    plan_type: record.plan_type as PlanType
+    ...best,
+    plan_type: best.plan_type as PlanType
   };
 }
 

@@ -38,33 +38,33 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
-    
-    // Get or create subscription record
+
+    // Get or upsert subscription record
     let { data: subscription } = await supabaseClient
       .from("user_subscriptions")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!subscription) {
-      logStep("Creating initial subscription record - FREE PLAN ONLY");
-      const { data: newSub, error } = await supabaseClient
+      logStep("Creating initial subscription record (upsert, not insert) for user_id", { userId: user.id });
+      // Use upsert to avoid duplicates and ensure uniqueness
+      const upsertResult = await supabaseClient
         .from("user_subscriptions")
-        .insert({
+        .upsert({
           user_id: user.id,
-          plan_type: 'free'
-          // NO automatic trial - users must opt-in
-        })
+          plan_type: "free",
+          is_active: true,
+        }, { onConflict: "user_id" })
         .select()
-        .single();
-
-      if (error) throw error;
-      subscription = newSub;
+        .maybeSingle();
+      if (upsertResult.error) throw upsertResult.error;
+      subscription = upsertResult.data;
     }
 
     // Check Stripe if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
+
     if (customers.data.length === 0) {
       logStep("No Stripe customer found");
       return new Response(JSON.stringify({
@@ -95,44 +95,45 @@ serve(async (req) => {
       const activeSub = subscriptions.data[0];
       const amount = activeSub.items.data[0].price.unit_amount || 0;
       const interval = activeSub.items.data[0].price.recurring?.interval;
-      
+
       // Determine plan type from amount and interval
       if (interval === 'year' && amount === 6999) {
         planType = 'pro_annual';
       } else if (interval === 'month' && amount === 799) {
         planType = 'pro';
       }
-      
+
       isActive = true;
       subscriptionEnd = new Date(activeSub.current_period_end * 1000).toISOString();
-      
+
       logStep("Active subscription found", { planType, subscriptionEnd });
 
-      // Update database
+      // Update database (upsert again just in case)
       await supabaseClient
         .from("user_subscriptions")
-        .update({
+        .upsert({
+          user_id: user.id,
           plan_type: planType,
           stripe_customer_id: customerId,
           stripe_subscription_id: activeSub.id,
           is_active: true,
           subscription_start_date: new Date(activeSub.start_date * 1000).toISOString(),
           subscription_end_date: subscriptionEnd
-        })
-        .eq("user_id", user.id);
+        }, { onConflict: "user_id" });
     } else {
-      logStep("No active subscription found, keeping current plan");
-      
+      logStep("No active subscription found, updating to keep current plan");
       // Update customer ID but keep current plan
       await supabaseClient
         .from("user_subscriptions")
-        .update({
+        .upsert({
+          user_id: user.id,
+          plan_type: subscription.plan_type,
           stripe_customer_id: customerId,
           stripe_subscription_id: null,
           subscription_start_date: null,
-          subscription_end_date: null
-        })
-        .eq("user_id", user.id);
+          subscription_end_date: null,
+          is_active: subscription.is_active,
+        }, { onConflict: "user_id" });
     }
 
     return new Response(JSON.stringify({
