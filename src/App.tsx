@@ -31,25 +31,6 @@ const queryClient = new QueryClient({
 const App = () => {
   console.log('🚀 App component rendering');
 
-  // Check if React is properly initialized
-  if (!React || !React.createElement || !React.useState) {
-    console.error('React is not properly initialized');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-red-50">
-        <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Loading Error</h2>
-          <p className="text-gray-600 mb-4">React is not properly loaded.</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Reload Application
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary>
       <SimpleReactCheck>

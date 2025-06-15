@@ -27,18 +27,7 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Check if React hooks are available before using them
-  if (!React || !React.useState) {
-    console.warn('React hooks not available, using fallback rendering');
-    return (
-      <div className="opacity-0" style={{ visibility: 'hidden' }}>
-        {children}
-      </div>
-    );
-  }
-
   const [theme, setTheme] = useState<Theme>(() => {
-    // Safe initialization
     try {
       if (typeof window !== "undefined" && window.localStorage) {
         const stored = localStorage.getItem(storageKey);
@@ -54,19 +43,12 @@ export function ThemeProvider({
 
   const [mounted, setMounted] = useState(false);
 
-  // Safe initialization effect
   useEffect(() => {
-    try {
-      console.log('🎨 Theme provider mounting');
-      setMounted(true);
-      console.log('✅ Theme provider mounted successfully');
-    } catch (error) {
-      console.warn("Failed to mount theme provider:", error);
-      setMounted(true); // Still set mounted to prevent infinite loading
-    }
+    console.log('🎨 Theme provider mounting');
+    setMounted(true);
+    console.log('✅ Theme provider mounted successfully');
   }, []);
 
-  // Apply theme to DOM
   useEffect(() => {
     if (!mounted) return;
 
@@ -90,7 +72,6 @@ export function ThemeProvider({
     }
   }, [theme, mounted]);
 
-  // Save theme to localStorage
   useEffect(() => {
     if (!mounted) return;
     
@@ -112,10 +93,9 @@ export function ThemeProvider({
     },
   };
 
-  // Show loading state while not mounted
   if (!mounted) {
     return (
-      <div className="opacity-0" style={{ visibility: 'hidden' }}>
+      <div style={{ visibility: 'hidden', opacity: 0 }}>
         {children}
       </div>
     );
