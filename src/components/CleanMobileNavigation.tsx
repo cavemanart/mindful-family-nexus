@@ -29,7 +29,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const secondaryItems = [
     { key: 'calendar', label: 'Calendar', icon: Calendar },
     { key: 'mental-load', label: 'Tasks', icon: Brain },
-    { key: 'nanny-mode', label: 'Nanny', icon: Baby },
+    { key: 'nanny', label: 'Nanny', icon: Baby }, // Changed from 'nanny-mode' to 'nanny'
     { key: 'children', label: 'Kids', icon: Users },
     { key: 'weekly-sync', label: 'Goals', icon: Calendar },
   ];
