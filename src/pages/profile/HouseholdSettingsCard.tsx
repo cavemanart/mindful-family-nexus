@@ -5,15 +5,10 @@ import { Home, Shield } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-interface Household {
-  id: string;
-  name: string;
-  role: string;
-}
+import type { Household } from "@/hooks/useHouseholds"; // Use hook's exported type for correctness
 
 interface HouseholdSettingsCardProps {
-  selectedHousehold: Household | undefined;
+  selectedHousehold?: Household; // make optional to flow correctly with hook type
   householdName: string;
   setHouseholdName: (v: string) => void;
   isAdminOrOwner: boolean;

@@ -1,6 +1,7 @@
 
 import React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Separator } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Palette } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";

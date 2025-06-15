@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useHouseholds } from '@/hooks/useHouseholds';
+import { useHouseholds, Household } from '@/hooks/useHouseholds';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useTheme } from '@/components/theme-provider';
 import { useNavigate } from 'react-router-dom';
@@ -63,7 +63,10 @@ const Profile = () => {
   const [lastName, setLastName] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
-  const selectedHousehold = households?.find(h => h.id === localStorage.getItem('selectedHouseholdId'));
+  // To ensure selectedHousehold is properly typed and the role property is available as possibly undefined:
+  const selectedHousehold: Household | undefined = households?.find(
+    (h) => h.id === localStorage.getItem('selectedHouseholdId')
+  );
   const [householdName, setHouseholdName] = useState('');
   const [isUpdatingHousehold, setIsUpdatingHousehold] = useState(false);
   
