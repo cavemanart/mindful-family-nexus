@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,21 +31,62 @@ const queryClient = new QueryClient({
   },
 });
 
+const DEBUG = true; // Set to false to hide debug info
+
 const App = () => {
-  console.log('[App] App component rendering. React.useState available:', typeof React.useState === 'function');
+  // For debugging
+  if (DEBUG) {
+    console.log('[App] App component rendering. React.useState available:', typeof React.useState === 'function');
+    if (typeof window !== "undefined") {
+      console.log("[App] - LocalStorage device_id:", localStorage.getItem("child_device_id"));
+      console.log("[App] - LocalStorage supabase.auth.token:", localStorage.getItem("supabase.auth.token"));
+    }
+  }
 
   // Detect device-based child session
   const isChildDeviceRoute = window.location.pathname.startsWith("/child-dashboard") || window.location.pathname === "/dashboard";
   const deviceId = typeof window !== "undefined" ? localStorage.getItem("child_device_id") : null;
+  const authToken = typeof window !== "undefined" ? localStorage.getItem("supabase.auth.token") : null;
 
-  // If this is a child device (by deviceId and currently no authenticated user), and deviceChild exists, render ChildModeDashboard directly
-  if (isChildDeviceRoute && deviceId && !localStorage.getItem("supabase.auth.token")) {
-    // Note: direct rendering, avoid auth providers
+  // Show debug info for troubleshooting
+  if (DEBUG) {
+    window.__DEBUG_STATE__ = { 
+      isChildDeviceRoute,
+      deviceId,
+      authToken
+    };
+  }
+
+  // Only enter strict child dashboard mode if all conditions are met:
+  const shouldShowChildMode =
+    isChildDeviceRoute &&
+    deviceId &&
+    !authToken;
+
+  if (shouldShowChildMode) {
+    if (DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log(
+        "[App] Rendering device-based (child mode) dashboard because: isChildDeviceRoute=true, deviceId exists, authToken empty"
+      );
+    }
     return (
-      <ChildModeDashboard />
+      <div>
+        <ChildModeDashboard />
+        {/* Debug info */}
+        {DEBUG && (
+          <div className="fixed bottom-0 left-0 bg-gray-100 dark:bg-gray-900 px-2 py-1 text-xs rounded-tr z-50 border-t border-r border-gray-200 dark:border-gray-800">
+            <div>DEBUG: Child Device Mode</div>
+            <div>deviceId: <span className="font-mono">{deviceId}</span></div>
+            <div>authToken: {authToken ? "SET" : "NONE"}</div>
+            <div>route: {window.location.pathname}</div>
+          </div>
+        )}
+      </div>
     );
   }
 
+  // If not device-based child, always default to the parent-authenticated flow
   return (
     <ErrorBoundary>
       <SimpleReactCheck>
@@ -66,6 +108,15 @@ const App = () => {
                     <Route path="/join-household" element={<JoinHousehold />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
+                  {/* Debug info for parent mode */}
+                  {DEBUG && (
+                    <div className="fixed bottom-0 left-0 bg-purple-100 dark:bg-purple-900 px-2 py-1 text-xs rounded-tr z-50 border-t border-r border-purple-200 dark:border-purple-800">
+                      <div>DEBUG: Parent Mode</div>
+                      <div>deviceId: <span className="font-mono">{deviceId}</span></div>
+                      <div>authToken: {authToken ? "SET" : "NONE"}</div>
+                      <div>route: {window.location.pathname}</div>
+                    </div>
+                  )}
                   <PWAInstallPrompt />
                 </ChildSessionProvider>
               </AuthProvider>
@@ -78,3 +129,4 @@ const App = () => {
 };
 
 export default App;
+
