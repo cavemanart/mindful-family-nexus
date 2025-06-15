@@ -42,41 +42,7 @@ const App = () => {
     }
   }
 
-  // Detect device-based child session
-  const isChildDeviceRoute = window.location.pathname.startsWith("/child-dashboard") || window.location.pathname === "/dashboard";
-  const deviceId = typeof window !== "undefined" ? localStorage.getItem("child_device_id") : null;
-  const authToken = typeof window !== "undefined" ? localStorage.getItem("supabase.auth.token") : null;
-
-  // Show debug info for troubleshooting
-  if (DEBUG) {
-    window.__DEBUG_STATE__ = { 
-      isChildDeviceRoute,
-      deviceId,
-      authToken
-    };
-  }
-
-  // Only enter strict child dashboard mode if all conditions are met:
-  const shouldShowChildMode =
-    isChildDeviceRoute &&
-    deviceId &&
-    !authToken;
-
-  if (shouldShowChildMode) {
-    if (DEBUG) {
-      // eslint-disable-next-line no-console
-      console.log(
-        "[App] Rendering device-based (child mode) dashboard because: isChildDeviceRoute=true, deviceId exists, authToken empty"
-      );
-    }
-    return (
-      <div>
-        <ChildModeDashboard />
-      </div>
-    );
-  }
-
-  // If not device-based child, always default to the parent-authenticated flow
+  // Remove all device-based child mode checks. AuthParent flow covers all routes.
   return (
     <ErrorBoundary>
       <SimpleReactCheck>
