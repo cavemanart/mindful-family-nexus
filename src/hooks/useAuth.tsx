@@ -21,8 +21,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Progressive state initialization to prevent React overload
-  const [initializationStep, setInitializationStep] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -34,8 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session: !!session, 
     userProfile: !!userProfile, 
     loading, 
-    error,
-    initializationStep 
+    error
   });
 
   const fetchUserProfile = async (userId: string) => {
@@ -68,16 +65,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initializeAuth = async () => {
     try {
-      console.log('🚀 Initializing auth - step:', initializationStep);
+      console.log('🚀 Initializing auth');
       setLoading(true);
       setError(null);
-
-      // Check if we're online
-      if (!navigator.onLine) {
-        setError('You appear to be offline. Please check your connection.');
-        setLoading(false);
-        return;
-      }
 
       // Get initial session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -99,7 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setLoading(false);
-      setInitializationStep(prev => prev + 1);
     } catch (error) {
       console.error('🚨 Auth initialization error:', error);
       setError('Failed to initialize authentication');
@@ -109,80 +98,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const retry = () => {
     console.log('🔄 Retrying auth initialization');
-    setInitializationStep(0);
     initializeAuth();
   };
 
-  // Progressive initialization to prevent React overload
   useEffect(() => {
-    if (initializationStep === 0) {
-      console.log('🚀 Starting progressive auth initialization');
-      
-      // Small delay to ensure React is fully ready
-      const timer = setTimeout(() => {
-        setInitializationStep(1);
-      }, 50);
-
-      return () => clearTimeout(timer);
-    }
-  }, [initializationStep]);
-
-  useEffect(() => {
-    if (initializationStep === 1) {
-      console.log('🚀 Setting up auth state listener');
-      
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log('🔄 Auth state changed:', event, !!session);
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            console.log('👤 User authenticated, fetching profile');
-            // Use setTimeout to prevent hook call issues during auth state change
-            setTimeout(() => {
-              fetchUserProfile(session.user.id);
-            }, 0);
-          } else {
-            console.log('👤 User not authenticated, clearing profile');
-            setUserProfile(null);
-          }
-          
-          if (event === 'SIGNED_OUT') {
-            setError(null);
-          }
+    console.log('🚀 Setting up auth state listener');
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('🔄 Auth state changed:', event, !!session);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          console.log('👤 User authenticated, fetching profile');
+          fetchUserProfile(session.user.id);
+        } else {
+          console.log('👤 User not authenticated, clearing profile');
+          setUserProfile(null);
         }
-      );
-
-      // Initialize auth after setting up listener
-      setTimeout(() => {
-        initializeAuth();
-      }, 100);
-
-      // Online/offline detection
-      const handleOnline = () => {
-        console.log('🌐 Back online, retrying auth');
-        if (error && error.includes('offline')) {
-          retry();
+        
+        if (event === 'SIGNED_OUT') {
+          setError(null);
         }
-      };
+      }
+    );
 
-      const handleOffline = () => {
-        console.log('📴 Gone offline');
-        setError('You are currently offline');
-      };
+    // Initialize auth
+    initializeAuth();
 
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
-
-      return () => {
-        console.log('🧹 Cleaning up auth subscription');
-        subscription.unsubscribe();
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      };
-    }
-  }, [initializationStep, error]);
+    return () => {
+      console.log('🧹 Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string, role: UserRole = 'parent') => {
     console.log('📝 Signing up user:', email, role);
@@ -229,18 +178,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
   };
-
-  // Show loading state during initialization
-  if (initializationStep === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Starting up...</p>
-        </div>
-      </div>
-    );
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

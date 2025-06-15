@@ -27,7 +27,6 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Safe theme initialization with fallback
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -42,22 +41,7 @@ export function ThemeProvider({
     return defaultTheme;
   });
 
-  const [mounted, setMounted] = useState(false);
-
-  // Progressive mounting to prevent React conflicts
   useEffect(() => {
-    const timer = setTimeout(() => {
-      console.log('🎨 Theme provider mounting safely');
-      setMounted(true);
-      console.log('✅ Theme provider mounted successfully');
-    }, 10); // Small delay to ensure React is ready
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
     try {
       const root = window.document.documentElement;
       root.classList.remove("light", "dark");
@@ -76,11 +60,9 @@ export function ThemeProvider({
     } catch (error) {
       console.warn("Failed to apply theme to DOM:", error);
     }
-  }, [theme, mounted]);
+  }, [theme]);
 
   useEffect(() => {
-    if (!mounted) return;
-    
     try {
       if (typeof window !== "undefined" && window.localStorage) {
         localStorage.setItem(storageKey, theme);
@@ -88,25 +70,12 @@ export function ThemeProvider({
     } catch (error) {
       console.warn("Failed to save theme to localStorage:", error);
     }
-  }, [theme, storageKey, mounted]);
+  }, [theme, storageKey]);
 
   const value = {
     theme,
-    setTheme: (newTheme: Theme) => {
-      if (mounted) {
-        setTheme(newTheme);
-      }
-    },
+    setTheme,
   };
-
-  // Progressive rendering to prevent flash
-  if (!mounted) {
-    return (
-      <div style={{ visibility: 'hidden', opacity: 0, position: 'absolute' }}>
-        {children}
-      </div>
-    );
-  }
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>

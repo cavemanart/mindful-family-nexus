@@ -20,13 +20,6 @@ const Profile = () => {
   const { households } = useHouseholds();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  
-  console.log('📄 Profile component state:', { 
-    user: !!user, 
-    userProfile: !!userProfile, 
-    authLoading,
-    householdsCount: households?.length || 0 
-  });
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -179,7 +172,7 @@ const Profile = () => {
         </div>
 
         <div className="space-y-8">
-          {/* Profile Header - Temporarily without AvatarUpload */}
+          {/* Profile Header */}
           <div className="text-center space-y-4">
             <Avatar className="h-24 w-24 mx-auto">
               <AvatarImage src={userProfile?.avatar_url || undefined} />
