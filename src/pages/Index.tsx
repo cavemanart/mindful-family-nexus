@@ -90,7 +90,8 @@ const Index = () => {
 
     switch (currentPage) {
       case 'overview':
-        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={() => {}} />;
+        // Pass setCurrentPage so Dashboard buttons work!
+        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={setCurrentPage} />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':
@@ -114,7 +115,8 @@ const Index = () => {
       case 'nanny':
         return isVisible('nanny') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
       default:
-        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={() => {}} />;
+        // fallback still passes real navigation
+        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={setCurrentPage} />;
     }
   };
 
