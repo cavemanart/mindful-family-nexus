@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -87,6 +86,16 @@ const SubscriptionManager: React.FC = () => {
   const trialActive = subscription ? isTrialActive(subscription) : false;
   const isPro = planType === 'pro' || planType === 'pro_annual';
 
+  // Get prices from config (stored in cents, so divide by 100)
+  const proPrice = (SUBSCRIPTION_PLANS.pro.price / 100).toFixed(2);
+  const proAnnualPrice = (SUBSCRIPTION_PLANS.pro_annual.price / 100).toFixed(2);
+
+  // Calculate Pro Annual savings: (monthly pro x 12 - annual pro)
+  const proAnnualSavings = (
+    SUBSCRIPTION_PLANS.pro.price * 12 / 100 -
+    SUBSCRIPTION_PLANS.pro_annual.price / 100
+  ).toFixed(2);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -144,7 +153,7 @@ const SubscriptionManager: React.FC = () => {
                 <span>Family Pro</span>
                 <Badge variant="secondary">Most Popular</Badge>
               </CardTitle>
-              <p className="text-2xl font-bold">$7.99<span className="text-sm font-normal">/month</span></p>
+              <p className="text-2xl font-bold">${proPrice}<span className="text-sm font-normal">/month</span></p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2 text-sm">
@@ -172,8 +181,8 @@ const SubscriptionManager: React.FC = () => {
                 <span>Family Pro Annual</span>
                 <Badge variant="secondary" className="bg-green-100 text-green-800">Best Value</Badge>
               </CardTitle>
-              <p className="text-2xl font-bold">$69.99<span className="text-sm font-normal">/year</span></p>
-              <p className="text-sm text-green-600">Save $26/year!</p>
+              <p className="text-2xl font-bold">${proAnnualPrice}<span className="text-sm font-normal">/year</span></p>
+              <p className="text-sm text-green-600">Save ${proAnnualSavings}/year!</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <ul className="space-y-2 text-sm">
