@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { User, Settings } from 'lucide-react';
@@ -126,6 +127,20 @@ const CleanUserProfile: React.FC<CleanUserProfileProps> = ({
               <Settings className="mr-2 h-4 w-4" />
               Profile Settings
             </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => {
+                navigate('/subscription');
+                setShowProfile(false);
+              }}
+              data-testid="subscription-profile-menu-button"
+            >
+              <span className="mr-2 h-4 w-4">$</span>
+              Subscription
+            </Button>
+
             <Button 
               variant="outline" 
               onClick={() => {
@@ -152,3 +167,4 @@ const CleanUserProfile: React.FC<CleanUserProfileProps> = ({
 };
 
 export default CleanUserProfile;
+
