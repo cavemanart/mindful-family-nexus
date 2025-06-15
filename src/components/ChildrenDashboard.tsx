@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Heart, Loader2, UserPlus, RefreshCw, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { useChores } from '@/hooks/useChores';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useChildren } from '@/hooks/useChildren';
 import AddChildDialog from './AddChildDialog';
+import AddKidModal from "./AddKidModal";
+import { UserPlus } from "lucide-react";
 
 interface ChildrenDashboardProps {
   selectedHousehold: { id: string } | null;
@@ -26,6 +27,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   
   const [selectedChild, setSelectedChild] = useState('');
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  
+  const [addKidOpen, setAddKidOpen] = useState(false);
 
   console.log(`🔍 ChildrenDashboard: Rendering with ${children.length} children for household:`, selectedHousehold?.id);
   console.log('🔍 ChildrenDashboard: Children data:', children.map(c => ({ id: c.id, name: c.first_name })));
@@ -123,21 +126,18 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           </h2>
           <p className="text-muted-foreground mb-4">No children in this household yet!</p>
           <p className="text-muted-foreground text-sm mb-6">Add children to your household to see their tasks and progress.</p>
-          
           <div className="flex gap-2 justify-center mb-4">
             {selectedHousehold && (
-              <AddChildDialog 
-                householdId={selectedHousehold.id}
-                onChildAdded={handleChildAdded}
-                trigger={
-                  <Button className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Add Your First Child
-                  </Button>
-                }
-              />
+              <>
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600"
+                  onClick={() => setAddKidOpen(true)}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Add Kid
+                </Button>
+              </>
             )}
-            
             <Button 
               variant="outline" 
               onClick={handleManualRefresh}
@@ -151,7 +151,14 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               Force Refresh
             </Button>
           </div>
-
+          <div className="max-w-md mx-auto bg-white/40 dark:bg-gray-900/30 rounded-md shadow-sm p-4 mb-4">
+            <strong>How to add your child:</strong>
+            <ol className="list-decimal list-inside text-sm text-muted-foreground mt-1 space-y-1 text-left">
+              <li>Click <span className="font-medium">Add Kid</span> below.</li>
+              <li>Share the code with your child or enter it on their device on the <span className="font-medium">Join Household</span> page.</li>
+              <li>Your child’s profile will appear here the moment they join.</li>
+            </ol>
+          </div>
           {/* Connection Status */}
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-4">
             <connectionStatus.icon className={`h-3 w-3 ${connectionStatus.color} ${subscriptionStatus === 'connecting' ? 'animate-spin' : ''}`} />
@@ -166,16 +173,27 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
               )}
             </div>
           )}
+          <AddKidModal
+            open={addKidOpen}
+            onOpenChange={setAddKidOpen}
+            householdId={selectedHousehold?.id}
+          />
         </div>
       </div>
     );
   }
 
-  console.log('🔍 ChildrenDashboard: Showing dashboard for', children.length, 'children');
-
+  // main dashboard case with children
   return (
     <div className="space-y-6">
-      {/* Child Selector */}
+
+      <AddKidModal
+        open={addKidOpen}
+        onOpenChange={setAddKidOpen}
+        householdId={selectedHousehold?.id}
+      />
+
+      {/* Child Selector and top actions */}
       <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
         <h2 className="text-3xl font-bold text-foreground mb-4">
           Kid's Dashboard 🎈
@@ -195,21 +213,13 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             </Button>
           ))}
         </div>
-        
         <div className="flex gap-2 justify-center mb-4">
           {selectedHousehold && (
-            <AddChildDialog 
-              householdId={selectedHousehold.id}
-              onChildAdded={handleChildAdded}
-              trigger={
-                <Button variant="outline" size="sm">
-                  <UserPlus className="mr-2 h-3 w-3" />
-                  Add Another Child
-                </Button>
-              }
-            />
+            <Button variant="outline" size="sm" onClick={() => setAddKidOpen(true)}>
+              <UserPlus className="mr-2 h-3 w-3" />
+              Add Kid
+            </Button>
           )}
-          
           <Button 
             variant="outline" 
             size="sm"
@@ -224,7 +234,14 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             Force Refresh
           </Button>
         </div>
-
+        <div className="max-w-md mx-auto bg-white/40 dark:bg-gray-900/30 rounded-md shadow-sm p-3 mb-4">
+          <strong>To add a child:</strong>
+          <ol className="list-decimal list-inside text-xs text-muted-foreground mt-1 space-y-1 text-left">
+            <li>Tap <span className="font-medium">Add Kid</span>.</li>
+            <li>Get a one-hour join code, then use it on your child’s device.</li>
+            <li>The new child will appear instantly here.</li>
+          </ol>
+        </div>
         {/* Connection Status */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
           <connectionStatus.icon className={`h-3 w-3 ${connectionStatus.color} ${subscriptionStatus === 'connecting' ? 'animate-spin' : ''}`} />
