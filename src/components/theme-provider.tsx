@@ -1,4 +1,3 @@
-
 import React from "react";
 
 console.log('[theme-provider] ThemeProvider module loaded. React namespace imported:', !!React);
@@ -41,14 +40,21 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // ONLY call hooks if React provides them (prevents critical errors)
+  // Extra robust: Check React itself and that useState/useEffect are callable functions.
   const hooksAvailable =
-    React &&
+    typeof React === "object" &&
+    React !== null &&
     typeof React.useState === "function" &&
     typeof React.useEffect === "function";
 
   if (!hooksAvailable) {
-    console.warn("[theme-provider] Hooks not available, rendering fallback.");
+    // Detailed log for debugging this pathway
+    console.warn("[theme-provider] Hooks or React not available:",
+      "typeof React:", typeof React,
+      "React:", React,
+      "React.useState:", React?.useState,
+      "React.useEffect:", React?.useEffect
+    );
     return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
   }
 
