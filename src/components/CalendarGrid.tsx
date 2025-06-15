@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AdvancedCalendarEvent, EventCategory, CalendarView } from '@/types/calendar';
 import { Card } from "@/components/ui/card";
@@ -12,6 +11,46 @@ interface CalendarGridProps {
   onEventClick: (event: AdvancedCalendarEvent) => void;
   onDateClick: (date: Date) => void;
 }
+
+const getEventSegmentType = (
+  event: AdvancedCalendarEvent,
+  targetDate: Date
+): 'single' | 'start' | 'middle' | 'end' => {
+  // Handle missing end date (single day event)
+  if (!event.end_datetime) return 'single';
+
+  // Start and end as midnight for comparison
+  const start = new Date(event.start_datetime);
+  const end = new Date(event.end_datetime);
+  // Zero time on targetDate for comparison
+  const date = new Date(targetDate);
+  date.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  if (start.getTime() === end.getTime()) return 'single';
+  if (date.getTime() === start.getTime()) return 'start';
+  if (date.getTime() === end.getTime()) return 'end';
+  if (date > start && date < end) return 'middle';
+  return 'single'; // defensive
+};
+
+const getEventsForDate = (date: Date, events: AdvancedCalendarEvent[]) => {
+  const dateStr = date.toISOString().split('T')[0];
+  // Include both single-day and multi-day events spanning this date
+  return events.filter(event => {
+    const eventStart = new Date(event.start_datetime);
+    const eventEnd = event.end_datetime
+      ? new Date(event.end_datetime)
+      : eventStart;
+    // Set all to midnight for comparison
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+    eventStart.setHours(0, 0, 0, 0);
+    eventEnd.setHours(0, 0, 0, 0);
+    return compareDate >= eventStart && compareDate <= eventEnd;
+  });
+};
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
   events,
@@ -46,14 +85,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
     
     return days;
-  };
-
-  const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return events.filter(event => {
-      const eventDate = new Date(event.start_datetime).toISOString().split('T')[0];
-      return eventDate === dateStr;
-    });
   };
 
   const isToday = (date: Date) => {
@@ -95,7 +126,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             );
           }
           
-          const dayEvents = getEventsForDate(date);
+          const dayEvents = getEventsForDate(date, events);
           const today = isToday(date);
           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
           
@@ -126,39 +157,85 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
               {/* Events */}
               <div className="px-2 pb-2 space-y-1 overflow-hidden">
-                {dayEvents.slice(0, 3).map(event => (
-                  <div
-                    key={event.id}
-                    className="group/event relative cursor-pointer transition-all duration-200 hover:scale-105"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEventClick(event);
-                    }}
-                  >
-                    <div
-                      className="text-xs p-1.5 rounded-md shadow-sm border-l-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-all hover:bg-white dark:hover:bg-gray-800"
-                      style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}
-                    >
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <Clock className="h-2.5 w-2.5 text-gray-500" />
-                        <span className="text-gray-600 dark:text-gray-400 text-xs">
-                          {formatEventTime(event.start_datetime)}
-                        </span>
-                      </div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400">
-                        {event.title}
-                      </div>
-                      {event.category && (
-                        <div 
-                          className="inline-block mt-1 px-1 py-0.5 rounded text-xs text-white text-center"
-                          style={{ backgroundColor: getCategoryColor(event.category) }}
+                {dayEvents
+                  .sort((a, b) => 
+                    new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime()
+                  )
+                  .slice(0, 3)
+                  .map(event => {
+                    const segment = getEventSegmentType(event, date);
+                    const isMultiDay = !!event.end_datetime && (
+                      new Date(event.start_datetime).toDateString() !==
+                      new Date(event.end_datetime!).toDateString()
+                    );
+                    const color = getCategoryColor(event.category || 'general');
+                    // Set style based on segment
+                    let style = {};
+                    let classes =
+                      'text-xs p-1.5 shadow-sm border-l-2 border-r-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-all hover:bg-white dark:hover:bg-gray-800 flex items-center gap-2';
+                    if (isMultiDay) {
+                      if (segment === 'start') {
+                        classes += ' rounded-l-md rounded-r-none pr-2';
+                        style = { borderLeftColor: color, borderRightWidth: 0 };
+                      } else if (segment === 'middle') {
+                        classes += ' rounded-none border-l-0 border-r-0 pl-2 pr-2';
+                        style = { borderLeftWidth: 0, borderRightWidth: 0, backgroundColor: color + '20' };
+                      } else if (segment === 'end') {
+                        classes += ' rounded-r-md rounded-l-none pl-2';
+                        style = { borderLeftWidth: 0, backgroundColor: color + '20' };
+                      }
+                    } else {
+                      // single-day
+                      style = { borderLeftColor: color };
+                    }
+                    return (
+                      <div
+                        key={event.id}
+                        className="group/event relative cursor-pointer transition-all duration-200 hover:scale-105"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(event);
+                        }}
+                      >
+                        <div
+                          className={classes}
+                          style={style}
                         >
-                          {event.category}
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <Clock className="h-2.5 w-2.5 text-gray-500" />
+                            <span className="text-gray-600 dark:text-gray-400 text-xs">
+                              {formatEventTime(event.start_datetime)}
+                              {isMultiDay && segment === 'end' && event.end_datetime ? <> - {formatEventTime(event.end_datetime)}</> : null}
+                            </span>
+                          </div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400">
+                            {event.title}
+                          </div>
+                          {event.category && (
+                            <div 
+                              className="inline-block mt-1 px-1 py-0.5 rounded text-xs text-white text-center"
+                              style={{ backgroundColor: color }}
+                            >
+                              {event.category}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                        {/* indicator bar for multi-day */}
+                        {isMultiDay && segment === 'start' && (
+                          <span className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-1 rounded-r-full bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                        )}
+                        {isMultiDay && segment === 'end' && (
+                          <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-1 rounded-l-full bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                        )}
+                        {isMultiDay && segment === 'middle' && (
+                          <>
+                            <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-1 bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                            <span className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-1 bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 
                 {dayEvents.length > 3 && (
                   <div 
