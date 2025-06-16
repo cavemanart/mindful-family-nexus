@@ -225,8 +225,8 @@ const Auth = () => {
             <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
               <p className="font-medium mb-1">After creating your account:</p>
               <p>• Parents/Grandparents can create a household</p>
-              <p>• Use join codes to add family members to your household</p>
-              <p>• Children and other family members can join using the codes</p>
+              <p>• Use "Join Household" from your profile to join existing households with invite codes</p>
+              <p>• All family members can join using household invite codes</p>
             </div>
           )}
         </CardContent>
