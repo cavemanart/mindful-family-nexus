@@ -1,16 +1,14 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, UserPlus, AlertCircle, Wifi, WifiOff } from "lucide-react";
-import AddKidModal from "./AddKidModal";
+import { Loader2, RefreshCw, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import HouseholdJoinCodeCard from "./HouseholdJoinCodeCard";
 
 interface ChildSelectorProps {
   childrenList: { id: string; first_name: string }[];
   selectedChild: string;
   setSelectedChild: (child: string) => void;
   selectedHousehold: { id: string } | null;
-  setAddKidOpen: (open: boolean) => void;
-  addKidOpen: boolean;
   handleManualRefresh: () => Promise<void>;
   isRefreshing: boolean;
   connectionStatus: { icon: React.ElementType; color: string; text: string };
@@ -24,8 +22,6 @@ const ChildSelector: React.FC<ChildSelectorProps> = ({
   selectedChild,
   setSelectedChild,
   selectedHousehold,
-  setAddKidOpen,
-  addKidOpen,
   handleManualRefresh,
   isRefreshing,
   connectionStatus,
@@ -53,12 +49,6 @@ const ChildSelector: React.FC<ChildSelectorProps> = ({
       ))}
     </div>
     <div className="flex gap-2 justify-center mb-4">
-      {selectedHousehold && (
-        <Button variant="outline" size="sm" onClick={() => setAddKidOpen(true)}>
-          <UserPlus className="mr-2 h-3 w-3" />
-          Add Kid
-        </Button>
-      )}
       <Button 
         variant="outline" 
         size="sm"
@@ -70,20 +60,24 @@ const ChildSelector: React.FC<ChildSelectorProps> = ({
         ) : (
           <RefreshCw className="mr-2 h-3 w-3" />
         )}
-        Force Refresh
+        Refresh
       </Button>
     </div>
-    <AddKidModal
-      open={addKidOpen}
-      onOpenChange={setAddKidOpen}
-      householdId={householdId}
-    />
+
+    {/* Generate Join Code Section */}
+    {householdId && (
+      <div className="mt-6 max-w-md mx-auto">
+        <HouseholdJoinCodeCard householdId={householdId} />
+      </div>
+    )}
+
     <div className="max-w-md mx-auto bg-white/40 dark:bg-gray-900/30 rounded-md shadow-sm p-3 mb-4">
-      <strong>To add a child:</strong>
+      <strong>To add more children:</strong>
       <ol className="list-decimal list-inside text-xs text-muted-foreground mt-1 space-y-1 text-left">
-        <li>Tap <span className="font-medium">Add Kid</span>.</li>
-        <li>Get a one-hour join code, then use it on your child’s device.</li>
-        <li>The new child will appear instantly here.</li>
+        <li>Child creates account at main sign-up page</li>
+        <li>Generate join code above, share with child</li>
+        <li>Child uses "Join Household" from their profile</li>
+        <li>New child appears here automatically</li>
       </ol>
     </div>
     <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">

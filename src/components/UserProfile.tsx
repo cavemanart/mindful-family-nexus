@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Sheet,
@@ -138,10 +139,10 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Household Management */}
-            {!isChildMode && (
+            {/* Household Management - Always show for authenticated users */}
+            {!isChildMode && user && (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Household</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Household Actions</h3>
                 <div className="space-y-2">
                   <JoinHouseholdDialog />
                 </div>

@@ -21,7 +21,7 @@ const AddKidModal: React.FC<AddKidModalProps> = ({ open, onOpenChange, household
         <DialogDescription>
           Generate a 24-hour join code below.<br />
           <span>
-            Your child can join by going to <strong>hublie.app/join-household</strong> (or "Join Household" from the homepage) on their device and entering the code.<br />
+            Your child should first create an account at the main sign-up page, then use "Join Household" from their profile to enter this code.<br />
             Once they join, their profile will appear here!
           </span>
         </DialogDescription>
