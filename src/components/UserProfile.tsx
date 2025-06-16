@@ -19,6 +19,7 @@ import LeaveHouseholdDialog from './LeaveHouseholdDialog';
 import AddChildDialog from './AddChildDialog';
 import UserProfileErrorBoundary from './UserProfileErrorBoundary';
 import HouseholdJoinCodeCard from "./HouseholdJoinCodeCard";
+import JoinHouseholdDialog from './JoinHouseholdDialog';
 
 interface UserProfileProps {
   selectedHousehold: Household | null;
@@ -137,7 +138,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Remove AddChildDialog section, replace with JoinCode card */}
+            {/* Household Management */}
+            {!isChildMode && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Household</h3>
+                <div className="space-y-2">
+                  <JoinHouseholdDialog />
+                </div>
+              </div>
+            )}
+
+            {/* Children section for parents/grandparents */}
             {canManageChildren && selectedHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Children ({children.length})</h3>

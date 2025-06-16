@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -209,28 +210,6 @@ const Auth = () => {
               {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
             </Button>
           </form>
-
-          {/* Divider for alternate flow */}
-          <div className="relative flex items-center my-6">
-            <div className="flex-grow border-t border-gray-200" />
-            <span className="mx-3 text-gray-400 text-sm">or</span>
-            <div className="flex-grow border-t border-gray-200" />
-          </div>
-
-          {/* Join Household / Kid's Join Button */}
-          <div className="flex flex-col items-center mb-2">
-            <Button
-              variant="secondary"
-              className="w-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-              onClick={() => navigate('/join-household')}
-              type="button"
-            >
-              👶 Kid? Join Household
-            </Button>
-            <span className="mt-2 text-xs text-gray-500 italic text-center">
-              Use a parent-provided code to join your family as a kid. No need to create an account.
-            </span>
-          </div>
           
           <div className="mt-4 text-center">
             <button
@@ -241,6 +220,15 @@ const Auth = () => {
               {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
             </button>
           </div>
+
+          {isSignUp && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+              <p className="font-medium mb-1">After creating your account:</p>
+              <p>• Parents/Grandparents can create a household</p>
+              <p>• Use join codes to add family members to your household</p>
+              <p>• Children and other family members can join using the codes</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -201,6 +201,23 @@ export const useHouseholds = () => {
         return false;
       }
 
+      // Check if user is already a member
+      const { data: existingMembership, error: membershipError } = await supabase
+        .from('household_members')
+        .select('id')
+        .eq('household_id', household.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingMembership) {
+        toast({
+          title: "Already a member",
+          description: "You are already a member of this household.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
       // Add user to household_members
       const { error: joinError } = await supabase
         .from('household_members')

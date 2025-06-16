@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,7 +18,6 @@ import Subscription from "./pages/Subscription";
 import Success from "./pages/Success";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
-import JoinHousehold from './pages/JoinHousehold';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +40,6 @@ const App = () => {
     }
   }
 
-  // Remove all device-based child mode checks. AuthParent flow covers all routes.
   return (
     <ErrorBoundary>
       <SimpleReactCheck>
@@ -59,7 +58,6 @@ const App = () => {
                     <Route path="/subscription" element={<Subscription />} />
                     <Route path="/success" element={<Success />} />
                     <Route path="/nanny" element={<NannyAccess />} />
-                    <Route path="/join-household" element={<JoinHousehold />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   <PWAInstallPrompt />
