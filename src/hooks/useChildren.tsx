@@ -19,9 +19,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<
-    'connecting' | 'SUBSCRIBED' | 'SUBSCRIPTION_ERROR' | 'disconnected'
-  >('disconnected');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'connecting' | 'SUBSCRIBED' | 'SUBSCRIPTION_ERROR' | 'disconnected'>('disconnected');
   const [retryCount, setRetryCount] = useState(0);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
   const { toast } = useToast();
@@ -30,94 +28,93 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000;
 
-  const fetchChildren = useCallback(
-    async (showToast = false) => {
-      if (!householdId || (!user?.id && !allowUnauthenticated)) {
-        console.log('❌ useChildren: Missing householdId or user.id (and not allowUnauthenticated)');
-        setLoading(false);
-        return;
+  const fetchChildren = useCallback(async (showToast = false) => {
+    if (!householdId || (!user?.id && !allowUnauthenticated)) {
+      console.log('❌ useChildren: Missing householdId or user.id (and not allowUnauthenticated)');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log('🔄 useChildren: Fetching children for household:', householdId);
+
+      // Removed .eq('profiles.is_child_account', true) filter here:
+      const { data, error } = await supabase
+        .from('household_members')
+        .select(`
+          user_id,
+          role,
+          profiles (
+            id,
+            first_name,
+            last_name,
+            avatar_selection,
+            is_child_account,
+            parent_id,
+            device_id,
+            created_at
+          )
+        `)
+        .eq('household_id', householdId);
+
+      if (error) {
+        console.error('❌ useChildren: Error fetching children:', error);
+        throw error;
       }
 
-      try {
-        console.log('🔄 useChildren: Fetching children for household:', householdId);
+      console.log('📊 useChildren: Raw data from query:', data);
 
-        const { data, error } = await supabase
-          .from('household_members')
-          .select(`
-            user_id,
-            role,
-            profiles (
-              id,
-              first_name,
-              last_name,
-              avatar_selection,
-              is_child_account,
-              parent_id,
-              device_id,
-              created_at
-            )
-          `)
-          .eq('household_id', householdId)
-          .eq('profiles.is_child_account', true);
+      const childrenData = data
+        ?.map((member: any) => {
+          const profile = member.profiles ?? member; // fallback if Supabase flattens join
 
-        if (error) {
-          console.error('❌ useChildren: Error fetching children:', error);
-          throw error;
-        }
+          if (!profile || !profile.is_child_account) return null;
 
-        console.log('📊 useChildren: Raw data from query:', data);
+          return {
+            id: profile.id,
+            first_name: profile.first_name || 'Unnamed',
+            last_name: profile.last_name ?? null,
+            avatar_selection: profile.avatar_selection || 'default',
+            is_child_account: true,
+            parent_id: profile.parent_id || undefined,
+            device_id: profile.device_id || undefined,
+            created_at: profile.created_at || undefined,
+          } as Child;
+        })
+        .filter(Boolean) || [];
 
-        const childrenData = data
-          ?.map((member: any) => {
-            const profile = member.profiles ?? member; // fallback if Supabase flattens join
+      console.log('👶 useChildren: Filtered children:', childrenData);
 
-            if (!profile || !profile.is_child_account) return null;
+      setChildren(childrenData);
+      setLastFetchTime(new Date());
+      setRetryCount(0);
 
-            return {
-              id: profile.id,
-              first_name: profile.first_name || 'Unnamed',
-              last_name: profile.last_name ?? null,
-              avatar_selection: profile.avatar_selection || 'default',
-              is_child_account: true,
-              parent_id: profile.parent_id || undefined,
-              device_id: profile.device_id || undefined,
-              created_at: profile.created_at || undefined,
-            } as Child;
-          })
-          .filter(Boolean) || [];
-
-        console.log('👶 useChildren: Filtered children:', childrenData);
-        setChildren(childrenData);
-        setLastFetchTime(new Date());
-        setRetryCount(0);
-
-        if (showToast) {
-          toast({
-            title: 'Success',
-            description: `Found ${childrenData.length} children`,
-          });
-        }
-      } catch (error: any) {
-        console.error('❌ useChildren: Fetch error:', error);
-
-        if (retryCount < MAX_RETRIES) {
-          console.log(`🔄 useChildren: Retrying fetch (${retryCount + 1}/${MAX_RETRIES})`);
-          setRetryCount((prev) => prev + 1);
-          setTimeout(() => fetchChildren(showToast), RETRY_DELAY * Math.pow(2, retryCount));
-        } else {
-          toast({
-            title: 'Error fetching children',
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
-      } finally {
-        setLoading(false);
-        setIsRefreshing(false);
+      if (showToast) {
+        toast({
+          title: "Success",
+          description: `Found ${childrenData.length} children`,
+        });
       }
-    },
-    [householdId, user?.id, retryCount, toast, allowUnauthenticated]
-  );
+
+    } catch (error: any) {
+      console.error('❌ useChildren: Fetch error:', error);
+
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 useChildren: Retrying fetch (${retryCount + 1}/${MAX_RETRIES})`);
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => fetchChildren(showToast), RETRY_DELAY * Math.pow(2, retryCount));
+      } else {
+        toast({
+          title: "Error fetching children",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [householdId, user?.id, retryCount, toast, allowUnauthenticated]);
 
   const addOptimisticChild = useCallback((newChild: Omit<Child, 'id'>) => {
     const optimisticChild: Child = {
@@ -126,7 +123,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
     };
 
     console.log('➕ useChildren: Adding optimistic child:', optimisticChild);
-    setChildren((prev) => {
+    setChildren(prev => {
       const updated = [...prev, optimisticChild];
       console.log('📝 useChildren: Updated children list:', updated);
       return updated;
@@ -159,7 +156,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
             event: '*',
             schema: 'public',
             table: 'household_members',
-            filter: `household_id=eq.${householdId}`,
+            filter: `household_id=eq.${householdId}`
           },
           (payload) => {
             console.log('📡 useChildren: Realtime update received (household_members):', payload);
@@ -171,7 +168,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
           {
             event: '*',
             schema: 'public',
-            table: 'profiles',
+            table: 'profiles'
           },
           (payload) => {
             const newRecord = payload.new as any;
@@ -196,6 +193,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
         console.log('🔌 useChildren: Cleaning up subscription');
         supabase.removeChannel(channel);
       };
+
     } catch (error) {
       console.error('❌ useChildren: Error setting up subscription:', error);
       setSubscriptionStatus('SUBSCRIPTION_ERROR');
@@ -221,6 +219,6 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
     isRefreshing,
     subscriptionStatus,
     lastFetchTime,
-    retryCount,
+    retryCount
   };
 };
