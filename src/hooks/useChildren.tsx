@@ -37,11 +37,13 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
 
     try {
       console.log('🔄 useChildren: Fetching children for household:', householdId);
-      
+
       const { data, error } = await supabase
         .from('household_members')
         .select(`
-          profiles:user_id (
+          user_id,
+          role,
+          profiles (
             id,
             first_name,
             last_name,
@@ -52,7 +54,8 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
             created_at
           )
         `)
-        .eq('household_id', householdId);
+        .eq('household_id', householdId)
+        .eq('profiles.is_child_account', true);
 
       if (error) {
         console.error('❌ useChildren: Error fetching children:', error);
@@ -61,19 +64,17 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
 
       console.log('📊 useChildren: Raw data from query:', data);
 
-      // Filter and map to Child objects without type predicate
       const childrenData = data
-        ?.map(member => member.profiles)
-        .filter(profile => profile !== null && profile.is_child_account)
-        .map(profile => ({
-          id: profile.id,
-          first_name: profile.first_name,
-          last_name: profile.last_name ?? null,
-          avatar_selection: profile.avatar_selection,
-          is_child_account: profile.is_child_account,
-          parent_id: profile.parent_id || undefined,
-          device_id: profile.device_id || undefined,
-          created_at: profile.created_at || undefined
+        ?.filter(member => member.profiles !== null)
+        .map(member => ({
+          id: member.profiles.id,
+          first_name: member.profiles.first_name,
+          last_name: member.profiles.last_name ?? null,
+          avatar_selection: member.profiles.avatar_selection,
+          is_child_account: member.profiles.is_child_account,
+          parent_id: member.profiles.parent_id || undefined,
+          device_id: member.profiles.device_id || undefined,
+          created_at: member.profiles.created_at || undefined
         } as Child)) || [];
 
       console.log('👶 useChildren: Filtered children:', childrenData);
@@ -90,7 +91,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
 
     } catch (error: any) {
       console.error('❌ useChildren: Fetch error:', error);
-      
+
       if (retryCount < MAX_RETRIES) {
         console.log(`🔄 useChildren: Retrying fetch (${retryCount + 1}/${MAX_RETRIES})`);
         setRetryCount(prev => prev + 1);
@@ -151,7 +152,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
             filter: `household_id=eq.${householdId}`
           },
           (payload) => {
-            console.log('📡 useChildren: Realtime update received:', payload);
+            console.log('📡 useChildren: Realtime update received (household_members):', payload);
             fetchChildren();
           }
         )
@@ -163,23 +164,21 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
             table: 'profiles'
           },
           (payload) => {
-            console.log('📡 useChildren: Profile update received:', payload);
             const newRecord = payload.new as any;
             const oldRecord = payload.old as any;
             if (newRecord?.is_child_account || oldRecord?.is_child_account) {
+              console.log('📡 useChildren: Realtime update received (profiles):', payload);
               fetchChildren();
             }
           }
         )
         .subscribe((status) => {
           console.log('📡 useChildren: Subscription status:', status);
-          
+
           if (status === 'SUBSCRIBED') {
             setSubscriptionStatus('SUBSCRIBED');
-            console.log('✅ useChildren: Successfully subscribed to realtime updates');
-          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          } else if (['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)) {
             setSubscriptionStatus('SUBSCRIPTION_ERROR');
-            console.error('❌ useChildren: Subscription error');
           }
         });
 
@@ -208,7 +207,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
     loading,
     creating: false,
     refreshChildren,
-    addOptimisticChild: () => {},
+    addOptimisticChild,
     createChild: undefined,
     isRefreshing,
     subscriptionStatus,
