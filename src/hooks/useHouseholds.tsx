@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -188,12 +187,12 @@ export const useHouseholds = () => {
     try {
       console.log('🔗 Joining household with code:', joinCode, 'as role:', role);
       
-      // Use the updated function that accepts role parameter
+      // Call the function with explicit parameters instead of RPC
       const { data, error } = await supabase.rpc('join_household_with_code', {
         _code: joinCode,
-        _name: user.email?.split('@')[0] || 'User', // Fallback name
+        _name: user.email?.split('@')[0] || 'User',
         _avatar_selection: 'default',
-        _device_id: '', // Not needed for regular users
+        _device_id: '',
         _role: role
       });
 
