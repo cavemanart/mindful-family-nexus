@@ -14,11 +14,33 @@ export interface Household {
   user_id?: string;
 }
 
+// New interface for members including profiles with is_child_account flag
+export interface HouseholdMember {
+  role: string;
+  user_id: string;
+  users: {
+    id: string;
+    email: string;
+  };
+  profiles: {
+    first_name?: string;
+    last_name?: string;
+    is_child_account?: boolean;
+    parent_id?: string;
+    avatar_url?: string;
+  };
+}
+
 export const useHouseholds = () => {
   const [households, setHouseholds] = useState<Household[]>([]);
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // --- New states ---
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
+  const [kids, setKids] = useState<HouseholdMember[]>([]);
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -98,6 +120,72 @@ export const useHouseholds = () => {
     console.log('🏠 Selecting household:', household.name);
     setSelectedHousehold(household);
   };
+
+  // --- NEW FUNCTION: fetch household members with profile info including is_child_account ---
+  const fetchHouseholdMembersWithChildFlag = async (householdId: string) => {
+    if (!user) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase
+        .from('household_members')
+        .select(`
+          role,
+          user_id,
+          users (
+            id,
+            email
+          ),
+          profiles (
+            first_name,
+            last_name,
+            is_child_account,
+            parent_id,
+            avatar_url
+          )
+        `)
+        .eq('household_id', householdId);
+
+      if (error) {
+        setError('Failed to load household members');
+        toast({
+          title: "Failed to fetch household members",
+          description: error.message,
+          variant: "destructive"
+        });
+        setMembers([]);
+        setKids([]);
+        return;
+      }
+
+      setMembers(data ?? []);
+      setKids((data ?? []).filter((hm) => hm.profiles?.is_child_account === true));
+      setError(null);
+    } catch (err: any) {
+      setError('Failed to load household members');
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive"
+      });
+      setMembers([]);
+      setKids([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Watch for selectedHousehold changes and fetch members ---
+  useEffect(() => {
+    if (selectedHousehold?.id) {
+      fetchHouseholdMembersWithChildFlag(selectedHousehold.id);
+    } else {
+      setMembers([]);
+      setKids([]);
+    }
+  }, [selectedHousehold?.id]);
 
   const createHousehold = async (name: string, description: string) => {
     if (!user) {
@@ -317,6 +405,8 @@ export const useHouseholds = () => {
     } else {
       setHouseholds([]);
       setSelectedHousehold(null);
+      setMembers([]);
+      setKids([]);
       setLoading(false);
       setError(null);
     }
@@ -332,6 +422,9 @@ export const useHouseholds = () => {
     fetchHouseholds,
     createHousehold,
     joinHousehold,
-    leaveHousehold
+    leaveHousehold,
+    // new exports
+    members,
+    kids,
   };
 };
