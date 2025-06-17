@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -174,7 +175,7 @@ export const useHouseholds = () => {
     }
   };
 
-  const joinHousehold = async (inviteCode: string) => {
+  const joinHousehold = async (joinCode: string, role: string = 'member') => {
     if (!user) {
       toast({
         title: "Not authenticated",
@@ -185,59 +186,29 @@ export const useHouseholds = () => {
     }
 
     try {
-      // First, find the household with this invite code
-      const { data: household, error: findError } = await supabase
-        .from('households')
-        .select('id')
-        .eq('invite_code', inviteCode)
-        .single();
+      console.log('🔗 Joining household with code:', joinCode, 'as role:', role);
+      
+      // Use the updated function that accepts role parameter
+      const { data, error } = await supabase.rpc('join_household_with_code', {
+        _code: joinCode,
+        _name: user.email?.split('@')[0] || 'User', // Fallback name
+        _avatar_selection: 'default',
+        _device_id: '', // Not needed for regular users
+        _role: role
+      });
 
-      if (findError || !household) {
-        toast({
-          title: "Invalid invite code",
-          description: "No household found with this invite code.",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // Check if user is already a member
-      const { data: existingMembership, error: membershipError } = await supabase
-        .from('household_members')
-        .select('id')
-        .eq('household_id', household.id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (existingMembership) {
-        toast({
-          title: "Already a member",
-          description: "You are already a member of this household.",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // Add user to household_members
-      const { error: joinError } = await supabase
-        .from('household_members')
-        .insert([
-          {
-            household_id: household.id,
-            user_id: user.id,
-            role: 'member'
-          }
-        ]);
-
-      if (joinError) {
+      if (error) {
+        console.error('❌ Join household error:', error);
         toast({
           title: "Failed to join household",
-          description: joinError.message,
+          description: error.message,
           variant: "destructive"
         });
         return false;
       }
 
+      console.log('✅ Successfully joined household');
+      
       // Refresh households
       fetchHouseholds();
 
@@ -248,6 +219,7 @@ export const useHouseholds = () => {
 
       return true;
     } catch (err: any) {
+      console.error('🚨 Join household error:', err);
       toast({
         title: "Error",
         description: err.message,

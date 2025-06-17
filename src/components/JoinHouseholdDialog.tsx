@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useHouseholds } from '@/hooks/useHouseholds';
@@ -9,6 +10,7 @@ import { UserPlus, Loader2 } from 'lucide-react';
 
 const JoinHouseholdDialog = () => {
   const [joinCode, setJoinCode] = useState('');
+  const [selectedRole, setSelectedRole] = useState('member');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
@@ -21,13 +23,20 @@ const JoinHouseholdDialog = () => {
       return;
     }
 
+    if (!selectedRole) {
+      toast({ title: "Error", description: "Please select your role", variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      const success = await joinHousehold(joinCode.trim());
+      console.log('🔗 Attempting to join household with role:', selectedRole);
+      const success = await joinHousehold(joinCode.trim(), selectedRole);
       if (success) {
-        toast({ title: "Success!", description: "You have joined the household!" });
+        toast({ title: "Success!", description: `You have joined the household as ${selectedRole}!` });
         setJoinCode('');
+        setSelectedRole('member');
         setIsOpen(false);
       }
     } catch (error) {
@@ -60,9 +69,30 @@ const JoinHouseholdDialog = () => {
               spellCheck={false}
             />
           </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="role-select" className="text-sm font-medium">
+              Select your role in this household:
+            </label>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose your role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="owner">Owner</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Note: Higher roles may require approval from existing household admins.
+            </p>
+          </div>
+
           <div className="text-xs text-muted-foreground">
             Ask a household member for a join code to join their household.
           </div>
+          
           <div className="flex gap-2">
             <Button 
               type="button" 
