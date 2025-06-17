@@ -65,17 +65,17 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
       console.log('📊 useChildren: Raw data from query:', data);
 
       const childrenData = data
-        ?.filter(member => member.profiles !== null)
-        .map(member => ({
-          id: member.profiles.id,
-          first_name: member.profiles.first_name,
-          last_name: member.profiles.last_name ?? null,
-          avatar_selection: member.profiles.avatar_selection,
-          is_child_account: member.profiles.is_child_account,
-          parent_id: member.profiles.parent_id || undefined,
-          device_id: member.profiles.device_id || undefined,
-          created_at: member.profiles.created_at || undefined
-        } as Child)) || [];
+    ?.map((child: any) => ({
+    id: child.id,
+    first_name: child.first_name,
+    last_name: child.last_name ?? null,
+    avatar_selection: child.avatar_selection ?? 'default',
+    is_child_account: child.is_child_account,
+    parent_id: child.parent_id || undefined,
+    device_id: child.device_id || undefined,
+    created_at: child.created_at || undefined
+  } as Child)) || [];
+
 
       console.log('👶 useChildren: Filtered children:', childrenData);
       setChildren(childrenData);
