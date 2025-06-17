@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -187,14 +188,14 @@ export const useHouseholds = () => {
     try {
       console.log('🔗 Joining household with code:', joinCode, 'as role:', role);
       
-      // Call the function with explicit parameters instead of RPC
+      // Call the function with explicit parameters and type assertion to include _role
       const { data, error } = await supabase.rpc('join_household_with_code', {
         _code: joinCode,
         _name: user.email?.split('@')[0] || 'User',
         _avatar_selection: 'default',
         _device_id: '',
         _role: role
-      });
+      } as any); // Type assertion to bypass TypeScript error for the _role parameter
 
       if (error) {
         console.error('❌ Join household error:', error);
