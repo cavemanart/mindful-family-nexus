@@ -4,23 +4,15 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
+console.log('🏁 Starting React application');
+
+// Find root element
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-console.log('🏁 Starting React application');
-
-// Simple global error handler
-window.addEventListener('error', (event) => {
-  console.error('🔥 Global error:', event.error);
-});
-
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('🔥 Unhandled promise rejection:', event.reason);
-});
-
-// Simple initialization
+// Simple initialization without complex error handling that might interfere
 try {
   console.log('✅ Initializing React application');
   
@@ -32,6 +24,16 @@ try {
   );
   
   console.log('✅ React application initialized successfully');
+  
+  // Add global error handlers AFTER React is initialized
+  window.addEventListener('error', (event) => {
+    console.error('🔥 Global error:', event.error);
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('🔥 Unhandled promise rejection:', event.reason);
+  });
+  
 } catch (error) {
   console.error('💥 Failed to initialize React application:', error);
   
