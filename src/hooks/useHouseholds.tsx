@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -28,19 +27,18 @@ export const useHouseholds = () => {
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log('🏠 Fetching households for user:', user.id);
-      
-      // Set timeout for household fetch
+
       const fetchTimeout = setTimeout(() => {
         console.error('⏰ Household fetch timeout');
         setError('Loading households took too long');
         setLoading(false);
-      }, 10000); // 10 second timeout
+      }, 10000);
 
       const { data, error: fetchError } = await supabase
         .from('household_members')
@@ -75,12 +73,11 @@ export const useHouseholds = () => {
         }));
         console.log('✅ Households loaded:', formatted.length);
         setHouseholds(formatted);
-        
-        // Auto-select first household if none selected
+
         if (formatted.length > 0 && !selectedHousehold) {
           setSelectedHousehold(formatted[0]);
         }
-        
+
         setError(null);
       }
     } catch (err: any) {
@@ -135,7 +132,6 @@ export const useHouseholds = () => {
         return null;
       }
 
-      // Add the creator as the owner of the household
       const { error: memberError } = await supabase
         .from('household_members')
         .insert([
@@ -155,7 +151,6 @@ export const useHouseholds = () => {
         return null;
       }
 
-      // Refresh the list
       fetchHouseholds();
 
       toast({
@@ -163,7 +158,6 @@ export const useHouseholds = () => {
         description: "Household created successfully!",
       });
 
-      // Return the household data with the role
       return { ...householdData, role: 'owner' };
     } catch (err: any) {
       toast({
@@ -187,15 +181,17 @@ export const useHouseholds = () => {
 
     try {
       console.log('🔗 Joining household with code:', joinCode, 'as role:', role);
-      
-      // Call the function with explicit parameters and type assertion to include _role
+
+      // Normalize casing to match DB format: Title-Case format (Red-Cloud-42)
+      const cleanedCode = joinCode.trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
       const { data, error } = await supabase.rpc('join_household_with_code', {
-        _code: joinCode,
+        _code: cleanedCode,
         _name: user.email?.split('@')[0] || 'User',
         _avatar_selection: 'default',
         _device_id: '',
         _role: role
-      } as any); // Type assertion to bypass TypeScript error for the _role parameter
+      } as any);
 
       if (error) {
         console.error('❌ Join household error:', error);
@@ -208,8 +204,7 @@ export const useHouseholds = () => {
       }
 
       console.log('✅ Successfully joined household');
-      
-      // Refresh households
+
       fetchHouseholds();
 
       toast({
@@ -240,7 +235,6 @@ export const useHouseholds = () => {
     }
 
     try {
-      // First, check if user is an admin/owner
       const { data: userMembership, error: membershipError } = await supabase
         .from('household_members')
         .select('role')
@@ -257,7 +251,6 @@ export const useHouseholds = () => {
         return false;
       }
 
-      // If user is admin/owner, check if there are other admins/owners
       if (userMembership.role === 'admin' || userMembership.role === 'owner') {
         const { data: adminMembers, error: adminError } = await supabase
           .from('household_members')
@@ -285,7 +278,6 @@ export const useHouseholds = () => {
         }
       }
 
-      // Remove user from household
       const { error: leaveError } = await supabase
         .from('household_members')
         .delete()
@@ -301,7 +293,6 @@ export const useHouseholds = () => {
         return false;
       }
 
-      // Refresh households
       fetchHouseholds();
 
       toast({
@@ -329,7 +320,6 @@ export const useHouseholds = () => {
       setLoading(false);
       setError(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   return {
