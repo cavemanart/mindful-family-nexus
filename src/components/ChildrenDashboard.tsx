@@ -1,16 +1,13 @@
-
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Star, CheckCircle, Clock, Heart, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useChores } from '@/hooks/useChores';
 import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useChildren } from '@/hooks/useChildren';
+import { useWeeklyData } from '@/hooks/useWeeklyData';
 import ChildSelector from './ChildSelector';
-import RewardsCard from './RewardsCard';
-import ChoresSection from './ChoresSection';
-import MessagesSection from './MessagesSection';
 import HouseholdJoinCodeCard from "./HouseholdJoinCodeCard";
 
 interface ChildrenDashboardProps {
@@ -18,16 +15,14 @@ interface ChildrenDashboardProps {
 }
 
 const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
-  // Use allowUnauthenticated for device-child accounts
   const { 
     children, 
     loading: childrenLoading, 
     refreshChildren, 
     isRefreshing,
     subscriptionStatus 
-  } = useChildren(selectedHousehold?.id, true /* allow even without parent login */);
+  } = useChildren(selectedHousehold?.id, true);
 
-  // ADDED HOOKS TO FIX BUILD ERRORS:
   const {
     chores,
     loading: choresLoading,
@@ -39,11 +34,16 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     loading: messagesLoading,
   } = useFamilyMessages(selectedHousehold?.id || null);
 
+  const {
+    goals,
+    wins,
+    loading: weeklyLoading,
+  } = useWeeklyData(selectedHousehold?.id || null);
+
   const [selectedChild, setSelectedChild] = useState('');
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
   console.log(`🔍 ChildrenDashboard: Rendering with ${children.length} children for household:`, selectedHousehold?.id);
-  console.log('🔍 ChildrenDashboard: Children data:', children.map(c => ({ id: c.id, name: c.first_name })));
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -81,39 +81,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const connectionStatus = getConnectionStatus();
 
-  // Get the selected child's full name for matching
-  const selectedChildData = children.find(child => child.first_name === selectedChild);
-  const childFullName = selectedChildData ? `${selectedChildData.first_name} ${selectedChildData.last_name}` : selectedChild;
-
-  const childChores = chores.filter(chore => 
-    chore.assigned_to === selectedChild || 
-    chore.assigned_to === childFullName ||
-    chore.assigned_to.toLowerCase() === selectedChild.toLowerCase()
-  );
-
-  const childMessages = messages.filter(message => 
-    message.to_member === selectedChild || 
-    message.to_member === childFullName ||
-    message.to_member === null
-  );
-
-  const completedChores = childChores.filter(chore => chore.completed);
-  const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
-
-  const handleCompleteChore = async (choreId: string) => {
-    await toggleChore(choreId);
-  };
-
-  const getRewardLevel = (points: number) => {
-    if (points >= 50) return { level: 'Super Star', color: 'text-purple-600 dark:text-purple-400', icon: '🌟' };
-    if (points >= 30) return { level: 'Champion', color: 'text-blue-600 dark:text-blue-400', icon: '🏆' };
-    if (points >= 15) return { level: 'Helper', color: 'text-green-600 dark:text-green-400', icon: '⭐' };
-    return { level: 'Getting Started', color: 'text-gray-600 dark:text-gray-400', icon: '👍' };
-  };
-
-  const reward = getRewardLevel(totalPoints);
-
-  if (choresLoading || messagesLoading || childrenLoading) {
+  if (choresLoading || messagesLoading || childrenLoading || weeklyLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="animate-spin" size={24} />
@@ -123,15 +91,13 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   }
 
   if (children.length === 0) {
-    console.log('🔍 ChildrenDashboard: No children found, showing empty state');
     return (
       <div className="space-y-6">
         <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            Kid's Dashboard 🎈
+            Kids Dashboard 👨‍👩‍👧‍👦
           </h2>
           <p className="text-muted-foreground mb-4">No children in this household yet!</p>
-          <p className="text-muted-foreground text-sm mb-6">Children need to create accounts first, then join your household with invite codes.</p>
           
           <div className="flex gap-2 justify-center mb-4">
             <Button 
@@ -184,62 +150,290 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     );
   }
 
-  // main dashboard case with children
+  // Get the selected child's data for detailed view
+  const selectedChildData = children.find(child => child.first_name === selectedChild);
+  const childFullName = selectedChildData ? `${selectedChildData.first_name} ${selectedChildData.last_name || ''}`.trim() : selectedChild;
+
+  // Filter data for the selected child - include all possible name variations
+  const childChores = chores.filter(chore => 
+    chore.assigned_to === selectedChild || 
+    chore.assigned_to === childFullName ||
+    chore.assigned_to.toLowerCase() === selectedChild.toLowerCase() ||
+    chore.assigned_to.toLowerCase() === childFullName.toLowerCase()
+  );
+
+  const childMessages = messages.filter(message => 
+    message.to_member === selectedChild || 
+    message.to_member === childFullName ||
+    message.to_member === null ||
+    message.to_member.toLowerCase() === selectedChild.toLowerCase() ||
+    message.to_member.toLowerCase() === childFullName.toLowerCase()
+  );
+
+  const childGoals = goals.filter(goal =>
+    goal.assigned_to === selectedChild ||
+    goal.assigned_to === childFullName ||
+    goal.assigned_to.toLowerCase() === selectedChild.toLowerCase() ||
+    goal.assigned_to.toLowerCase() === childFullName.toLowerCase()
+  );
+
+  // Calculate child's progress
+  const completedChores = childChores.filter(chore => chore.completed);
+  const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
+  const completedGoals = childGoals.filter(goal => goal.completed);
+
   return (
     <div className="space-y-6">
-      {/* Child Selector and top actions */}
-      <ChildSelector
-        childrenList={children}
-        selectedChild={selectedChild}
-        setSelectedChild={setSelectedChild}
-        selectedHousehold={selectedHousehold}
-        handleManualRefresh={handleManualRefresh}
-        isRefreshing={isRefreshing}
-        connectionStatus={connectionStatus}
-        subscriptionStatus={subscriptionStatus}
-        lastRefreshTime={lastRefreshTime}
-        householdId={selectedHousehold?.id}
-      />
-
-      {/* Debug Information - Enhanced */}
-      <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700">
-        <CardContent className="p-4">
-          <div className="text-sm space-y-1">
-            <p><strong>Household ID:</strong> {selectedHousehold?.id}</p>
-            <p><strong>Children Count:</strong> {children.length}</p>
-            <p><strong>Children:</strong> {children.map(c => `${c.first_name} (${c.id.startsWith('temp-') ? 'syncing' : 'saved'})`).join(', ') || 'None'}</p>
-            <p><strong>Selected Child:</strong> {selectedChild || 'None'}</p>
-            <p><strong>Real-time Status:</strong> 
-              <span className={connectionStatus.color.replace('text-', 'text-')}>
-                {connectionStatus.text}
-              </span>
-            </p>
-            {lastRefreshTime && (
-              <p><strong>Last Refresh:</strong> {lastRefreshTime.toLocaleString()}</p>
+      {/* Header with Child Selector */}
+      <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-xl">
+        <h2 className="text-3xl font-bold text-foreground mb-4">
+          Kids Dashboard 👨‍👩‍👧‍👦
+        </h2>
+        <div className="flex justify-center gap-2 flex-wrap mb-4">
+          {children.map((child) => (
+            <Button
+              key={child.id}
+              variant={selectedChild === child.first_name ? "default" : "outline"}
+              onClick={() => setSelectedChild(child.first_name)}
+              className={selectedChild === child.first_name ? "bg-purple-600 hover:bg-purple-700" : ""}
+            >
+              {child.first_name}
+              {child.id.startsWith('temp-') && (
+                <AlertCircle className="ml-1 h-3 w-3 text-amber-500" />
+              )}
+            </Button>
+          ))}
+        </div>
+        
+        <div className="flex gap-2 justify-center mb-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-3 w-3" />
             )}
+            Refresh
+          </Button>
+        </div>
+
+        {selectedHousehold && (
+          <div className="mt-6 max-w-md mx-auto">
+            <HouseholdJoinCodeCard householdId={selectedHousehold.id} />
           </div>
+        )}
+      </div>
+
+      {/* Child Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <span className="font-semibold text-blue-800">Tasks</span>
+            </div>
+            <p className="text-2xl font-bold text-blue-900">{completedChores.length}/{childChores.length}</p>
+            <p className="text-sm text-blue-600">Completed</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Star className="h-5 w-5 text-yellow-600" />
+              <span className="font-semibold text-yellow-800">Points</span>
+            </div>
+            <p className="text-2xl font-bold text-yellow-900">{totalPoints}</p>
+            <p className="text-sm text-yellow-600">Total Earned</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Target className="h-5 w-5 text-green-600" />
+              <span className="font-semibold text-green-800">Goals</span>
+            </div>
+            <p className="text-2xl font-bold text-green-900">{completedGoals.length}/{childGoals.length}</p>
+            <p className="text-sm text-green-600">Achieved</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Child's Tasks */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="text-blue-500" size={20} />
+            {selectedChild}'s Tasks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {childChores.length === 0 ? (
+            <div className="text-center py-6">
+              <CheckCircle className="text-gray-300 mx-auto mb-2" size={32} />
+              <p className="text-muted-foreground">No tasks assigned to {selectedChild}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {childChores.map((chore) => (
+                <div key={chore.id} className={`p-3 rounded-lg border ${
+                  chore.completed 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${
+                        chore.completed ? 'text-green-800 line-through' : 'text-gray-900'
+                      }`}>
+                        {chore.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-2">{chore.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} />
+                          Due: {new Date(chore.due_date).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Star size={12} className="text-yellow-500" />
+                          {chore.points} points
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant={chore.completed ? "default" : "secondary"}>
+                      {chore.completed ? 'Done!' : 'To Do'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Points and Rewards */}
-      <RewardsCard
-        selectedChild={selectedChild}
-        totalPoints={totalPoints}
-        reward={reward}
-      />
+      {/* Child's Goals */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="text-green-500" size={20} />
+            {selectedChild}'s Goals
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {childGoals.length === 0 ? (
+            <div className="text-center py-6">
+              <Target className="text-gray-300 mx-auto mb-2" size={32} />
+              <p className="text-muted-foreground">No goals assigned to {selectedChild}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {childGoals.map((goal) => (
+                <div key={goal.id} className={`p-3 rounded-lg border ${
+                  goal.completed 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className={`font-medium ${
+                        goal.completed ? 'text-green-800 line-through' : 'text-gray-900'
+                      }`}>
+                        {goal.title}
+                      </h4>
+                      <p className="text-sm text-gray-600">{goal.description}</p>
+                    </div>
+                    <Badge variant={goal.completed ? "default" : "secondary"}>
+                      {goal.completed ? 'Achieved!' : 'In Progress'}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Chores Section */}
-      <ChoresSection
-        selectedChild={selectedChild}
-        childChores={childChores}
-        handleCompleteChore={handleCompleteChore}
-      />
+      {/* Child's Messages */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="text-pink-500" size={20} />
+            Messages for {selectedChild}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {childMessages.length === 0 ? (
+            <div className="text-center py-6">
+              <Heart className="text-gray-300 mx-auto mb-2" size={32} />
+              <p className="text-muted-foreground">No messages for {selectedChild}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {childMessages.slice(0, 5).map((message) => (
+                <div key={message.id} className={`p-3 rounded-lg border ${
+                  message.is_special 
+                    ? 'bg-pink-50 border-pink-200' 
+                    : 'bg-white border-gray-200'
+                }`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">From {message.from_member}</span>
+                      {message.is_special && (
+                        <Badge className="bg-pink-100 text-pink-600">Special</Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(message.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700">{message.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Messages Section */}
-      <MessagesSection
-        selectedChild={selectedChild}
-        childMessages={childMessages}
-      />
+      {/* Family Activity Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="text-purple-500" size={20} />
+            Family Activity This Week
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-yellow-500" />
+                Recent Wins ({wins.length})
+              </h4>
+              {wins.slice(0, 3).map((win) => (
+                <div key={win.id} className="text-sm text-gray-600 mb-1">
+                  • {win.title} (by {win.added_by})
+                </div>
+              ))}
+            </div>
+            <div>
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                <Target className="h-4 w-4 text-blue-500" />
+                Active Goals ({goals.filter(g => !g.completed).length})
+              </h4>
+              {goals.filter(g => !g.completed).slice(0, 3).map((goal) => (
+                <div key={goal.id} className="text-sm text-gray-600 mb-1">
+                  • {goal.title} (for {goal.assigned_to})
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

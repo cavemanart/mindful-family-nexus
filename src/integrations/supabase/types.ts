@@ -1112,12 +1112,20 @@ export type Database = {
         Returns: boolean
       }
       join_household_with_code: {
-        Args: {
-          _code: string
-          _name: string
-          _avatar_selection: string
-          _device_id: string
-        }
+        Args:
+          | {
+              _code: string
+              _name: string
+              _avatar_selection: string
+              _device_id: string
+            }
+          | {
+              _code: string
+              _name: string
+              _avatar_selection: string
+              _device_id: string
+              _role?: string
+            }
         Returns: string
       }
       join_household_with_pin: {
