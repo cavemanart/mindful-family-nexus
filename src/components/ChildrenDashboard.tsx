@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Heart, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
   console.log(`🔍 ChildrenDashboard: Rendering with ${children.length} children for household:`, selectedHousehold?.id);
+  console.log(`🔍 ChildrenDashboard: Children data:`, children);
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -189,6 +191,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
         <h2 className="text-3xl font-bold text-foreground mb-4">
           Kids Dashboard 👨‍👩‍👧‍👦
         </h2>
+        <p className="text-muted-foreground mb-4">Found {children.length} children in this household</p>
         <div className="flex justify-center gap-2 flex-wrap mb-4">
           {children.map((child) => (
             <Button

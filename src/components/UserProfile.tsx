@@ -86,6 +86,9 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const isAdminOrOwner = selectedHousehold?.role === 'admin' || selectedHousehold?.role === 'owner';
   const canManageChildren = canManageHousehold && (userProfile?.role === 'parent' || userProfile?.role === 'grandparent' || isAdminOrOwner);
 
+  // Don't show invite code options for child accounts
+  const isChildAccount = userProfile?.is_child_account || userProfile?.role === 'child' || isChildMode;
+
   return (
     <UserProfileErrorBoundary>
       <Sheet>
@@ -139,8 +142,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Household Management - Always show for authenticated users */}
-            {!isChildMode && user && (
+            {/* Household Management - Only show for non-child accounts */}
+            {!isChildAccount && user && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Household Actions</h3>
                 <div className="space-y-2">
@@ -149,8 +152,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {/* Children section for parents/grandparents */}
-            {canManageChildren && selectedHousehold && (
+            {/* Children section for parents/grandparents - Only show for non-child accounts */}
+            {!isChildAccount && canManageChildren && selectedHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Children ({children.length})</h3>
                 <div className="space-y-2">
@@ -170,7 +173,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
               </div>
             )}
 
-            {isAdminOrOwner && selectedHousehold && canManageHousehold && (
+            {/* Admin Actions - Only show for non-child accounts */}
+            {!isChildAccount && isAdminOrOwner && selectedHousehold && canManageHousehold && (
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-muted-foreground">Admin Actions</h3>
                 <div className="space-y-2">

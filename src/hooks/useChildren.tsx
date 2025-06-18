@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +39,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
     try {
       console.log('🔄 useChildren: Fetching children for household:', householdId);
 
-      // Removed .eq('profiles.is_child_account', true) filter here:
+      // First get all household members with their profiles
       const { data, error } = await supabase
         .from('household_members')
         .select(`
@@ -52,23 +53,43 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
             is_child_account,
             parent_id,
             device_id,
-            created_at
+            created_at,
+            role
           )
         `)
         .eq('household_id', householdId);
 
       if (error) {
-        console.error('❌ useChildren: Error fetching children:', error);
+        console.error('❌ useChildren: Error fetching household members:', error);
         throw error;
       }
 
-      console.log('📊 useChildren: Raw data from query:', data);
+      console.log('📊 useChildren: Raw household members data:', data);
 
+      // Filter for child accounts
       const childrenData = data
         ?.map((member: any) => {
-          const profile = member.profiles ?? member; // fallback if Supabase flattens join
+          const profile = member.profiles;
+          
+          if (!profile) {
+            console.log('⚠️ useChildren: Member without profile:', member);
+            return null;
+          }
 
-          if (!profile || !profile.is_child_account) return null;
+          // Check if this is a child account based on multiple criteria
+          const isChild = profile.is_child_account === true || 
+                          profile.role === 'child' || 
+                          member.role === 'member'; // household members with 'member' role are typically children
+
+          console.log('🔍 useChildren: Profile check:', {
+            name: profile.first_name,
+            is_child_account: profile.is_child_account,
+            profile_role: profile.role,
+            member_role: member.role,
+            isChild
+          });
+
+          if (!isChild) return null;
 
           return {
             id: profile.id,
@@ -173,7 +194,7 @@ export const useChildren = (householdId: string | undefined, allowUnauthenticate
           (payload) => {
             const newRecord = payload.new as any;
             const oldRecord = payload.old as any;
-            if (newRecord?.is_child_account || oldRecord?.is_child_account) {
+            if (newRecord?.is_child_account || oldRecord?.is_child_account || newRecord?.role === 'child' || oldRecord?.role === 'child') {
               console.log('📡 useChildren: Realtime update received (profiles):', payload);
               fetchChildren();
             }
