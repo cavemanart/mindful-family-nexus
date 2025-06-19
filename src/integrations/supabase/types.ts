@@ -1048,6 +1048,14 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
+      can_user_admin_profile: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
+      can_user_view_profile: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       can_view_calendar_event: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
@@ -1105,6 +1113,14 @@ export type Database = {
       }
       is_household_owner_or_admin: {
         Args: { household_id: string }
+        Returns: boolean
+      }
+      is_user_household_admin: {
+        Args: { target_household_id: string }
+        Returns: boolean
+      }
+      is_user_household_member: {
+        Args: { target_household_id: string }
         Returns: boolean
       }
       is_user_member_of_household: {
