@@ -41,7 +41,19 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Always call hooks - never conditionally
+  // Check if React hooks are available BEFORE calling them
+  const hooksAvailable =
+    typeof React === "object" &&
+    React !== null &&
+    typeof React.useState === "function" &&
+    typeof React.useEffect === "function";
+
+  if (!hooksAvailable) {
+    console.warn("[theme-provider] Hooks or React not available during initialization");
+    return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
+  }
+
+  // Now it's safe to call hooks
   const [theme, setTheme] = React.useState<Theme>(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
@@ -90,18 +102,6 @@ export function ThemeProvider({
     theme,
     setTheme,
   }), [theme]);
-
-  // Check if React hooks are available AFTER calling them
-  const hooksAvailable =
-    typeof React === "object" &&
-    React !== null &&
-    typeof React.useState === "function" &&
-    typeof React.useEffect === "function";
-
-  if (!hooksAvailable) {
-    console.warn("[theme-provider] Hooks or React not available after initialization");
-    return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
-  }
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
