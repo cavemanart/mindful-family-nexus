@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -28,10 +29,10 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const secondaryItems = [
     { key: 'calendar', label: 'Calendar', icon: Calendar },
     { key: 'mental-load', label: 'Tasks', icon: Brain },
-    { key: 'nanny', label: 'Nanny', icon: Baby }, // Changed from 'nanny-mode' to 'nanny'
+    { key: 'nanny-mode', label: 'Nanny', icon: Baby }, // Fixed key to match AVAILABLE_PAGES
     { key: 'children', label: 'Kids', icon: Users },
     { key: 'weekly-sync', label: 'Goals', icon: Calendar },
-    { key: 'subscription', label: 'Subscription', icon: CreditCard }, // <-- Subscription added here
+    { key: 'subscription', label: 'Subscription', icon: CreditCard },
   ];
 
   // Filter items based on user preferences

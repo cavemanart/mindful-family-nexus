@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,6 +32,7 @@ export const AVAILABLE_PAGES: AvailablePage[] = [
   { key: 'nanny-mode', label: 'Nanny Mode', description: 'Caregiver dashboard', category: 'management', parentOnly: true },
   { key: 'children', label: 'Children Dashboard', description: 'Manage children profiles', category: 'family' },
   { key: 'weekly-sync', label: 'Weekly Goals', description: 'Set and track weekly goals', category: 'management' },
+  { key: 'subscription', label: 'Subscription', description: 'Manage subscription and billing', category: 'management', parentOnly: true },
 ];
 
 export const usePagePreferences = () => {
