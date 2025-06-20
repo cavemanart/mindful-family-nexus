@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X, User, CreditCard } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
 
   // Primary navigation items (shown in bottom bar) - profile removed from primary items
   const primaryItems = [
-    { key: 'dashboard', label: 'Home', icon: Home },
+    { key: 'overview', label: 'Home', icon: Home }, // Changed from 'dashboard' to 'overview'
     { key: 'mvp', label: 'MVP', icon: Trophy },
     { key: 'bills', label: 'Bills', icon: DollarSign },
     { key: 'notes', label: 'Notes', icon: StickyNote },
@@ -188,4 +187,3 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
 };
 
 export default CleanMobileNavigation;
-

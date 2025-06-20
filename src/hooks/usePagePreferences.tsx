@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useChildSession } from '@/hooks/useChildSession';
 import { toast } from 'sonner';
 
 export interface PagePreference {
@@ -19,22 +20,24 @@ export interface AvailablePage {
   description: string;
   category: 'core' | 'family' | 'management';
   alwaysVisible?: boolean;
+  parentOnly?: boolean; // New field to mark parent-only pages
 }
 
 export const AVAILABLE_PAGES: AvailablePage[] = [
   { key: 'dashboard', label: 'Dashboard', description: 'Main overview page', category: 'core', alwaysVisible: true },
   { key: 'appreciations', label: 'Appreciations', description: 'Send and receive thanks', category: 'family' },
-  { key: 'bills', label: 'Bills Tracker', description: 'Manage household bills', category: 'management' },
+  { key: 'bills', label: 'Bills Tracker', description: 'Manage household bills', category: 'management', parentOnly: true },
   { key: 'notes', label: 'Family Notes', description: 'Shared family notes', category: 'family' },
   { key: 'calendar', label: 'Family Calendar', description: 'Household calendar and events', category: 'family' },
   { key: 'mental-load', label: 'Mental Load', description: 'Task management and planning', category: 'management' },
-  { key: 'nanny-mode', label: 'Nanny Mode', description: 'Caregiver dashboard', category: 'management' },
+  { key: 'nanny-mode', label: 'Nanny Mode', description: 'Caregiver dashboard', category: 'management', parentOnly: true },
   { key: 'children', label: 'Children Dashboard', description: 'Manage children profiles', category: 'family' },
   { key: 'weekly-sync', label: 'Weekly Goals', description: 'Set and track weekly goals', category: 'management' },
 ];
 
 export const usePagePreferences = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
+  const { isChildMode } = useChildSession();
   const [preferences, setPreferences] = useState<PagePreference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +93,14 @@ export const usePagePreferences = () => {
   };
 
   const isPageVisible = (pageKey: string): boolean => {
+    // Check if this is a parent-only page and user is a child
+    const page = AVAILABLE_PAGES.find(p => p.key === pageKey);
+    const isChild = isChildMode || userProfile?.role === 'child' || userProfile?.is_child_account;
+    
+    if (page?.parentOnly && isChild) {
+      return false; // Hide parent-only pages from children
+    }
+
     const preference = preferences.find(p => p.page_key === pageKey);
     return preference ? preference.is_visible : true; // Default to visible
   };
@@ -145,6 +156,17 @@ export const usePagePreferences = () => {
     return pages.filter(page => isPageVisible(page.key));
   };
 
+  // Filter available pages for child users
+  const getAvailablePagesForUser = () => {
+    const isChild = isChildMode || userProfile?.role === 'child' || userProfile?.is_child_account;
+    
+    if (isChild) {
+      return AVAILABLE_PAGES.filter(page => !page.parentOnly);
+    }
+    
+    return AVAILABLE_PAGES;
+  };
+
   return {
     preferences,
     loading,
@@ -153,6 +175,6 @@ export const usePagePreferences = () => {
     isPageVisible,
     togglePageVisibility,
     getVisiblePages,
-    availablePages: AVAILABLE_PAGES,
+    availablePages: getAvailablePagesForUser(),
   };
 };

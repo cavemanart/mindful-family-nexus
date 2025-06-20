@@ -69,17 +69,17 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       bgColor: 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/30 dark:to-cyan-950/30'
     },
     {
-      key: 'nanny', // <-- Changed from 'nanny-mode' to 'nanny'
+      key: 'nanny',
       title: 'Nanny Mode',
       description: 'Caregiver information hub',
       icon: Baby,
-      action: () => setActiveSection('nanny'), // <-- Changed as well
+      action: () => setActiveSection('nanny'),
       color: 'from-orange-500 to-red-500',
       bgColor: 'bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/30 dark:to-red-950/30'
     },
   ];
 
-  // Filter actions based on user preferences
+  // Filter actions based on user preferences (this will now exclude parent-only pages for children)
   const visibleActions = getVisiblePages(actions);
 
   if (visibleActions.length === 0) {
@@ -122,4 +122,3 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
 };
 
 export default QuickActions;
-
