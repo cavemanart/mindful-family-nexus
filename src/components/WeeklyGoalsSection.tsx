@@ -241,7 +241,7 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
                             {goal.title}
                           </h4>
                           {goal.is_assigned_by_parent && (
-                            <UserCheck className="w-4 h-4 text-blue-500" title="Assigned by parent" />
+                            <UserCheck className="w-4 h-4 text-blue-500" />
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
