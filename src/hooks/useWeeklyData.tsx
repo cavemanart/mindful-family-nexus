@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +21,10 @@ export interface WeeklyGoal {
   created_at: string;
   updated_at: string;
   household_id: string;
+  created_by?: string;
+  created_by_name?: string;
+  is_shared_with_family?: boolean;
+  is_assigned_by_parent?: boolean;
 }
 
 export const useWeeklyData = (householdId: string | null) => {

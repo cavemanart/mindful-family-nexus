@@ -201,10 +201,14 @@ export type Database = {
           assigned_to: string
           completed: boolean
           created_at: string
+          created_by: string | null
+          created_by_name: string | null
           description: string
           due_date: string
           household_id: string
           id: string
+          is_assigned_by_parent: boolean | null
+          is_shared_with_family: boolean | null
           points: number
           title: string
           updated_at: string
@@ -213,10 +217,14 @@ export type Database = {
           assigned_to: string
           completed?: boolean
           created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
           description: string
           due_date: string
           household_id: string
           id?: string
+          is_assigned_by_parent?: boolean | null
+          is_shared_with_family?: boolean | null
           points?: number
           title: string
           updated_at?: string
@@ -225,10 +233,14 @@ export type Database = {
           assigned_to?: string
           completed?: boolean
           created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
           description?: string
           due_date?: string
           household_id?: string
           id?: string
+          is_assigned_by_parent?: boolean | null
+          is_shared_with_family?: boolean | null
           points?: number
           title?: string
           updated_at?: string
@@ -806,6 +818,48 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_goals: {
+        Row: {
+          completed: boolean
+          created_at: string
+          created_by: string
+          created_by_name: string
+          description: string
+          household_id: string
+          id: string
+          is_shared_with_family: boolean
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          created_by: string
+          created_by_name: string
+          description: string
+          household_id: string
+          id?: string
+          is_shared_with_family?: boolean
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          description?: string
+          household_id?: string
+          id?: string
+          is_shared_with_family?: boolean
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_selection: string | null
@@ -968,9 +1022,13 @@ export type Database = {
           assigned_to: string
           completed: boolean
           created_at: string
+          created_by: string | null
+          created_by_name: string | null
           description: string
           household_id: string
           id: string
+          is_assigned_by_parent: boolean | null
+          is_shared_with_family: boolean | null
           title: string
           updated_at: string
         }
@@ -978,9 +1036,13 @@ export type Database = {
           assigned_to: string
           completed?: boolean
           created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
           description: string
           household_id: string
           id?: string
+          is_assigned_by_parent?: boolean | null
+          is_shared_with_family?: boolean | null
           title: string
           updated_at?: string
         }
@@ -988,9 +1050,13 @@ export type Database = {
           assigned_to?: string
           completed?: boolean
           created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
           description?: string
           household_id?: string
           id?: string
+          is_assigned_by_parent?: boolean | null
+          is_shared_with_family?: boolean | null
           title?: string
           updated_at?: string
         }
@@ -1041,23 +1107,56 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_households: {
+        Row: {
+          household_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          household_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          household_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "household_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_edit_calendar_event: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
-      can_user_admin_profile: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
-      can_user_view_profile: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
       can_view_calendar_event: {
         Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
+      check_household_admin: {
+        Args: { target_household_id: string; current_user_id: string }
+        Returns: boolean
+      }
+      check_household_membership: {
+        Args: { target_household_id: string; current_user_id: string }
+        Returns: boolean
+      }
+      check_profile_access: {
+        Args: { target_user_id: string; current_user_id: string }
         Returns: boolean
       }
       create_child_profile: {
@@ -1103,6 +1202,10 @@ export type Database = {
         Args: { p_bill_id: string }
         Returns: string
       }
+      get_user_household: {
+        Args: { user_id: string }
+        Returns: string
+      }
       is_household_member: {
         Args: { household_id: string }
         Returns: boolean
@@ -1113,14 +1216,6 @@ export type Database = {
       }
       is_household_owner_or_admin: {
         Args: { household_id: string }
-        Returns: boolean
-      }
-      is_user_household_admin: {
-        Args: { target_household_id: string }
-        Returns: boolean
-      }
-      is_user_household_member: {
-        Args: { target_household_id: string }
         Returns: boolean
       }
       is_user_member_of_household: {
