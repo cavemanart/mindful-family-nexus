@@ -957,6 +957,7 @@ export type Database = {
       user_subscriptions: {
         Row: {
           created_at: string
+          household_id: string | null
           id: string
           is_active: boolean
           plan_type: string
@@ -971,6 +972,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          household_id?: string | null
           id?: string
           is_active?: boolean
           plan_type?: string
@@ -985,6 +987,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          household_id?: string | null
           id?: string
           is_active?: boolean
           plan_type?: string
@@ -997,7 +1000,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       users: {
         Row: {
@@ -1143,6 +1154,10 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
+      can_manage_household_subscription: {
+        Args: { p_user_id: string; p_household_id: string }
+        Returns: boolean
+      }
       can_view_calendar_event: {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
@@ -1201,6 +1216,16 @@ export type Database = {
       generate_next_bill_instance: {
         Args: { p_bill_id: string }
         Returns: string
+      }
+      get_household_subscription_status: {
+        Args: { p_household_id: string }
+        Returns: {
+          has_subscription: boolean
+          plan_type: string
+          is_trial_active: boolean
+          subscription_end_date: string
+          owner_user_id: string
+        }[]
       }
       get_user_household: {
         Args: { user_id: string }

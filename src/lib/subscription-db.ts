@@ -5,6 +5,7 @@ import type { PlanType } from "./subscription-config";
 export interface UserSubscription {
   id: string;
   user_id: string;
+  household_id?: string;
   plan_type: PlanType;
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
@@ -17,7 +18,36 @@ export interface UserSubscription {
   updated_at: string;
 }
 
-// Returns best/most relevant subscription record for user
+// Get household subscription status instead of individual user subscription
+export async function getHouseholdSubscription(householdId: string): Promise<UserSubscription | null> {
+  const { data, error } = await supabase
+    .rpc('get_household_subscription_status', {
+      p_household_id: householdId
+    });
+
+  if (error) {
+    console.error('Error fetching household subscription:', error);
+    return null;
+  }
+
+  const status = data?.[0];
+  if (!status) return null;
+
+  // Convert the function result to UserSubscription format
+  return {
+    id: '', // Not needed for household subscription checks
+    user_id: status.owner_user_id || '',
+    household_id: householdId,
+    plan_type: status.plan_type as PlanType,
+    trial_end_date: status.is_trial_active ? status.subscription_end_date : undefined,
+    subscription_end_date: status.subscription_end_date,
+    is_active: status.has_subscription,
+    created_at: '',
+    updated_at: '',
+  };
+}
+
+// Returns best/most relevant subscription record for user (backward compatibility)
 export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
   const { data, error } = await supabase
     .from('user_subscriptions')
@@ -47,7 +77,8 @@ export async function getUserPlan(userId: string): Promise<PlanType> {
   return subscription?.plan_type || 'free';
 }
 
-export async function activateTrial(userId: string): Promise<boolean> {
+// Update to link subscription to household
+export async function activateTrial(userId: string, householdId: string): Promise<boolean> {
   try {
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + 14);
@@ -56,7 +87,8 @@ export async function activateTrial(userId: string): Promise<boolean> {
       .from('user_subscriptions')
       .update({
         trial_start_date: new Date().toISOString(),
-        trial_end_date: trialEndDate.toISOString()
+        trial_end_date: trialEndDate.toISOString(),
+        household_id: householdId
       })
       .eq('user_id', userId);
 
@@ -68,7 +100,7 @@ export async function activateTrial(userId: string): Promise<boolean> {
 }
 
 // Initialize subscription for existing users who don't have one
-export async function ensureUserSubscription(userId: string): Promise<UserSubscription> {
+export async function ensureUserSubscription(userId: string, householdId?: string): Promise<UserSubscription> {
   let subscription = await getUserSubscription(userId);
 
   if (!subscription) {
@@ -76,7 +108,8 @@ export async function ensureUserSubscription(userId: string): Promise<UserSubscr
       .from('user_subscriptions')
       .insert({
         user_id: userId,
-        plan_type: 'free'
+        plan_type: 'free',
+        household_id: householdId
       })
       .select()
       .single();
@@ -86,6 +119,21 @@ export async function ensureUserSubscription(userId: string): Promise<UserSubscr
       ...data,
       plan_type: data.plan_type as PlanType
     };
+  } else if (householdId && !subscription.household_id) {
+    // Link existing subscription to household if not already linked
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .update({ household_id: householdId })
+      .eq('id', subscription.id)
+      .select()
+      .single();
+
+    if (!error && data) {
+      subscription = {
+        ...data,
+        plan_type: data.plan_type as PlanType
+      };
+    }
   }
 
   return subscription;

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildSession } from '@/hooks/useChildSession';
+import { useHouseholdSubscription } from '@/hooks/useHouseholdSubscription';
 import { toast } from 'sonner';
 
 export interface PagePreference {
@@ -38,6 +39,7 @@ export const AVAILABLE_PAGES: AvailablePage[] = [
 export const usePagePreferences = () => {
   const { user, userProfile } = useAuth();
   const { isChildMode } = useChildSession();
+  const { subscriptionStatus } = useHouseholdSubscription();
   const [preferences, setPreferences] = useState<PagePreference[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +103,20 @@ export const usePagePreferences = () => {
       return false; // Hide parent-only pages from children
     }
 
+    // Special handling for subscription page
+    if (pageKey === 'subscription') {
+      // Hide subscription page for children
+      if (isChild) return false;
+      
+      // Hide subscription page for non-owners if household already has subscription
+      if (subscriptionStatus.hasSubscription && !subscriptionStatus.canManageSubscription) {
+        return false;
+      }
+      
+      // Show subscription page for owners or when no household subscription exists
+      return subscriptionStatus.canManageSubscription || !subscriptionStatus.hasSubscription;
+    }
+
     const preference = preferences.find(p => p.page_key === pageKey);
     return preference ? preference.is_visible : true; // Default to visible
   };
@@ -156,15 +172,28 @@ export const usePagePreferences = () => {
     return pages.filter(page => isPageVisible(page.key));
   };
 
-  // Filter available pages for child users
+  // Filter available pages for child users and subscription logic
   const getAvailablePagesForUser = () => {
     const isChild = isChildMode || userProfile?.role === 'child' || userProfile?.is_child_account;
     
+    let availablePages = AVAILABLE_PAGES;
+    
     if (isChild) {
-      return AVAILABLE_PAGES.filter(page => !page.parentOnly);
+      availablePages = availablePages.filter(page => !page.parentOnly);
     }
     
-    return AVAILABLE_PAGES;
+    // Filter subscription page based on household subscription status
+    availablePages = availablePages.filter(page => {
+      if (page.key === 'subscription') {
+        if (isChild) return false;
+        if (subscriptionStatus.hasSubscription && !subscriptionStatus.canManageSubscription) {
+          return false;
+        }
+      }
+      return true;
+    });
+    
+    return availablePages;
   };
 
   return {

@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { ensureUserSubscription } from '@/lib/subscription-utils';
+import { ensureUserSubscription } from '@/lib/subscription-db';
 
 export type UserRole = 'parent' | 'nanny' | 'child' | 'grandparent';
 
@@ -49,8 +49,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(data);
         setError(null);
 
+        // Get user's household for subscription setup
+        const { data: householdData } = await supabase
+          .from('household_members')
+          .select('household_id')
+          .eq('user_id', userId)
+          .limit(1)
+          .single();
+
         // Ensure subscription exists after profile is loaded
-        ensureUserSubscription(userId).catch(error => {
+        ensureUserSubscription(userId, householdData?.household_id).catch(error => {
           console.error('❌ Error ensuring subscription:', error);
         });
       } else {

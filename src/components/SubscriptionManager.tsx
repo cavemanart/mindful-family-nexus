@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useHouseholds } from '@/hooks/useHouseholds';
+import { useHouseholdSubscription } from '@/hooks/useHouseholdSubscription';
 import { supabase } from '@/integrations/supabase/client';
-import { getUserSubscription, isTrialActive } from '@/lib/subscription-utils';
 import { SUBSCRIPTION_PLANS } from '@/lib/subscription-config';
 import SubscriptionBadge from './SubscriptionBadge';
 import CurrentPlanCard from './CurrentPlanCard';
@@ -11,42 +12,24 @@ import SubscriptionRefreshButton from './SubscriptionRefreshButton';
 
 const SubscriptionManager: React.FC = () => {
   const { userProfile } = useAuth();
-  const [subscription, setSubscription] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { selectedHousehold } = useHouseholds();
+  const { subscriptionStatus, loading, isPro, refresh } = useHouseholdSubscription();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSubscription();
-  }, [userProfile?.id]);
-
-  const loadSubscription = async () => {
-    if (!userProfile?.id) return;
-
-    try {
-      let sub = await getUserSubscription(userProfile.id);
-
-      // Then verify with Stripe
-      const { data, error } = await supabase.functions.invoke('check-subscription-status');
-      if (!error && data) {
-        setSubscription(data);
-      } else {
-        setSubscription(sub);
-      }
-    } catch (error) {
-      console.error('Error loading subscription:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleUpgrade = async (planType: 'pro' | 'pro_annual') => {
-    if (!userProfile) return;
+    if (!userProfile || !subscriptionStatus.canManageSubscription) {
+      alert('Only household owners can manage subscriptions.');
+      return;
+    }
 
     setCheckoutLoading(planType);
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { plan_type: planType }
+        body: { 
+          plan_type: planType,
+          household_id: selectedHousehold?.id 
+        }
       });
 
       if (error) throw error;
@@ -63,6 +46,11 @@ const SubscriptionManager: React.FC = () => {
   };
 
   const handleManageSubscription = async () => {
+    if (!subscriptionStatus.canManageSubscription) {
+      alert('Only household owners can manage subscriptions.');
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke('create-customer-portal');
 
@@ -81,9 +69,39 @@ const SubscriptionManager: React.FC = () => {
     return <div className="text-center py-8">Loading subscription info...</div>;
   }
 
-  const planType = subscription?.plan_type || 'free';
-  const trialActive = subscription ? isTrialActive(subscription) : false;
-  const isPro = planType === 'pro' || planType === 'pro_annual';
+  // Show different content for non-owners when household has subscription
+  if (subscriptionStatus.hasSubscription && !subscriptionStatus.canManageSubscription) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Subscription Status</h2>
+          <SubscriptionBadge 
+            planType={subscriptionStatus.planType}
+            isTrialActive={subscriptionStatus.isTrialActive}
+            trialEndDate={subscriptionStatus.subscriptionEndDate}
+          />
+        </div>
+
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">
+            🎉 Your household has {SUBSCRIPTION_PLANS[subscriptionStatus.planType]?.name}!
+          </h3>
+          <p className="text-green-700">
+            You have access to all Pro features as part of your household's subscription. 
+            Only the household owner can manage subscription settings.
+          </p>
+          {subscriptionStatus.subscriptionEndDate && (
+            <p className="text-sm text-green-600 mt-2">
+              Subscription active until {new Date(subscriptionStatus.subscriptionEndDate).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const planType = subscriptionStatus.planType;
+  const trialActive = subscriptionStatus.isTrialActive;
 
   // Get prices from config (stored in cents, so divide by 100)
   const proPrice = (SUBSCRIPTION_PLANS.pro.price / 100).toFixed(2);
@@ -98,25 +116,33 @@ const SubscriptionManager: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Subscription</h2>
+        <h2 className="text-2xl font-bold">Household Subscription</h2>
         <SubscriptionBadge 
           planType={planType}
           isTrialActive={trialActive}
-          trialEndDate={subscription?.trial_end_date}
+          trialEndDate={subscriptionStatus.subscriptionEndDate}
         />
       </div>
+
+      {!subscriptionStatus.canManageSubscription && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">
+            Only household owners can manage subscription settings.
+          </p>
+        </div>
+      )}
 
       {/* Current Plan */}
       <CurrentPlanCard
         planType={planType}
         trialActive={trialActive}
-        subscription={subscription}
+        subscription={subscriptionStatus}
         isPro={isPro}
         onManageSubscription={handleManageSubscription}
       />
 
       {/* Upgrade Options */}
-      {!isPro && (
+      {!isPro && subscriptionStatus.canManageSubscription && (
         <UpgradeOptions
           proPrice={proPrice}
           proAnnualPrice={proAnnualPrice}
@@ -128,7 +154,7 @@ const SubscriptionManager: React.FC = () => {
 
       {/* Refresh Button */}
       <SubscriptionRefreshButton
-        onRefresh={loadSubscription}
+        onRefresh={refresh}
         loading={loading}
       />
     </div>
