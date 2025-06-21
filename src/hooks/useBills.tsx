@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { canCreateBill } from '@/lib/subscription-utils';
+import { canCreateBill } from '@/lib/limits';
 
 export interface Bill {
   id: string;
@@ -104,8 +104,8 @@ export const useBills = (householdId: string | null) => {
     try {
       console.log('🧾 Adding new bill:', billData.name);
       
-      // Check subscription limits before creating
-      const canCreate = await canCreateBill(userProfile.id);
+      // Check subscription limits before creating - pass both required arguments
+      const canCreate = await canCreateBill(userProfile.id, householdId);
       if (!canCreate) {
         toast({
           title: "Bill limit reached",
