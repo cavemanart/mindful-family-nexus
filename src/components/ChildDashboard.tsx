@@ -4,10 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
 import { useChores } from '@/hooks/useChores';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
-import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Star, Trophy, Calendar, Heart, Target, MessageCircle } from 'lucide-react';
+import { CheckCircle, Star, Trophy, Calendar, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ChildDashboardProps {
@@ -18,7 +17,6 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   const { userProfile } = useAuth();
   const { chores, toggleChore } = useChores(selectedHousehold?.id);
   const { wins, goals } = useWeeklyData(selectedHousehold?.id || null);
-  const { messages } = useFamilyMessages(selectedHousehold?.id || null);
 
   if (!selectedHousehold) {
     return (
@@ -43,12 +41,6 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   const myGoals = goals.filter(goal =>
     goal.assigned_to.toLowerCase() === childName.toLowerCase() ||
     goal.assigned_to.toLowerCase() === childFullName.toLowerCase()
-  );
-
-  const myMessages = messages.filter(message =>
-    message.to_member === null || // General family messages
-    message.to_member.toLowerCase() === childName.toLowerCase() ||
-    message.to_member.toLowerCase() === childFullName.toLowerCase()
   );
 
   const completedChores = myChores.filter(chore => chore.completed);
@@ -216,47 +208,6 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                       {goal.completed ? 'Done!' : 'In Progress'}
                     </Badge>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* My Messages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-pink-500" />
-            My Messages
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {myMessages.length === 0 ? (
-              <div className="text-center py-6">
-                <Heart className="text-gray-300 mx-auto mb-4" size={48} />
-                <p className="text-muted-foreground">No messages yet!</p>
-              </div>
-            ) : (
-              myMessages.slice(0, 5).map((message) => (
-                <div key={message.id} className={`rounded-lg p-3 border ${
-                  message.is_special 
-                    ? 'bg-pink-50 border-pink-200' 
-                    : 'bg-white'
-                }`}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">From {message.from_member}</span>
-                      {message.is_special && (
-                        <Badge className="bg-pink-100 text-pink-600 text-xs">Special</Badge>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(message.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700">{message.message}</p>
                 </div>
               ))
             )}

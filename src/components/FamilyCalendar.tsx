@@ -9,7 +9,6 @@ import AdvancedCalendar from './AdvancedCalendar';
 import SimpleEventForm from './SimpleEventForm';
 import SimpleEventsList from './SimpleEventsList';
 import SubscriptionBadge from './SubscriptionBadge';
-import { checkFeatureAccess } from '@/lib/feature-access';
 import { useSimpleCalendarEvents } from '@/hooks/useSimpleCalendarEvents';
 
 interface Household {

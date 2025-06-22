@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, DollarSign, StickyNote, Users, Calendar, Baby, Trophy, CheckCircle } from 'lucide-react';
+import { DollarSign, StickyNote, Users, Calendar, Baby, Trophy, CheckCircle } from 'lucide-react';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useChildren } from '@/hooks/useChildren';
 import AddChoreDialog from './AddChoreDialog';
@@ -22,15 +22,6 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       action: () => setActiveSection('mvp'),
       color: 'from-yellow-500 to-orange-500',
       bgColor: 'bg-gradient-to-br from-yellow-50/50 to-orange-50/50 dark:from-yellow-950/30 dark:to-orange-950/30'
-    },
-    {
-      key: 'appreciations',
-      title: 'Send Appreciation',
-      description: 'Share gratitude with family',
-      icon: Heart,
-      action: () => setActiveSection('appreciations'),
-      color: 'from-pink-500 to-rose-500',
-      bgColor: 'bg-gradient-to-br from-pink-50/50 to-rose-50/50 dark:from-pink-950/30 dark:to-rose-950/30'
     },
     {
       key: 'bills',

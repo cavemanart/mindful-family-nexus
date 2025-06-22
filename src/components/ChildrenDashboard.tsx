@@ -1,11 +1,10 @@
 
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Heart, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users } from 'lucide-react';
+import { Star, CheckCircle, Clock, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useChores } from '@/hooks/useChores';
-import { useFamilyMessages } from '@/hooks/useFamilyMessages';
 import { useChildren } from '@/hooks/useChildren';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import ChildSelector from './ChildSelector';
@@ -29,11 +28,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     loading: choresLoading,
     toggleChore,
   } = useChores(selectedHousehold?.id || null);
-
-  const {
-    messages,
-    loading: messagesLoading,
-  } = useFamilyMessages(selectedHousehold?.id || null);
 
   const {
     goals,
@@ -83,7 +77,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   const connectionStatus = getConnectionStatus();
 
-  if (choresLoading || messagesLoading || childrenLoading || weeklyLoading) {
+  if (choresLoading || childrenLoading || weeklyLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="animate-spin" size={24} />
@@ -162,14 +156,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     chore.assigned_to === childFullName ||
     chore.assigned_to.toLowerCase() === selectedChild.toLowerCase() ||
     chore.assigned_to.toLowerCase() === childFullName.toLowerCase()
-  );
-
-  const childMessages = messages.filter(message => 
-    message.to_member === selectedChild || 
-    message.to_member === childFullName ||
-    message.to_member === null ||
-    message.to_member.toLowerCase() === selectedChild.toLowerCase() ||
-    message.to_member.toLowerCase() === childFullName.toLowerCase()
   );
 
   const childGoals = goals.filter(goal =>
@@ -354,47 +340,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
                       {goal.completed ? 'Achieved!' : 'In Progress'}
                     </Badge>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Child's Messages */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="text-pink-500" size={20} />
-            Messages for {selectedChild}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {childMessages.length === 0 ? (
-            <div className="text-center py-6">
-              <Heart className="text-gray-300 mx-auto mb-2" size={32} />
-              <p className="text-muted-foreground">No messages for {selectedChild}</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {childMessages.slice(0, 5).map((message) => (
-                <div key={message.id} className={`p-3 rounded-lg border ${
-                  message.is_special 
-                    ? 'bg-pink-50 border-pink-200' 
-                    : 'bg-white border-gray-200'
-                }`}>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">From {message.from_member}</span>
-                      {message.is_special && (
-                        <Badge className="bg-pink-100 text-pink-600">Special</Badge>
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {new Date(message.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-700">{message.message}</p>
                 </div>
               ))}
             </div>
