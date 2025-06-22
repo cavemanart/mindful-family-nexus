@@ -8,6 +8,7 @@ import PersonalGoalsSection from './PersonalGoalsSection';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import { usePersonalGoals } from '@/hooks/usePersonalGoals';
 import { useAuth } from '@/hooks/useAuth';
+import { useChildren } from '@/hooks/useChildren';
 
 interface WeeklySyncProps {
   selectedHousehold: { id: string } | null;
@@ -24,8 +25,9 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
     deletePersonalGoal 
   } = usePersonalGoals(selectedHousehold?.id || null, user?.id || null);
 
-  // In a real app, familyMembers would be fetched from household data.
-  const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
+  // Get actual household members from children data
+  const { children } = useChildren(selectedHousehold?.id || '');
+  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim());
   
   // Mock user data - in real app this would come from user profile
   const currentUserName = user?.user_metadata?.first_name || 'User';
@@ -64,7 +66,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
             wins={wins}
             loading={loading}
             addWin={addWin}
-            familyMembers={familyMembers}
+            householdId={selectedHousehold?.id || ''}
           />
         </TabsContent>
 
