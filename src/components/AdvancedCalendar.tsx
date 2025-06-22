@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAdvancedCalendar } from '@/hooks/useAdvancedCalendar';
 import { useAuth } from '@/hooks/useAuth';
+import { useHouseholdSubscription } from '@/hooks/useHouseholdSubscription';
 import AdvancedEventForm from './AdvancedEventForm';
 import CalendarGrid from './CalendarGrid';
 import EventsList from './EventsList';
@@ -13,7 +14,6 @@ import CategoryFilter from './CategoryFilter';
 import KeywordSearch from './KeywordSearch';
 import DayEventsModal from './DayEventsModal';
 import SubscriptionBadge from './SubscriptionBadge';
-import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
 import { CalendarView, AdvancedCalendarEvent } from '@/types/calendar';
 import EventDetailsModal from './EventDetailsModal';
 
@@ -29,6 +29,7 @@ interface AdvancedCalendarProps {
 const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
   const { events, categories, loading, error, createEvent, updateEvent, deleteEvent } = useAdvancedCalendar(selectedHousehold?.id || null);
+  const { subscriptionStatus, loading: subscriptionLoading } = useHouseholdSubscription();
   const [view, setView] = useState<CalendarView>({ type: 'month', date: new Date() });
   const [showEventForm, setShowEventForm] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -128,6 +129,13 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           <p className="text-gray-600 dark:text-gray-400">{selectedHousehold.name}</p>
         </div>
         <div className="flex items-center gap-2">
+          {!subscriptionLoading && (
+            <SubscriptionBadge 
+              planType={subscriptionStatus.planType}
+              isTrialActive={subscriptionStatus.isTrialActive}
+              trialEndDate={subscriptionStatus.subscriptionEndDate}
+            />
+          )}
           <Button
             variant="outline"
             size="sm"

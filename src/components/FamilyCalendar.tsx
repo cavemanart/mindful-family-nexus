@@ -1,14 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Calendar, Info } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/hooks/useAuth';
+import { useHouseholdSubscription } from '@/hooks/useHouseholdSubscription';
 import AdvancedCalendar from './AdvancedCalendar';
 import SimpleEventForm from './SimpleEventForm';
 import SimpleEventsList from './SimpleEventsList';
 import SubscriptionBadge from './SubscriptionBadge';
-import { getUserSubscription, checkFeatureAccess, isTrialActive } from '@/lib/subscription-utils';
+import { checkFeatureAccess } from '@/lib/feature-access';
 import { useSimpleCalendarEvents } from '@/hooks/useSimpleCalendarEvents';
 
 interface Household {
@@ -23,27 +24,9 @@ interface FamilyCalendarProps {
 const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
   const { events, loading, error, createEvent, deleteEvent } = useSimpleCalendarEvents(selectedHousehold?.id || null);
-  const [subscription, setSubscription] = useState<any>(null);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const { subscriptionStatus, loading: subscriptionLoading, hasProAccess } = useHouseholdSubscription();
 
   const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
-
-  useEffect(() => {
-    const loadSubscription = async () => {
-      if (userProfile?.id) {
-        try {
-          const sub = await getUserSubscription(userProfile.id);
-          setSubscription(sub);
-        } catch (error) {
-          console.error('Error loading subscription:', error);
-        } finally {
-          setSubscriptionLoading(false);
-        }
-      }
-    };
-
-    loadSubscription();
-  }, [userProfile?.id]);
 
   if (!selectedHousehold) {
     return (
@@ -65,16 +48,15 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
     );
   }
 
-  const trialActive = subscription ? isTrialActive(subscription) : false;
-  const planType = subscription?.plan_type || 'free';
-  const hasAdvancedCalendar = checkFeatureAccess(planType, 'advanced_calendar', trialActive);
+  // Use household subscription to determine feature access
+  const hasAdvancedCalendar = hasProAccess;
 
-  // Show Advanced Calendar for Pro users, Simple Calendar for free users
+  // Show Advanced Calendar for households with Pro access, Simple Calendar for free households
   if (hasAdvancedCalendar) {
     return <AdvancedCalendar selectedHousehold={selectedHousehold} />;
   }
 
-  // Fallback to simple calendar for free users
+  // Fallback to simple calendar for free households
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -85,9 +67,9 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
         </div>
         {!subscriptionLoading && (
           <SubscriptionBadge 
-            planType={planType}
-            isTrialActive={trialActive}
-            trialEndDate={subscription?.trial_end_date}
+            planType={subscriptionStatus.planType}
+            isTrialActive={subscriptionStatus.isTrialActive}
+            trialEndDate={subscriptionStatus.subscriptionEndDate}
           />
         )}
       </div>
