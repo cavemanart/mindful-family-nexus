@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Users, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AdvancedCalendarEvent, EventCategory } from '@/types/calendar';
+import { useChildren } from '@/hooks/useChildren';
 
 interface AdvancedEventFormProps {
   onEventCreated: (event: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => void;
@@ -15,7 +17,7 @@ interface AdvancedEventFormProps {
   categories: EventCategory[];
   householdId: string;
   initialEvent?: AdvancedCalendarEvent;
-  buttonLabel?: string; // Optional: support custom submit label
+  buttonLabel?: string;
 }
 
 const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
@@ -26,6 +28,8 @@ const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
   initialEvent,
   buttonLabel,
 }) => {
+  const { children } = useChildren(householdId);
+  
   const [formData, setFormData] = useState({
     title: initialEvent?.title || '',
     description: initialEvent?.description || '',
@@ -65,7 +69,8 @@ const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const familyMembers = ['Mom', 'Dad', 'Alex', 'Emma']; // This would come from household members in a real app
+  // Get actual family members from children data
+  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim());
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -158,32 +163,34 @@ const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
             </div>
 
             {/* Assigned To */}
-            <div>
-              <Label className="flex items-center gap-2 mb-3">
-                <Users className="h-4 w-4" />
-                Assign to Family Members
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                {familyMembers.map(member => (
-                  <div key={member} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={member}
-                      checked={formData.assigned_to.includes(member)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          updateField('assigned_to', [...formData.assigned_to, member]);
-                        } else {
-                          updateField('assigned_to', formData.assigned_to.filter(m => m !== member));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={member} className="text-sm font-medium cursor-pointer">
-                      {member}
-                    </Label>
-                  </div>
-                ))}
+            {familyMembers.length > 0 && (
+              <div>
+                <Label className="flex items-center gap-2 mb-3">
+                  <Users className="h-4 w-4" />
+                  Assign to Family Members
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {familyMembers.map(member => (
+                    <div key={member} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={member}
+                        checked={formData.assigned_to.includes(member)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            updateField('assigned_to', [...formData.assigned_to, member]);
+                          } else {
+                            updateField('assigned_to', formData.assigned_to.filter(m => m !== member));
+                          }
+                        }}
+                      />
+                      <Label htmlFor={member} className="text-sm font-medium cursor-pointer">
+                        {member}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Recurring Event */}
             <div className="space-y-3">

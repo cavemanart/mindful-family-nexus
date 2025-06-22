@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Brain, Plus, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useChildren } from '@/hooks/useChildren';
 
 interface MentalLoadItem {
   id: string;
@@ -22,7 +22,13 @@ interface MentalLoadItem {
   createdAt: Date;
 }
 
-const MentalLoad = () => {
+interface MentalLoadProps {
+  householdId?: string;
+}
+
+const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
+  const { children } = useChildren(householdId);
+  
   const [items, setItems] = useState<MentalLoadItem[]>([
     {
       id: '1',
@@ -71,7 +77,8 @@ const MentalLoad = () => {
     dueDate: '',
   });
 
-  const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
+  // Get actual family members from children data
+  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim());
   const categories = ['Healthcare', 'Education', 'Events', 'Household', 'Finance', 'Social', 'Other'];
 
   const addItem = () => {
@@ -100,6 +107,7 @@ const MentalLoad = () => {
     ));
   };
 
+  // ... keep existing code (getPriorityColor, getCategoryColor functions)
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
@@ -235,9 +243,15 @@ const MentalLoad = () => {
                       <SelectValue placeholder="Who?" />
                     </SelectTrigger>
                     <SelectContent>
-                      {familyMembers.map((member) => (
-                        <SelectItem key={member} value={member}>{member}</SelectItem>
-                      ))}
+                      {familyMembers.length === 0 ? (
+                        <SelectItem value="no-members" disabled>
+                          No family members found
+                        </SelectItem>
+                      ) : (
+                        familyMembers.map((member) => (
+                          <SelectItem key={member} value={member}>{member}</SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

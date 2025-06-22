@@ -78,11 +78,17 @@ const MVPNominationForm: React.FC<MVPNominationFormProps> = ({
               <SelectValue placeholder="Select your MVP" />
             </SelectTrigger>
             <SelectContent>
-              {availableMembers.map((member) => (
-                <SelectItem key={member.id} value={member.full_name}>
-                  {member.full_name}
+              {availableMembers.length === 0 ? (
+                <SelectItem value="no-members" disabled>
+                  No other household members found
                 </SelectItem>
-              ))}
+              ) : (
+                availableMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.full_name}>
+                    {member.full_name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -129,26 +135,22 @@ const MVPNominationForm: React.FC<MVPNominationFormProps> = ({
         <div className="flex gap-2 pt-2">
           <Button 
             onClick={handleSubmit} 
-            disabled={!isFormValid || isSubmitting}
-            className="bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50"
+            disabled={!isFormValid || isSubmitting || availableMembers.length === 0}
+            className="flex-1 bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600"
           >
             {isSubmitting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                <Star className="mr-2 h-4 w-4 animate-spin" />
                 Nominating...
               </>
             ) : (
               <>
-                <Star size={16} className="mr-2" />
+                <Trophy className="mr-2 h-4 w-4" />
                 Nominate MVP
               </>
             )}
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
+          <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
         </div>

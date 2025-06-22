@@ -7,20 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { WeeklyWin } from "@/hooks/useWeeklyData";
+import { useChildren } from "@/hooks/useChildren";
 
 interface WeeklyWinsSectionProps {
   wins: WeeklyWin[];
   loading: boolean;
   addWin: (data: { title: string; description: string; added_by: string }) => Promise<boolean>;
-  familyMembers: string[];
+  householdId: string;
 }
 
 const WeeklyWinsSection: React.FC<WeeklyWinsSectionProps> = ({
   wins,
   loading,
   addWin,
-  familyMembers,
+  householdId,
 }) => {
+  const { children } = useChildren(householdId);
   const [isAddingWin, setIsAddingWin] = useState(false);
   const [newWin, setNewWin] = useState({ title: "", description: "", added_by: "" });
 
@@ -33,6 +35,9 @@ const WeeklyWinsSection: React.FC<WeeklyWinsSectionProps> = ({
       }
     }
   };
+
+  // Get actual family members from children data
+  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim());
 
   return (
     <div className="space-y-4">
