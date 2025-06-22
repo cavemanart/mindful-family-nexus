@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
@@ -15,8 +16,11 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold, WeeklySyncOverviewSlot }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { children } = useChildren(selectedHousehold?.id);
+
+  // Check if user is a parent (not a child)
+  const isParent = userProfile?.role !== 'child';
 
   // If not logged in, prompt to log in
   if (!user) {
@@ -65,7 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHouseho
           <div className="bg-card rounded-2xl border shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-              {children.length > 0 && (
+              {children.length > 0 && isParent && (
                 <AddChoreDialog 
                   householdId={selectedHousehold.id}
                   trigger={
