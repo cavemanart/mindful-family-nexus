@@ -10,6 +10,7 @@ import AccessCodesCard from './nanny-dashboard/AccessCodesCard';
 import ChildInfoCard from './nanny-dashboard/ChildInfoCard';
 import NotesCard from './nanny-dashboard/NotesCard';
 import HouseRulesCard from './nanny-dashboard/HouseRulesCard';
+import DailySchedules from './DailySchedules';
 import { Button } from '@/components/ui/button';
 import { LogOut, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,8 +26,8 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
   onLogout 
 }) => {
   const { contacts } = useEmergencyContacts(householdId);
-  const { medications } = useMedications(householdId);
-  const { householdInfo } = useHouseholdInfo(householdId);
+  const { medications, addMedication, updateMedication, deleteMedication } = useMedications(householdId);
+  const { householdInfo, addHouseholdInfo, updateHouseholdInfo, deleteHouseholdInfo } = useHouseholdInfo(householdId);
   const { notes } = useFamilyNotes(householdId);
   const [showCodes, setShowCodes] = useState(false);
 
@@ -81,11 +82,47 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
         </Alert>
 
         <EmergencyContactsCard contacts={contacts} />
-        <MedicationsCard medications={medications} />
-        <AccessCodesCard accessCodes={accessCodes} showCodes={showCodes} setShowCodes={setShowCodes} />
-        {childInfo.length > 0 && <ChildInfoCard childInfo={childInfo} />}
+        
+        <MedicationsCard 
+          medications={medications} 
+          onUpdate={updateMedication}
+          onDelete={deleteMedication}
+          onAdd={addMedication}
+          canEdit={true}
+        />
+        
+        <AccessCodesCard 
+          accessCodes={accessCodes} 
+          showCodes={showCodes} 
+          setShowCodes={setShowCodes}
+          onUpdate={updateHouseholdInfo}
+          onDelete={deleteHouseholdInfo}
+          onAdd={addHouseholdInfo}
+          canEdit={true}
+        />
+        
+        {childInfo.length > 0 && (
+          <ChildInfoCard 
+            childInfo={childInfo}
+            onUpdate={updateHouseholdInfo}
+            onDelete={deleteHouseholdInfo}
+            onAdd={addHouseholdInfo}
+            canEdit={true}
+          />
+        )}
+        
         <NotesCard nannyNotes={nannyNotes} />
-        <HouseRulesCard houseRules={houseRules} emergencyNumbers={emergencyNumbers} />
+        
+        <HouseRulesCard 
+          houseRules={houseRules} 
+          emergencyNumbers={emergencyNumbers}
+          onUpdate={updateHouseholdInfo}
+          onDelete={deleteHouseholdInfo}
+          onAdd={addHouseholdInfo}
+          canEdit={true}
+        />
+
+        <DailySchedules householdId={householdId} canEdit={true} />
       </div>
     </div>
   );

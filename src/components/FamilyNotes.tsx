@@ -1,249 +1,283 @@
+
 import React, { useState } from 'react';
-import { Plus, Search, Pin, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StickyNote, Plus, Edit, Trash2, Pin, PinOff } from 'lucide-react';
 import { useFamilyNotes } from '@/hooks/useFamilyNotes';
-import { Household } from '@/hooks/useHouseholds';
 
 interface FamilyNotesProps {
-  selectedHousehold: Household;
+  householdId: string;
+  canEdit?: boolean;
 }
 
-const FamilyNotes: React.FC<FamilyNotesProps> = ({ selectedHousehold }) => {
-  const { notes, loading, addNote, updateNote, deleteNote } = useFamilyNotes(selectedHousehold?.id);
-  const [isAddingNote, setIsAddingNote] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [editingNote, setEditingNote] = useState({ title: '', content: '' });
-  const [newNote, setNewNote] = useState({ title: '', content: '' });
-  const [searchTerm, setSearchTerm] = useState('');
+const colorOptions = [
+  { value: 'bg-yellow-100 border-yellow-300', label: 'Yellow', preview: 'bg-yellow-100' },
+  { value: 'bg-pink-100 border-pink-300', label: 'Pink', preview: 'bg-pink-100' },
+  { value: 'bg-blue-100 border-blue-300', label: 'Blue', preview: 'bg-blue-100' },
+  { value: 'bg-green-100 border-green-300', label: 'Green', preview: 'bg-green-100' },
+  { value: 'bg-purple-100 border-purple-300', label: 'Purple', preview: 'bg-purple-100' }
+];
 
-  const colors = [
-    'bg-yellow-50 border-yellow-300 dark:bg-yellow-950/30 dark:border-yellow-700',
-    'bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700',
-    'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700',
-    'bg-pink-50 border-pink-300 dark:bg-pink-950/30 dark:border-pink-700',
-    'bg-purple-50 border-purple-300 dark:bg-purple-950/30 dark:border-purple-700',
-  ];
+const FamilyNotes: React.FC<FamilyNotesProps> = ({ householdId, canEdit = true }) => {
+  const { notes, addNote, updateNote, deleteNote } = useFamilyNotes(householdId);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingNote, setEditingNote] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    color: 'bg-yellow-100 border-yellow-300'
+  });
 
-  const handleAddNote = async () => {
-    if (newNote.title.trim() && newNote.content.trim()) {
-      const success = await addNote({
-        title: newNote.title,
-        content: newNote.content,
-        author: 'You',
-        is_pinned: false,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      });
-      
-      if (success) {
-        setNewNote({ title: '', content: '' });
-        setIsAddingNote(false);
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.content) return;
+
+    const noteData = {
+      title: formData.title,
+      content: formData.content,
+      color: formData.color,
+      household_id: householdId,
+      author: 'Family Member'
+    };
+
+    if (editingNote) {
+      await updateNote(editingNote.id, noteData);
+      setEditingNote(null);
+    } else {
+      await addNote(noteData);
+    }
+
+    setFormData({ title: '', content: '', color: 'bg-yellow-100 border-yellow-300' });
+    setShowAddDialog(false);
+  };
+
+  const handleEdit = (note: any) => {
+    setFormData({
+      title: note.title,
+      content: note.content,
+      color: note.color
+    });
+    setEditingNote(note);
+    setShowAddDialog(true);
+  };
+
+  const handleDelete = async (noteId: string) => {
+    if (window.confirm('Are you sure you want to delete this note?')) {
+      await deleteNote(noteId);
     }
   };
 
-  const handleTogglePin = async (id: string, currentPinStatus: boolean) => {
-    await updateNote(id, { is_pinned: !currentPinStatus });
+  const handlePin = async (note: any) => {
+    await updateNote(note.id, { is_pinned: !note.is_pinned });
   };
 
-  const handleDeleteNote = async (id: string) => {
-    await deleteNote(id);
+  const closeDialog = () => {
+    setShowAddDialog(false);
+    setEditingNote(null);
+    setFormData({ title: '', content: '', color: 'bg-yellow-100 border-yellow-300' });
   };
 
-  const handleEditNote = (note: any) => {
-    setEditingNoteId(note.id);
-    setEditingNote({ title: note.title, content: note.content });
-  };
+  const pinnedNotes = notes.filter(note => note.is_pinned);
+  const regularNotes = notes.filter(note => !note.is_pinned);
 
-  const handleSaveEdit = async () => {
-    if (editingNoteId && editingNote.title.trim() && editingNote.content.trim()) {
-      await updateNote(editingNoteId, editingNote);
-      setEditingNoteId(null);
-      setEditingNote({ title: '', content: '' });
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingNoteId(null);
-    setEditingNote({ title: '', content: '' });
-  };
-
-  const renderNoteCard = (note: any) => (
-    <Card 
-      key={note.id} 
-      className={`${note.color} hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 cursor-pointer`}
-      onClick={() => !editingNoteId ? handleEditNote(note) : undefined}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          {editingNoteId === note.id ? (
-            <Input
-              value={editingNote.title}
-              onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-              className="font-semibold bg-transparent border-none p-0 focus:ring-0"
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <CardTitle className="text-lg font-semibold text-foreground">{note.title}</CardTitle>
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <StickyNote className="h-5 w-5 text-amber-500" />
+            Family Notes
+          </CardTitle>
+          {canEdit && (
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Note
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingNote ? 'Edit Note' : 'Add New Note'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Note title"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="content">Content</Label>
+                    <Textarea
+                      id="content"
+                      value={formData.content}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                      placeholder="Write your note here..."
+                      rows={4}
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="color">Color</Label>
+                    <Select
+                      value={formData.color}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, color: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a color" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {colorOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex items-center gap-2">
+                              <div className={`w-4 h-4 rounded ${option.preview} border`}></div>
+                              {option.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">
+                      {editingNote ? 'Update Note' : 'Add Note'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={closeDialog}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
           )}
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTogglePin(note.id, note.is_pinned);
-              }}
-              className={`${note.is_pinned ? 'text-yellow-600 hover:bg-yellow-200 dark:hover:bg-yellow-900/50' : 'text-muted-foreground hover:bg-muted'} p-1`}
-            >
-              <Pin size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteNote(note.id);
-              }}
-              className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 p-1"
-            >
-              <Trash2 size={14} />
-            </Button>
-          </div>
         </div>
       </CardHeader>
       <CardContent>
-        {editingNoteId === note.id ? (
-          <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-            <Textarea
-              value={editingNote.content}
-              onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-              rows={4}
-              className="resize-none bg-transparent border-gray-300 dark:border-gray-600"
-            />
-            <div className="flex gap-2">
-              <Button onClick={handleSaveEdit} size="sm" className="bg-green-600 hover:bg-green-700">
-                Save
-              </Button>
-              <Button onClick={handleCancelEdit} variant="outline" size="sm">
-                Cancel
-              </Button>
-            </div>
+        {notes.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <StickyNote className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>No notes yet</p>
+            {canEdit && <p className="text-sm mt-2">Click "Add Note" to create your first family note</p>}
           </div>
         ) : (
-          <>
-            <p className="text-foreground text-sm mb-3">{note.content}</p>
-            <div className="flex items-center justify-between">
-              <Badge variant="secondary" className="text-xs">
-                by {note.author}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {new Date(note.created_at).toLocaleDateString()}
-              </span>
-            </div>
-          </>
+          <div className="space-y-4">
+            {/* Pinned Notes */}
+            {pinnedNotes.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
+                  <Pin className="h-4 w-4" />
+                  Pinned Notes
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {pinnedNotes.map((note) => (
+                    <div key={note.id} className={`${note.color} p-4 rounded-lg shadow-sm relative group`}>
+                      {canEdit && (
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            onClick={() => handlePin(note)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
+                            <PinOff className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={() => handleEdit(note)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(note.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      <h3 className="font-semibold text-gray-800 mb-2 pr-8">{note.title}</h3>
+                      <p className="text-gray-700 text-sm whitespace-pre-wrap mb-3">{note.content}</p>
+                      <div className="text-xs text-gray-500">
+                        By {note.author} • {new Date(note.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Regular Notes */}
+            {regularNotes.length > 0 && (
+              <div>
+                {pinnedNotes.length > 0 && (
+                  <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                    Other Notes
+                  </h4>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {regularNotes.map((note) => (
+                    <div key={note.id} className={`${note.color} p-4 rounded-lg shadow-sm relative group`}>
+                      {canEdit && (
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            onClick={() => handlePin(note)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Pin className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={() => handleEdit(note)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(note.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      <h3 className="font-semibold text-gray-800 mb-2 pr-8">{note.title}</h3>
+                      <p className="text-gray-700 text-sm whitespace-pre-wrap mb-3">{note.content}</p>
+                      <div className="text-xs text-gray-500">
+                        By {note.author} • {new Date(note.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
-  );
-
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const pinnedNotes = filteredNotes.filter(note => note.is_pinned);
-  const regularNotes = filteredNotes.filter(note => !note.is_pinned);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Family Notes</h2>
-        <div className="flex gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-            <Input
-              placeholder="Search notes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button onClick={() => setIsAddingNote(true)} className="bg-blue-600 hover:bg-blue-700">
-            <Plus size={16} className="mr-2" />
-            Add Note
-          </Button>
-        </div>
-      </div>
-
-      {isAddingNote && (
-        <Card className="border-2 border-dashed border-border">
-          <CardHeader>
-            <CardTitle>Add New Note</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              placeholder="Note title..."
-              value={newNote.title}
-              onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-            />
-            <Textarea
-              placeholder="Write your note here..."
-              value={newNote.content}
-              onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-              rows={3}
-            />
-            <div className="flex gap-2">
-              <Button onClick={handleAddNote} className="bg-green-600 hover:bg-green-700">
-                Save Note
-              </Button>
-              <Button variant="outline" onClick={() => setIsAddingNote(false)}>
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {pinnedNotes.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Pin size={18} className="text-muted-foreground" />
-            Pinned Notes
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pinnedNotes.map(renderNoteCard)}
-          </div>
-        </div>
-      )}
-
-      {regularNotes.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold text-foreground mb-3">All Notes</h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {regularNotes.map(renderNoteCard)}
-          </div>
-        </div>
-      )}
-
-      {filteredNotes.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">No notes found.</p>
-          <p className="text-muted-foreground text-sm mt-2">Start by adding your first family note!</p>
-        </div>
-      )}
-    </div>
   );
 };
 

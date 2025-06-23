@@ -7,15 +7,15 @@ export interface FamilyNote {
   id: string;
   title: string;
   content: string;
-  author: string;
-  is_pinned: boolean;
   color: string;
+  author: string;
+  household_id: string;
+  is_pinned: boolean;
   created_at: string;
   updated_at: string;
-  household_id: string;
 }
 
-export const useFamilyNotes = (householdId: string | null) => {
+export const useFamilyNotes = (householdId?: string) => {
   const [notes, setNotes] = useState<FamilyNote[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -31,13 +31,21 @@ export const useFamilyNotes = (householdId: string | null) => {
         .from('family_notes')
         .select('*')
         .eq('household_id', householdId)
+        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setNotes(data || []);
+      if (error) {
+        toast({
+          title: "Error fetching notes",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        setNotes(data || []);
+      }
     } catch (error: any) {
       toast({
-        title: "Error fetching notes",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
@@ -46,66 +54,98 @@ export const useFamilyNotes = (householdId: string | null) => {
     }
   };
 
-  const addNote = async (noteData: Omit<FamilyNote, 'id' | 'created_at' | 'updated_at' | 'household_id'>) => {
-    if (!householdId) return false;
-
+  const addNote = async (note: Omit<FamilyNote, 'id' | 'created_at' | 'updated_at' | 'is_pinned'>) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('family_notes')
-        .insert([{ ...noteData, household_id: householdId }]);
+        .insert([{ ...note, is_pinned: false }])
+        .select()
+        .single();
 
-      if (error) throw error;
-      
+      if (error) {
+        toast({
+          title: "Error adding note",
+          description: error.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      fetchNotes();
       toast({
         title: "Success",
-        description: "Note added successfully!",
+        description: "Note added successfully"
       });
-      
-      fetchNotes();
-      return true;
+      return data;
     } catch (error: any) {
       toast({
-        title: "Error adding note",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
-      return false;
+      return null;
     }
   };
 
-  const updateNote = async (id: string, updates: Partial<FamilyNote>) => {
+  const updateNote = async (noteId: string, updates: Partial<FamilyNote>) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('family_notes')
         .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', noteId)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error updating note",
+          description: error.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
       fetchNotes();
-      return true;
+      toast({
+        title: "Success",
+        description: "Note updated successfully"
+      });
+      return data;
     } catch (error: any) {
       toast({
-        title: "Error updating note",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
-      return false;
+      return null;
     }
   };
 
-  const deleteNote = async (id: string) => {
+  const deleteNote = async (noteId: string) => {
     try {
       const { error } = await supabase
         .from('family_notes')
         .delete()
-        .eq('id', id);
+        .eq('id', noteId);
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error deleting note",
+          description: error.message,
+          variant: "destructive"
+        });
+        return false;
+      }
+
       fetchNotes();
+      toast({
+        title: "Success",
+        description: "Note deleted successfully"
+      });
       return true;
     } catch (error: any) {
       toast({
-        title: "Error deleting note",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
@@ -120,9 +160,9 @@ export const useFamilyNotes = (householdId: string | null) => {
   return {
     notes,
     loading,
+    fetchNotes,
     addNote,
     updateNote,
-    deleteNote,
-    refetch: fetchNotes
+    deleteNote
   };
 };
