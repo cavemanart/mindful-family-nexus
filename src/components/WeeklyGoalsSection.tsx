@@ -46,8 +46,7 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
   const [newGoal, setNewGoal] = useState({ 
     title: "", 
     description: "", 
-    assigned_to: "",
-    assignToParent: false
+    assigned_to: ""
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,7 +65,7 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
         is_assigned_by_parent: isParent
       });
       if (success) {
-        setNewGoal({ title: '', description: '', assigned_to: '', assignToParent: false });
+        setNewGoal({ title: '', description: '', assigned_to: '' });
         setIsAddingGoal(false);
       }
     }
@@ -93,6 +92,9 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
   const handleDelete = async (id: string) => {
     await deleteGoal(id);
   };
+
+  // Create a list of assignable members including the current user
+  const assignableMembers = [...familyMembers, currentUserName];
 
   return (
     <div className="space-y-4">
@@ -126,33 +128,16 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
               onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
               rows={3}
             />
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={newGoal.assignToParent}
-                  onCheckedChange={(checked) => {
-                    setNewGoal({ 
-                      ...newGoal, 
-                      assignToParent: checked,
-                      assigned_to: checked ? currentUserName : ""
-                    });
-                  }}
-                />
-                <label className="text-sm">Assign to myself</label>
-              </div>
-              {!newGoal.assignToParent && (
-                <select
-                  className="w-full p-2 border rounded-md bg-background text-foreground border-border"
-                  value={newGoal.assigned_to}
-                  onChange={(e) => setNewGoal({ ...newGoal, assigned_to: e.target.value })}
-                >
-                  <option value="">Assign to...</option>
-                  {familyMembers.map(member => (
-                    <option key={member} value={member}>{member}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+            <select
+              className="w-full p-2 border rounded-md bg-background text-foreground border-border"
+              value={newGoal.assigned_to}
+              onChange={(e) => setNewGoal({ ...newGoal, assigned_to: e.target.value })}
+            >
+              <option value="">Assign to...</option>
+              {assignableMembers.map(member => (
+                <option key={member} value={member}>{member}</option>
+              ))}
+            </select>
             <div className="flex gap-2">
               <Button onClick={handleAddGoal} className="bg-blue-600 hover:bg-blue-700">
                 <Target size={16} className="mr-2" />
@@ -210,7 +195,7 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
                             onChange={(e) => setEditData({ ...editData, assigned_to: e.target.value })}
                           >
                             <option value="">Assign to...</option>
-                            {familyMembers.map(member => (
+                            {assignableMembers.map(member => (
                               <option key={member} value={member}>{member}</option>
                             ))}
                           </select>
