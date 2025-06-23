@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -113,8 +114,8 @@ const Index = () => {
         return isVisible('mvp') ? <MVPOfTheDay selectedHousehold={selectedHousehold} /> : null;
       case 'subscription':
         return <SubscriptionManager />;
-      case 'nanny':
-        return isVisible('nanny') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
+      case 'nanny-mode':
+        return isVisible('nanny-mode') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
       case 'mental-load':
         return isVisible('mental-load') ? <MentalLoad /> : null;
       default:
