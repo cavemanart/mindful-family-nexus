@@ -6,12 +6,12 @@ import { useToast } from '@/hooks/use-toast';
 export interface HouseholdInfo {
   id: string;
   household_id: string;
-  info_type: string;
   title: string;
   value: string;
   description?: string;
-  created_at: string;
-  updated_at: string;
+  info_type: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const useHouseholdInfo = (householdId?: string) => {
@@ -30,8 +30,7 @@ export const useHouseholdInfo = (householdId?: string) => {
         .from('household_info')
         .select('*')
         .eq('household_id', householdId)
-        .order('info_type')
-        .order('title');
+        .order('created_at');
 
       if (error) {
         toast({
@@ -73,7 +72,7 @@ export const useHouseholdInfo = (householdId?: string) => {
       fetchHouseholdInfo();
       toast({
         title: "Success",
-        description: "Household info added successfully"
+        description: "Information added successfully"
       });
       return data;
     } catch (error: any) {
@@ -86,12 +85,46 @@ export const useHouseholdInfo = (householdId?: string) => {
     }
   };
 
-  const deleteHouseholdInfo = async (infoId: string) => {
+  const updateHouseholdInfo = async (id: string, updates: Partial<HouseholdInfo>) => {
+    try {
+      const { data, error } = await supabase
+        .from('household_info')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error updating household info",
+          description: error.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      fetchHouseholdInfo();
+      toast({
+        title: "Success",
+        description: "Information updated successfully"
+      });
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const deleteHouseholdInfo = async (id: string) => {
     try {
       const { error } = await supabase
         .from('household_info')
         .delete()
-        .eq('id', infoId);
+        .eq('id', id);
 
       if (error) {
         toast({
@@ -105,7 +138,7 @@ export const useHouseholdInfo = (householdId?: string) => {
       fetchHouseholdInfo();
       toast({
         title: "Success",
-        description: "Household info deleted successfully"
+        description: "Information deleted successfully"
       });
       return true;
     } catch (error: any) {
@@ -127,6 +160,7 @@ export const useHouseholdInfo = (householdId?: string) => {
     loading,
     fetchHouseholdInfo,
     addHouseholdInfo,
+    updateHouseholdInfo,
     deleteHouseholdInfo
   };
 };

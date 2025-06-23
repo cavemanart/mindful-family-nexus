@@ -88,6 +88,40 @@ export const useMedications = (householdId?: string) => {
     }
   };
 
+  const updateMedication = async (medicationId: string, updates: Partial<Medication>) => {
+    try {
+      const { data, error } = await supabase
+        .from('medications')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', medicationId)
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error updating medication",
+          description: error.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      fetchMedications();
+      toast({
+        title: "Success",
+        description: "Medication updated successfully"
+      });
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   const deleteMedication = async (medicationId: string) => {
     try {
       const { error } = await supabase
@@ -129,6 +163,7 @@ export const useMedications = (householdId?: string) => {
     loading,
     fetchMedications,
     addMedication,
+    updateMedication,
     deleteMedication
   };
 };
