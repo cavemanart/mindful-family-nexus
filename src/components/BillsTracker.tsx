@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Receipt, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Repeat, Clock, HelpCircle, Info, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useBills } from '@/hooks/useBills';
 import { Household } from '@/hooks/useHouseholds';
 import { useAuth } from '@/hooks/useAuth';
+import { useChildren } from '@/hooks/useChildren';
 import { getUserSubscription, isTrialActive, getFeatureLimits } from '@/lib/subscription-utils';
 import BillUsageIndicator from './BillUsageIndicator';
 import BillDeleteDialog from './BillDeleteDialog';
@@ -23,6 +23,7 @@ interface BillsTrackerProps {
 
 const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
+  const { children } = useChildren(selectedHousehold?.id);
   const { bills, loading, billsThisMonth, error, addBill, deleteBill, togglePaid, generateNextInstance, processRecurringBills } = useBills(selectedHousehold?.id);
   const [isAddingBill, setIsAddingBill] = useState(false);
   const [showRecurringHelp, setShowRecurringHelp] = useState(false);
@@ -105,7 +106,12 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     );
   }
 
-  const familyMembers = ['Mom', 'Dad', 'Emma', 'Jack'];
+  // Create family members list from actual household data
+  const familyMembers = [
+    ...(userProfile?.first_name ? [userProfile.first_name] : []),
+    ...children.map(child => child.first_name)
+  ].filter(Boolean);
+
   const categories = ['Utilities', 'Insurance', 'Housing', 'Healthcare', 'Transportation', 'Entertainment', 'Other'];
 
   const planType = subscription?.plan_type || 'free';
@@ -409,7 +415,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </Card>
       )}
 
-      {/* Add Bill Form */}
+      {/* Add Bill Form - Updated to use actual family members */}
       {isAddingBill && canCreateMoreBills && (
         <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50 dark:border-green-700 dark:from-green-950 dark:to-blue-950">
           <CardHeader>
