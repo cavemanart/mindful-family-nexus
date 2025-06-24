@@ -6,12 +6,11 @@ import { useHouseholdSubscription } from '@/hooks/useHouseholdSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { SUBSCRIPTION_PLANS } from '@/lib/subscription-config';
 import SubscriptionBadge from './SubscriptionBadge';
-import CurrentPlanCard from './CurrentPlanCard';
 import UpgradeOptions from './UpgradeOptions';
 import SubscriptionRefreshButton from './SubscriptionRefreshButton';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, CreditCard, Calendar, AlertCircle } from 'lucide-react';
+import { Settings, CreditCard, Calendar, AlertCircle, Crown, Gift } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from 'sonner';
 
@@ -22,6 +21,8 @@ const SubscriptionManager: React.FC = () => {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
 
+  console.log('🎫 SubscriptionManager:', { subscriptionStatus, isPro, loading });
+
   const handleUpgrade = async (planType: 'pro' | 'pro_annual') => {
     if (!userProfile || !subscriptionStatus.canManageSubscription) {
       toast.error('Only household owners can manage subscriptions.');
@@ -31,6 +32,7 @@ const SubscriptionManager: React.FC = () => {
     setCheckoutLoading(planType);
 
     try {
+      console.log('🎫 Creating checkout session for:', planType);
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           plan_type: planType,
@@ -39,7 +41,7 @@ const SubscriptionManager: React.FC = () => {
       });
 
       if (error) {
-        console.error('Checkout error:', error);
+        console.error('🎫 Checkout error:', error);
         throw error;
       }
 
@@ -50,7 +52,7 @@ const SubscriptionManager: React.FC = () => {
         throw new Error('No checkout URL received');
       }
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('🎫 Error creating checkout session:', error);
       toast.error('Failed to start checkout. Please try again.');
     } finally {
       setCheckoutLoading(null);
@@ -64,14 +66,17 @@ const SubscriptionManager: React.FC = () => {
     }
 
     setPortalLoading(true);
+    console.log('🎫 Opening customer portal...');
 
     try {
       const { data, error } = await supabase.functions.invoke('create-customer-portal', {
         body: {}
       });
 
+      console.log('🎫 Customer portal response:', { data, error });
+
       if (error) {
-        console.error('Customer portal error:', error);
+        console.error('🎫 Customer portal error:', error);
         throw error;
       }
 
@@ -79,10 +84,10 @@ const SubscriptionManager: React.FC = () => {
         window.open(data.url, '_blank');
         toast.success('Opening subscription management...');
       } else {
-        throw new Error('No portal URL received');
+        throw new Error('No portal URL received from server');
       }
     } catch (error) {
-      console.error('Error opening customer portal:', error);
+      console.error('🎫 Error opening customer portal:', error);
       toast.error('Failed to open subscription management. Please contact support if this continues.');
     } finally {
       setPortalLoading(false);
@@ -139,8 +144,6 @@ const SubscriptionManager: React.FC = () => {
   // Get prices from config (stored in cents, so divide by 100)
   const proPrice = (SUBSCRIPTION_PLANS.pro.price / 100).toFixed(2);
   const proAnnualPrice = (SUBSCRIPTION_PLANS.pro_annual.price / 100).toFixed(2);
-
-  // Calculate Pro Annual savings: (monthly pro x 12 - annual pro)
   const proAnnualSavings = (
     SUBSCRIPTION_PLANS.pro.price * 12 / 100 -
     SUBSCRIPTION_PLANS.pro_annual.price / 100
@@ -166,54 +169,75 @@ const SubscriptionManager: React.FC = () => {
         </Alert>
       )}
 
-      {/* Current Plan */}
-      <CurrentPlanCard
-        planType={planType}
-        trialActive={trialActive}
-        subscription={subscriptionStatus}
-        isPro={isPro}
-        onManageSubscription={handleManageSubscription}
-      />
+      {/* Current Plan - Single Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {isPro ? <Crown className="h-5 w-5 text-purple-600" /> : <Gift className="h-5 w-5" />}
+            Current Plan: {SUBSCRIPTION_PLANS[planType]?.name || 'Free Plan'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {trialActive && planType === 'free' && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-green-800 font-medium">🎉 Trial Active!</p>
+              <p className="text-green-700 text-sm mt-1">
+                You have access to Pro features until {subscriptionStatus.subscriptionEndDate ? new Date(subscriptionStatus.subscriptionEndDate).toLocaleDateString() : 'trial expires'}.
+              </p>
+            </div>
+          )}
 
-      {/* Subscription Management for Pro Users */}
-      {isPro && subscriptionStatus.canManageSubscription && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Subscription Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Manage your subscription, update payment methods, view billing history, or make changes to your plan.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button 
-                onClick={handleManageSubscription} 
-                disabled={portalLoading}
-                className="flex items-center gap-2"
-              >
-                <CreditCard className="h-4 w-4" />
-                {portalLoading ? 'Opening...' : 'Manage Subscription'}
-              </Button>
-              {planType === 'pro' && (
+          {isPro && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">
+                    {planType === 'pro_annual' ? 'Annual Subscription' : 'Monthly Subscription'}
+                  </p>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {subscriptionStatus.subscriptionEndDate && (
+                      `Active until ${new Date(subscriptionStatus.subscriptionEndDate).toLocaleDateString()}`
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Single Manage Subscription Button */}
+          {isPro && subscriptionStatus.canManageSubscription && (
+            <div className="pt-4 border-t space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Manage your subscription, update payment methods, view billing history, or make changes to your plan.
+              </p>
+              <div className="flex flex-wrap gap-3">
                 <Button 
-                  variant="outline" 
-                  onClick={() => handleUpgrade('pro_annual')}
-                  disabled={checkoutLoading === 'pro_annual'}
+                  onClick={handleManageSubscription} 
+                  disabled={portalLoading}
                   className="flex items-center gap-2"
                 >
-                  <Calendar className="h-4 w-4" />
-                  {checkoutLoading === 'pro_annual' ? 'Processing...' : `Upgrade to Annual (Save $${proAnnualSavings})`}
+                  <Settings className="h-4 w-4" />
+                  {portalLoading ? 'Opening...' : 'Manage Subscription'}
                 </Button>
-              )}
+                {planType === 'pro' && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleUpgrade('pro_annual')}
+                    disabled={checkoutLoading === 'pro_annual'}
+                    className="flex items-center gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {checkoutLoading === 'pro_annual' ? 'Processing...' : `Upgrade to Annual (Save $${proAnnualSavings})`}
+                  </Button>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
-      {/* Upgrade Options */}
+      {/* Upgrade Options for Free Users */}
       {!isPro && subscriptionStatus.canManageSubscription && (
         <UpgradeOptions
           proPrice={proPrice}

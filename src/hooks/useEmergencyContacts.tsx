@@ -85,6 +85,40 @@ export const useEmergencyContacts = (householdId?: string) => {
     }
   };
 
+  const updateContact = async (contactId: string, updates: Partial<EmergencyContact>) => {
+    try {
+      const { data, error } = await supabase
+        .from('emergency_contacts')
+        .update(updates)
+        .eq('id', contactId)
+        .select()
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error updating contact",
+          description: error.message,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      fetchContacts();
+      toast({
+        title: "Success",
+        description: "Emergency contact updated successfully"
+      });
+      return data;
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   const deleteContact = async (contactId: string) => {
     try {
       const { error } = await supabase
@@ -126,6 +160,7 @@ export const useEmergencyContacts = (householdId?: string) => {
     loading,
     fetchContacts,
     addContact,
+    updateContact,
     deleteContact
   };
 };

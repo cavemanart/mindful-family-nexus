@@ -25,11 +25,13 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
   householdId, 
   onLogout 
 }) => {
-  const { contacts } = useEmergencyContacts(householdId);
+  const { contacts, addContact, updateContact, deleteContact } = useEmergencyContacts(householdId);
   const { medications, addMedication, updateMedication, deleteMedication } = useMedications(householdId);
   const { householdInfo, addHouseholdInfo, updateHouseholdInfo, deleteHouseholdInfo } = useHouseholdInfo(householdId);
   const { notes } = useFamilyNotes(householdId);
   const [showCodes, setShowCodes] = useState(false);
+
+  console.log('🏠 SimplifiedNannyDashboard:', { householdId, contactCount: contacts.length });
 
   const nannyNotes = notes.filter(note => 
     note.content.toLowerCase().includes('nanny') || 
@@ -81,7 +83,13 @@ const SimplifiedNannyDashboard: React.FC<SimplifiedNannyDashboardProps> = ({
           </div>
         </Alert>
 
-        <EmergencyContactsCard contacts={contacts} />
+        <EmergencyContactsCard 
+          contacts={contacts} 
+          onUpdate={updateContact}
+          onDelete={deleteContact}
+          onAdd={addContact}
+          canEdit={true}
+        />
         
         <MedicationsCard 
           medications={medications} 
