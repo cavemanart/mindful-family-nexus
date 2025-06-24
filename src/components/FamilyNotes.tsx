@@ -273,7 +273,6 @@ const FamilyNotes: React.FC<FamilyNotesProps> = ({ householdId, canEdit = true }
                   ))}
                 </div>
               </div>
-              )}
             )}
           </div>
         )}
