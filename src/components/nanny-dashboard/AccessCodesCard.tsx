@@ -13,9 +13,9 @@ interface AccessCodesCardProps {
   accessCodes: HouseholdInfo[];
   showCodes: boolean;
   setShowCodes: (show: boolean) => void;
-  onUpdate?: (id: string, updates: Partial<HouseholdInfo>) => Promise<void>;
-  onDelete?: (id: string) => Promise<void>;
-  onAdd?: (info: Omit<HouseholdInfo, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  onUpdate?: (id: string, updates: Partial<HouseholdInfo>) => Promise<any>;
+  onDelete?: (id: string) => Promise<any>;
+  onAdd?: (info: Omit<HouseholdInfo, 'id' | 'created_at' | 'updated_at'>) => Promise<any>;
   canEdit?: boolean;
 }
 

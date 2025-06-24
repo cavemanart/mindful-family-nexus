@@ -103,7 +103,7 @@ const Index = () => {
           </BillsErrorBoundary>
         ) : null;
       case 'notes':
-        return isVisible('notes') ? <FamilyNotes selectedHousehold={selectedHousehold} /> : null;
+        return isVisible('notes') ? <FamilyNotes householdId={selectedHousehold.id} canEdit={true} /> : null;
       case 'rules':
         return isVisible('rules') ? <HouseRulesManager householdId={selectedHousehold.id} canEdit={true} /> : null;
       case 'weekly-sync':

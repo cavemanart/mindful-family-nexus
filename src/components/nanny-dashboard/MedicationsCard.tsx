@@ -12,9 +12,9 @@ import type { Medication } from '@/hooks/useMedications';
 
 interface MedicationsCardProps {
   medications: Medication[];
-  onUpdate?: (medicationId: string, updates: Partial<Medication>) => Promise<void>;
-  onDelete?: (medicationId: string) => Promise<void>;
-  onAdd?: (medication: Omit<Medication, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  onUpdate?: (medicationId: string, updates: Partial<Medication>) => Promise<any>;
+  onDelete?: (medicationId: string) => Promise<any>;
+  onAdd?: (medication: Omit<Medication, 'id' | 'created_at' | 'updated_at'>) => Promise<any>;
   canEdit?: boolean;
 }
 
