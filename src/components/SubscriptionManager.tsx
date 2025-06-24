@@ -9,16 +9,22 @@ import SubscriptionBadge from './SubscriptionBadge';
 import CurrentPlanCard from './CurrentPlanCard';
 import UpgradeOptions from './UpgradeOptions';
 import SubscriptionRefreshButton from './SubscriptionRefreshButton';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Settings, CreditCard, Calendar, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from 'sonner';
 
 const SubscriptionManager: React.FC = () => {
   const { userProfile } = useAuth();
   const { selectedHousehold } = useHouseholds();
   const { subscriptionStatus, loading, isPro, refresh } = useHouseholdSubscription();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const handleUpgrade = async (planType: 'pro' | 'pro_annual') => {
     if (!userProfile || !subscriptionStatus.canManageSubscription) {
-      alert('Only household owners can manage subscriptions.');
+      toast.error('Only household owners can manage subscriptions.');
       return;
     }
 
@@ -32,14 +38,20 @@ const SubscriptionManager: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Checkout error:', error);
+        throw error;
+      }
 
       if (data?.url) {
         window.open(data.url, '_blank');
+        toast.success('Redirecting to checkout...');
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      alert('Failed to start checkout. Please try again.');
+      toast.error('Failed to start checkout. Please try again.');
     } finally {
       setCheckoutLoading(null);
     }
@@ -47,26 +59,45 @@ const SubscriptionManager: React.FC = () => {
 
   const handleManageSubscription = async () => {
     if (!subscriptionStatus.canManageSubscription) {
-      alert('Only household owners can manage subscriptions.');
+      toast.error('Only household owners can manage subscriptions.');
       return;
     }
 
-    try {
-      const { data, error } = await supabase.functions.invoke('create-customer-portal');
+    setPortalLoading(true);
 
-      if (error) throw error;
+    try {
+      const { data, error } = await supabase.functions.invoke('create-customer-portal', {
+        body: {}
+      });
+
+      if (error) {
+        console.error('Customer portal error:', error);
+        throw error;
+      }
 
       if (data?.url) {
         window.open(data.url, '_blank');
+        toast.success('Opening subscription management...');
+      } else {
+        throw new Error('No portal URL received');
       }
     } catch (error) {
       console.error('Error opening customer portal:', error);
-      alert('Failed to open subscription management. Please try again.');
+      toast.error('Failed to open subscription management. Please contact support if this continues.');
+    } finally {
+      setPortalLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading subscription info...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading subscription info...</p>
+        </div>
+      </div>
+    );
   }
 
   // Show different content for non-owners when household has subscription
@@ -83,15 +114,17 @@ const SubscriptionManager: React.FC = () => {
         </div>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-green-800 mb-2">
-            🎉 Your household has {SUBSCRIPTION_PLANS[subscriptionStatus.planType]?.name}!
+          <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Your household has {SUBSCRIPTION_PLANS[subscriptionStatus.planType]?.name}!
           </h3>
           <p className="text-green-700">
             You have access to all Pro features as part of your household's subscription. 
             Only the household owner can manage subscription settings.
           </p>
           {subscriptionStatus.subscriptionEndDate && (
-            <p className="text-sm text-green-600 mt-2">
+            <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
               Subscription active until {new Date(subscriptionStatus.subscriptionEndDate).toLocaleDateString()}
             </p>
           )}
@@ -125,11 +158,12 @@ const SubscriptionManager: React.FC = () => {
       </div>
 
       {!subscriptionStatus.canManageSubscription && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
             Only household owners can manage subscription settings.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Current Plan */}
@@ -140,6 +174,44 @@ const SubscriptionManager: React.FC = () => {
         isPro={isPro}
         onManageSubscription={handleManageSubscription}
       />
+
+      {/* Subscription Management for Pro Users */}
+      {isPro && subscriptionStatus.canManageSubscription && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Subscription Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Manage your subscription, update payment methods, view billing history, or make changes to your plan.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                onClick={handleManageSubscription} 
+                disabled={portalLoading}
+                className="flex items-center gap-2"
+              >
+                <CreditCard className="h-4 w-4" />
+                {portalLoading ? 'Opening...' : 'Manage Subscription'}
+              </Button>
+              {planType === 'pro' && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleUpgrade('pro_annual')}
+                  disabled={checkoutLoading === 'pro_annual'}
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  {checkoutLoading === 'pro_annual' ? 'Processing...' : `Upgrade to Annual (Save $${proAnnualSavings})`}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Upgrade Options */}
       {!isPro && subscriptionStatus.canManageSubscription && (
