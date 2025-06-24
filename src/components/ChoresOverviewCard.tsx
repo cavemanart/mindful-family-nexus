@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, Clock, User } from 'lucide-react';
 import { useChores } from '@/hooks/useChores';
 import { useChildren } from '@/hooks/useChildren';
+import EditableChoreDialog from './EditableChoreDialog'; //added. remove if needed.
 
 interface ChoresOverviewCardProps {
   householdId: string;
@@ -105,7 +106,43 @@ const ChoresOverviewCard: React.FC<ChoresOverviewCardProps> = ({
             </div>
           </div>
         )}
-
+        {/* Editable Chore Cards */}
+{Object.entries(choresByChild).map(([childId, childChores]) => (
+  <div key={childId} className="space-y-2">
+    <h4 className="text-sm font-medium">{children.find(c => c.id === childId)?.name || 'Unknown'}'s Chores:</h4>
+    {childChores.map((chore) => (
+      <div
+        key={chore.id}
+        className="flex items-center justify-between border rounded p-2 bg-white dark:bg-gray-900"
+      >
+        <div>
+          <p className="font-medium">{chore.title}</p>
+          <p className="text-sm text-muted-foreground">{chore.description}</p>
+        </div>
+        <div className="flex gap-2">
+          <EditableChoreDialog
+            householdId={householdId}
+            initialData={chore}
+            onSubmit={() => window.location.reload()} // or trigger a refresh method
+            trigger={<Button size="sm" variant="outline">Edit</Button>}
+          />
+          <Button
+            size="icon"
+            variant="destructive"
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this chore?")) {
+                // You can call useChores().deleteChore or expose it via props
+                console.log("Call deleteChore here for ID:", chore.id);
+              }
+            }}
+          >
+            🗑
+          </Button>
+        </div>
+      </div>
+    ))}
+  </div>
+))}
         {/* No chores message */}
         {chores.length === 0 && (
           <div className="text-center py-6">
