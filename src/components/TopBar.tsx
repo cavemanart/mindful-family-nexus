@@ -31,6 +31,11 @@ const TopBar: React.FC<TopBarProps> = ({
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  // Remove duplicates and ensure unique households
+  const uniqueHouseholds = households.filter((household, index, self) => 
+    index === self.findIndex(h => h.id === household.id)
+  );
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between px-4">
@@ -76,15 +81,15 @@ const TopBar: React.FC<TopBarProps> = ({
                 />
 
                 {/* Household Selector */}
-                {households.length > 0 && (
+                {uniqueHouseholds.length > 0 && (
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Household</label>
-                    <Select onValueChange={onHouseholdChange} defaultValue={households[0].id}>
+                    <Select onValueChange={onHouseholdChange} value={selectedHousehold?.id || ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select household" />
                       </SelectTrigger>
                       <SelectContent>
-                        {households.map((household) => (
+                        {uniqueHouseholds.map((household) => (
                           <SelectItem key={household.id} value={household.id}>
                             {household.name}
                           </SelectItem>
@@ -99,13 +104,13 @@ const TopBar: React.FC<TopBarProps> = ({
 
           {/* Desktop User Info */}
           <div className="hidden md:flex items-center space-x-3">
-            {households.length > 0 && (
-              <Select onValueChange={onHouseholdChange} defaultValue={households[0].id}>
+            {uniqueHouseholds.length > 0 && (
+              <Select onValueChange={onHouseholdChange} value={selectedHousehold?.id || ''}>
                 <SelectTrigger className="w-[160px] h-8">
                   <SelectValue placeholder="Select household" />
                 </SelectTrigger>
                 <SelectContent>
-                  {households.map((household) => (
+                  {uniqueHouseholds.map((household) => (
                     <SelectItem key={household.id} value={household.id}>
                       {household.name}
                     </SelectItem>

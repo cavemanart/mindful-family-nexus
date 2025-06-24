@@ -28,6 +28,11 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  // Remove duplicates and ensure unique households
+  const uniqueHouseholds = households.filter((household, index, self) => 
+    index === self.findIndex(h => h.id === household.id)
+  );
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between px-4">
@@ -70,13 +75,13 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({
           {/* Desktop Controls */}
           <div className="hidden md:flex items-center space-x-3">
             {/* Simple Household Selector */}
-            {households.length > 0 && (
+            {uniqueHouseholds.length > 0 && (
               <select 
                 className="px-3 py-1 border rounded-md bg-background text-foreground"
                 value={selectedHousehold?.id || ''}
                 onChange={(e) => onHouseholdChange(e.target.value)}
               >
-                {households.map((household) => (
+                {uniqueHouseholds.map((household) => (
                   <option key={household.id} value={household.id}>
                     {household.name}
                   </option>
@@ -98,7 +103,7 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({
         <div className="md:hidden border-t bg-background">
           <div className="p-4 space-y-4">
             {/* Mobile Household Selector */}
-            {households.length > 0 && (
+            {uniqueHouseholds.length > 0 && (
               <div>
                 <label className="block text-sm font-medium mb-1">Household</label>
                 <select 
@@ -106,7 +111,7 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({
                   value={selectedHousehold?.id || ''}
                   onChange={(e) => onHouseholdChange(e.target.value)}
                 >
-                  {households.map((household) => (
+                  {uniqueHouseholds.map((household) => (
                     <option key={household.id} value={household.id}>
                       {household.name}
                     </option>
