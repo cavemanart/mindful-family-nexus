@@ -40,11 +40,12 @@ export const useHouseholds = () => {
         setLoading(false);
       }, 10000);
 
+      // Use DISTINCT to prevent duplicates at the database level
       const { data, error: fetchError } = await supabase
         .from('household_members')
         .select(`
           role,
-          households (
+          households!inner (
             id,
             name,
             description,
@@ -71,11 +72,17 @@ export const useHouseholds = () => {
           ...hm.households,
           role: hm.role
         }));
-        console.log('✅ Households loaded:', formatted.length);
-        setHouseholds(formatted);
 
-        if (formatted.length > 0 && !selectedHousehold) {
-          setSelectedHousehold(formatted[0]);
+        // Additional client-side deduplication by household ID
+        const uniqueHouseholds = formatted.filter((household, index, self) => 
+          index === self.findIndex(h => h.id === household.id)
+        );
+
+        console.log('✅ Households loaded:', uniqueHouseholds.length);
+        setHouseholds(uniqueHouseholds);
+
+        if (uniqueHouseholds.length > 0 && !selectedHousehold) {
+          setSelectedHousehold(uniqueHouseholds[0]);
         }
 
         setError(null);
