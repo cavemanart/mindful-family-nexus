@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +41,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   const [selectedEvent, setSelectedEvent] = useState<AdvancedCalendarEvent | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
 
-  const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
+  // Allow all authenticated users (including children) to create events
+  const canCreateEvents = !!userProfile;
 
   // Filter events by categories and keywords
   const filteredEvents = events.filter(event => {
@@ -271,11 +273,11 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         />
       )}
 
-      {/* Alert for non-creators */}
+      {/* Alert for non-authenticated users */}
       {!canCreateEvents && (
         <Alert className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
           <AlertDescription className="text-blue-800 dark:text-blue-200">
-            Only parents and grandparents can create events. You can view family events above.
+            You need to be signed in to create events.
           </AlertDescription>
         </Alert>
       )}

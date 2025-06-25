@@ -25,7 +25,8 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
   const { events, loading, error, createEvent, deleteEvent } = useSimpleCalendarEvents(selectedHousehold?.id || null);
   const { subscriptionStatus, loading: subscriptionLoading, hasProAccess } = useHouseholdSubscription();
 
-  const canCreateEvents = userProfile?.role === 'parent' || userProfile?.role === 'grandparent';
+  // Allow all authenticated users (including children) to create events
+  const canCreateEvents = !!userProfile;
 
   if (!selectedHousehold) {
     return (
@@ -100,7 +101,7 @@ const FamilyCalendar: React.FC<FamilyCalendarProps> = ({ selectedHousehold }) =>
         <Card className="bg-card dark:bg-card border-border dark:border-border">
           <CardContent className="p-4">
             <p className="text-center text-gray-600 dark:text-gray-400">
-              Only parents and grandparents can create events. You can view family events above.
+              You need to be signed in to create events.
             </p>
           </CardContent>
         </Card>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,7 +30,7 @@ export const AVAILABLE_PAGES: AvailablePage[] = [
   { key: 'bills', label: 'Bills Tracker', description: 'Manage household bills', category: 'management', parentOnly: true },
   { key: 'notes', label: 'Family Notes', description: 'Shared family notes', category: 'family' },
   { key: 'calendar', label: 'Family Calendar', description: 'Household calendar and events', category: 'family' },
-  { key: 'mental-load', label: 'Mental Load', description: 'Task management and planning', category: 'management' },
+  { key: 'mental-load', label: 'Mental Load', description: 'Task management and planning', category: 'management', parentOnly: true },
   { key: 'nanny-mode', label: 'Nanny Mode', description: 'Caregiver dashboard', category: 'management', parentOnly: true },
   { key: 'children', label: 'Children Dashboard', description: 'Manage children profiles', category: 'family' },
   { key: 'weekly-sync', label: 'Weekly Goals', description: 'Set and track weekly goals', category: 'management' },
