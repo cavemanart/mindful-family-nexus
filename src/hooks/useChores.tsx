@@ -107,6 +107,32 @@ export const useChores = (householdId: string | null) => {
     }
   };
 
+  const deleteChore = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('chores')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Chore deleted successfully!",
+      });
+      
+      fetchChores();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error deleting chore",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const toggleChore = async (id: string) => {
     try {
       const chore = chores.find(c => c.id === id);
@@ -143,6 +169,7 @@ export const useChores = (householdId: string | null) => {
     addChore,
     createChore,
     updateChore,
+    deleteChore,
     toggleChore,
     refetch: fetchChores
   };

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Star, CheckCircle, Clock, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users } from 'lucide-react';
+import { Star, CheckCircle, Clock, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +8,18 @@ import { useChildren } from '@/hooks/useChildren';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import ChildSelector from './ChildSelector';
 import HouseholdJoinCodeCard from "./HouseholdJoinCodeCard";
+import EditableChoreDialog from './EditableChoreDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ChildrenDashboardProps {
   selectedHousehold: { id: string } | null;
@@ -27,12 +38,15 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
     chores,
     loading: choresLoading,
     toggleChore,
+    deleteChore,
   } = useChores(selectedHousehold?.id || null);
 
   const {
     goals,
     wins,
     loading: weeklyLoading,
+    toggleGoal,
+    deleteGoal,
   } = useWeeklyData(selectedHousehold?.id || null);
 
   const [selectedChild, setSelectedChild] = useState('');
@@ -170,6 +184,14 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
   const completedGoals = childGoals.filter(goal => goal.completed);
 
+  const handleDeleteChore = async (choreId: string) => {
+    await deleteChore(choreId);
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    await deleteGoal(goalId);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Child Selector */}
@@ -294,9 +316,42 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
                         </span>
                       </div>
                     </div>
-                    <Badge variant={chore.completed ? "default" : "secondary"}>
-                      {chore.completed ? 'Done!' : 'To Do'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={chore.completed ? "default" : "secondary"}>
+                        {chore.completed ? 'Done!' : 'To Do'}
+                      </Badge>
+                      <EditableChoreDialog
+                        householdId={selectedHousehold.id}
+                        initialData={chore}
+                        onSubmit={() => window.location.reload()}
+                        trigger={
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{chore.title}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteChore(chore.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -336,9 +391,32 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
                       </h4>
                       <p className="text-sm text-gray-600">{goal.description}</p>
                     </div>
-                    <Badge variant={goal.completed ? "default" : "secondary"}>
-                      {goal.completed ? 'Achieved!' : 'In Progress'}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={goal.completed ? "default" : "secondary"}>
+                        {goal.completed ? 'Achieved!' : 'In Progress'}
+                      </Badge>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Goal</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{goal.title}"? This action cannot be undone.
+                            </AlertDialoreogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteGoal(goal.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               ))}

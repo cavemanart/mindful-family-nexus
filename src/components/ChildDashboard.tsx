@@ -6,8 +6,20 @@ import { useChores } from '@/hooks/useChores';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Star, Trophy, Calendar, Target } from 'lucide-react';
+import { CheckCircle, Star, Trophy, Calendar, Target, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import EditableChoreDialog from './EditableChoreDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ChildDashboardProps {
   selectedHousehold?: Household | null;
@@ -15,8 +27,8 @@ interface ChildDashboardProps {
 
 const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
-  const { chores, toggleChore } = useChores(selectedHousehold?.id);
-  const { wins, goals } = useWeeklyData(selectedHousehold?.id || null);
+  const { chores, toggleChore, deleteChore } = useChores(selectedHousehold?.id);
+  const { wins, goals, toggleGoal, deleteGoal } = useWeeklyData(selectedHousehold?.id || null);
 
   if (!selectedHousehold) {
     return (
@@ -55,6 +67,14 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   };
 
   const reward = getRewardLevel(totalPoints);
+
+  const handleDeleteChore = async (choreId: string) => {
+    await deleteChore(choreId);
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    await deleteGoal(goalId);
+  };
 
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -147,21 +167,54 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                         </span>
                       </div>
                     </div>
-                    <Button
-                      variant={chore.completed ? "secondary" : "default"}
-                      size="lg"
-                      onClick={() => toggleChore(chore.id)}
-                      className={chore.completed ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
-                    >
-                      {chore.completed ? (
-                        <>
-                          <CheckCircle className="h-5 w-5 mr-2" />
-                          Done!
-                        </>
-                      ) : (
-                        "Mark Done"
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={chore.completed ? "secondary" : "default"}
+                        size="sm"
+                        onClick={() => toggleChore(chore.id)}
+                        className={chore.completed ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                      >
+                        {chore.completed ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Done!
+                          </>
+                        ) : (
+                          "Mark Done"
+                        )}
+                      </Button>
+                      <EditableChoreDialog
+                        householdId={selectedHousehold.id}
+                        initialData={chore}
+                        onSubmit={() => window.location.reload()}
+                        trigger={
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        }
+                      />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{chore.title}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteChore(chore.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               ))
@@ -192,9 +245,14 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                 }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-2 flex-1">
-                      <CheckCircle className={`h-4 w-4 mt-1 flex-shrink-0 ${
-                        goal.completed ? 'text-green-500' : 'text-gray-300'
-                      }`} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleGoal(goal.id)}
+                        className={`p-1 ${goal.completed ? 'text-green-500' : 'text-gray-300'}`}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
                       <div>
                         <h4 className={`font-medium text-sm ${
                           goal.completed ? 'text-green-800 line-through' : 'text-gray-800'
@@ -204,9 +262,32 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                         <p className="text-xs text-muted-foreground">{goal.description}</p>
                       </div>
                     </div>
-                    <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs">
-                      {goal.completed ? 'Done!' : 'In Progress'}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs">
+                        {goal.completed ? 'Done!' : 'In Progress'}
+                      </Badge>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Goal</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{goal.title}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteGoal(goal.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               ))

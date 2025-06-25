@@ -2,10 +2,21 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, User } from 'lucide-react';
+import { CheckCircle, Clock, User, Trash2 } from 'lucide-react';
 import { useChores } from '@/hooks/useChores';
 import { useChildren } from '@/hooks/useChildren';
 import EditableChoreDialog from './EditableChoreDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ChoresOverviewCardProps {
   householdId: string;
@@ -16,7 +27,7 @@ const ChoresOverviewCard: React.FC<ChoresOverviewCardProps> = ({
   householdId, 
   onNavigateToChildren 
 }) => {
-  const { chores, loading } = useChores(householdId);
+  const { chores, loading, deleteChore } = useChores(householdId);
   const { children } = useChildren(householdId);
 
   if (loading) {
@@ -50,6 +61,10 @@ const ChoresOverviewCard: React.FC<ChoresOverviewCardProps> = ({
     acc[chore.assigned_to].push(chore);
     return acc;
   }, {} as Record<string, typeof chores>);
+
+  const handleDeleteChore = async (choreId: string) => {
+    await deleteChore(choreId);
+  };
 
   return (
     <Card>
@@ -129,17 +144,27 @@ const ChoresOverviewCard: React.FC<ChoresOverviewCardProps> = ({
                     onSubmit={() => window.location.reload()}
                     trigger={<Button size="sm" variant="outline">Edit</Button>}
                   />
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this chore?")) {
-                        console.log("Call deleteChore here for ID:", chore.id);
-                      }
-                    }}
-                  >
-                    🗑
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Chore</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{chore.title}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteChore(chore.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             ))}
