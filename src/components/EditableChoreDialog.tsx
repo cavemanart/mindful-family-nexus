@@ -1,5 +1,4 @@
-// components/EditableChoreDialog.tsx
-// this is code I ingected, but can be removed safely if needed.
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,8 @@ const EditableChoreDialog: React.FC<EditableChoreDialogProps> = ({ householdId, 
     description: '',
     points: 10,
     due_date: '',
-    assigned_to: ''
+    assigned_to: '',
+    completed: false
   });
 
   const { children } = useChildren(householdId);
@@ -30,7 +30,14 @@ const EditableChoreDialog: React.FC<EditableChoreDialogProps> = ({ householdId, 
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        points: initialData.points || 10,
+        due_date: initialData.due_date || '',
+        assigned_to: initialData.assigned_to || '',
+        completed: initialData.completed || false
+      });
     }
   }, [initialData]);
 
@@ -78,7 +85,7 @@ const EditableChoreDialog: React.FC<EditableChoreDialogProps> = ({ householdId, 
         >
           <option value="">Assign to...</option>
           {children.map((child: any) => (
-            <option key={child.id} value={child.id}>{child.name}</option>
+            <option key={child.id} value={child.id}>{child.first_name}</option>
           ))}
         </select>
         <Button onClick={handleSubmit}>{initialData ? 'Save Changes' : 'Create Chore'}</Button>
