@@ -74,6 +74,39 @@ export const useChores = (householdId: string | null) => {
     }
   };
 
+  const createChore = async (choreData: Omit<Chore, 'id' | 'created_at' | 'updated_at' | 'household_id'>) => {
+    return await addChore(choreData);
+  };
+
+  const updateChore = async (id: string, choreData: Partial<Omit<Chore, 'id' | 'created_at' | 'updated_at' | 'household_id'>>) => {
+    try {
+      const { error } = await supabase
+        .from('chores')
+        .update({ 
+          ...choreData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Chore updated successfully!",
+      });
+      
+      fetchChores();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Error updating chore",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const toggleChore = async (id: string) => {
     try {
       const chore = chores.find(c => c.id === id);
@@ -108,6 +141,8 @@ export const useChores = (householdId: string | null) => {
     chores,
     loading,
     addChore,
+    createChore,
+    updateChore,
     toggleChore,
     refetch: fetchChores
   };
