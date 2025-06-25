@@ -128,6 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_OUT') {
           setError(null);
+          // Clear any cached data
+          localStorage.removeItem('selectedHouseholdId');
+          localStorage.removeItem('child_device_id');
         }
       }
     );
@@ -170,9 +173,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     console.log('🚪 Signing out user');
-    await supabase.auth.signOut();
-    setUserProfile(null);
-    setError(null);
+    try {
+      // Clear local state first
+      setUserProfile(null);
+      setError(null);
+      
+      // Clear any cached data
+      localStorage.removeItem('selectedHouseholdId');
+      localStorage.removeItem('child_device_id');
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+      
+      // For PWA, use window.location.href to ensure proper navigation
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('🔄 PWA detected, using location.href for navigation');
+        window.location.href = '/';
+      }
+    } catch (error) {
+      console.error('❌ Error during sign out:', error);
+    }
   };
 
   const value = {

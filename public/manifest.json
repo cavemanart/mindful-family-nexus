@@ -13,13 +13,13 @@
       "src": "/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["lifestyle", "productivity"],

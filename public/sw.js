@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'hublie-v1';
+const CACHE_NAME = 'hublie-v2';
 const urlsToCache = [
   '/',
   '/dashboard',
@@ -8,7 +8,8 @@ const urlsToCache = [
   '/nanny',
   '/static/js/bundle.js',
   '/static/css/main.css',
-  '/manifest.json'
+  '/manifest.json',
+  '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png'
 ];
 
 // Install event - cache resources
@@ -49,6 +50,17 @@ self.addEventListener('fetch', (event) => {
 
   // Skip external requests
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Handle navigation requests specially for PWA
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return caches.match('/') || caches.match('/dashboard');
+        })
+    );
     return;
   }
 
@@ -100,8 +112,8 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New update available!',
-    icon: '/placeholder.svg',
-    badge: '/placeholder.svg',
+    icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+    badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),

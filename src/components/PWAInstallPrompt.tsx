@@ -25,28 +25,34 @@ const PWAInstallPrompt = () => {
       const isInWebAppiOS = (window.navigator as any).standalone === true;
       const isInstalled = isStandalone || isInWebAppiOS;
       setIsInstalled(isInstalled);
+      
+      console.log('📱 PWA install status:', { isStandalone, isInWebAppiOS, isInstalled });
     };
 
     checkInstalled();
 
     const handler = (e: Event) => {
-      console.log('PWA install prompt event triggered');
+      console.log('📱 PWA install prompt event triggered');
       // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
       // Stash the event so it can be triggered later
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Only show if not already installed
-      if (!isInstalled) {
+      // Only show if not already installed and not recently dismissed
+      const lastDismissed = localStorage.getItem('pwa-install-dismissed');
+      const recentlyDismissed = lastDismissed && Date.now() - parseInt(lastDismissed) < 24 * 60 * 60 * 1000;
+      
+      if (!isInstalled && !recentlyDismissed) {
         setShowInstallPrompt(true);
       }
     };
 
     const appInstalledHandler = () => {
-      console.log('PWA was installed');
+      console.log('📱 PWA was installed');
       setIsInstalled(true);
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
+      localStorage.removeItem('pwa-install-dismissed');
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -60,7 +66,7 @@ const PWAInstallPrompt = () => {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
-      console.log('No deferred prompt available');
+      console.log('❌ No deferred prompt available');
       return;
     }
 
@@ -71,13 +77,16 @@ const PWAInstallPrompt = () => {
       // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice;
       
-      console.log(`User ${outcome} the install prompt`);
+      console.log(`📱 User ${outcome} the install prompt`);
 
       if (outcome === 'accepted') {
         setIsInstalled(true);
+      } else {
+        // Store dismissal to avoid immediate re-prompt
+        localStorage.setItem('pwa-install-dismissed', Date.now().toString());
       }
     } catch (error) {
-      console.error('Error during install prompt:', error);
+      console.error('❌ Error during install prompt:', error);
     } finally {
       // Clear the deferredPrompt so it can only be used once
       setDeferredPrompt(null);
@@ -91,14 +100,8 @@ const PWAInstallPrompt = () => {
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  // Don't show if already installed or recently dismissed
-  if (isInstalled || !showInstallPrompt) {
-    return null;
-  }
-
-  // Check if recently dismissed (within 24 hours)
-  const lastDismissed = localStorage.getItem('pwa-install-dismissed');
-  if (lastDismissed && Date.now() - parseInt(lastDismissed) < 24 * 60 * 60 * 1000) {
+  // Don't show if already installed or no prompt available
+  if (isInstalled || !showInstallPrompt || !deferredPrompt) {
     return null;
   }
 
@@ -110,10 +113,10 @@ const PWAInstallPrompt = () => {
             <Download className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             <div>
               <p className="font-medium text-blue-900 dark:text-blue-100 text-sm">
-                Install Hublie
+                Install Hublie App
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-300">
-                Install our app for a better experience
+                Get the full app experience with offline access
               </p>
             </div>
           </div>
