@@ -406,7 +406,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
                             <AlertDialogTitle>Delete Goal</AlertDialogTitle>
                             <AlertDialogDescription>
                               Are you sure you want to delete "{goal.title}"? This action cannot be undone.
-                            </AlertDialoreogDescription>
+                            </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
