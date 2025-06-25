@@ -1,143 +1,110 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Menu, Moon, Sun, Users, X } from "lucide-react";
-import { useTheme } from "@/components/theme-provider";
-import { Household } from '@/hooks/useHouseholds';
+import { Menu, X, Home, User, Settings, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import HouseholdSelector from './HouseholdSelector';
 import CleanUserProfile from './CleanUserProfile';
+import { useChildSession } from '@/hooks/useChildSession';
 
 interface CleanTopBarProps {
-  user: any;
-  households: Household[];
-  selectedHousehold: Household | null;
-  onHouseholdChange: (householdId: string) => void;
-  onSignOut: () => void;
+  selectedHousehold: any;
+  onHouseholdChange: (household: any) => void;
 }
 
-const CleanTopBar: React.FC<CleanTopBarProps> = ({
-  user,
-  households,
-  selectedHousehold,
-  onHouseholdChange,
-  onSignOut
-}) => {
-  const { theme, setTheme } = useTheme();
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+const CleanTopBar: React.FC<CleanTopBarProps> = ({ selectedHousehold, onHouseholdChange }) => {
+  const { userProfile } = useAuth();
+  const { isChildMode } = useChildSession();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Remove duplicates and ensure unique households
-  const uniqueHouseholds = households.filter((household, index, self) => 
-    index === self.findIndex(h => h.id === household.id)
-  );
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  if (!userProfile) {
+    return null;
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between px-4">
-        <div className="flex items-center space-x-3">
-          <h1 className="text-lg font-bold text-foreground">
-            Family Hub
-          </h1>
-          {selectedHousehold && (
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-              <Users size={14} />
-              <span>{selectedHousehold.name}</span>
-            </div>
-          )}
-        </div>
+    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo/Brand */}
+          <div className="flex items-center">
+            <Home className="h-6 w-6 text-primary mr-2" />
+            <span className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+              {isChildMode ? 'Kids Mode' : 'Family Hub'}
+            </span>
+          </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Theme Toggle */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleTheme}
-            className="h-8 w-8 px-0"
-          >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            <HouseholdSelector
+              selectedHousehold={selectedHousehold}
+              onHouseholdChange={onHouseholdChange}
+            />
+            <CleanUserProfile />
+          </div>
 
           {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 px-0 md:hidden"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-          >
-            {showMobileMenu ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            <span className="sr-only">Toggle menu</span>
-          </Button>
-
-          {/* Desktop Controls */}
-          <div className="hidden md:flex items-center space-x-3">
-            {/* Simple Household Selector */}
-            {uniqueHouseholds.length > 0 && (
-              <select 
-                className="px-3 py-1 border rounded-md bg-background text-foreground"
-                value={selectedHousehold?.id || ''}
-                onChange={(e) => onHouseholdChange(e.target.value)}
-              >
-                {uniqueHouseholds.map((household) => (
-                  <option key={household.id} value={household.id}>
-                    {household.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            
-            <CleanUserProfile 
-              user={user}
-              selectedHousehold={selectedHousehold}
-              onSignOut={onSignOut}
-            />
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMobileMenu}
+              className="p-2"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {showMobileMenu && (
-        <div className="md:hidden border-t bg-background">
-          <div className="p-4 space-y-4">
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4 space-y-4">
             {/* Mobile Household Selector */}
-            {uniqueHouseholds.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium mb-1">Household</label>
-                <select 
-                  className="w-full px-3 py-2 border rounded-md bg-background text-foreground"
-                  value={selectedHousehold?.id || ''}
-                  onChange={(e) => onHouseholdChange(e.target.value)}
-                >
-                  {uniqueHouseholds.map((household) => (
-                    <option key={household.id} value={household.id}>
-                      {household.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="px-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Users className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Household
+                </span>
               </div>
-            )}
-            
-            {/* Mobile User Info */}
-            <CleanUserProfile 
-              user={user}
-              selectedHousehold={selectedHousehold}
-              onSignOut={onSignOut}
-            />
-          </div>
-        </div>
-      )}
+              <div onClick={closeMobileMenu}>
+                <HouseholdSelector
+                  selectedHousehold={selectedHousehold}
+                  onHouseholdChange={(household) => {
+                    onHouseholdChange(household);
+                    closeMobileMenu();
+                  }}
+                />
+              </div>
+            </div>
 
-      {/* Mobile menu overlay */}
-      {showMobileMenu && (
-        <div 
-          className="fixed inset-0 z-40 md:hidden" 
-          onClick={() => setShowMobileMenu(false)}
-        />
-      )}
-    </header>
+            {/* Mobile User Profile */}
+            <div className="px-2">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Profile
+                </span>
+              </div>
+              <div onClick={closeMobileMenu}>
+                <CleanUserProfile />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
