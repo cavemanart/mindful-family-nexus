@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2 } from 'lucide-react';
+import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import NannyTokenGenerator from './NannyTokenGenerator';
-import NannyTokenManager from './NannyTokenManager';
 import HouseRulesManager from './HouseRulesManager';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
@@ -19,6 +19,7 @@ import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
 import { useMedications } from '@/hooks/useMedications';
 import { useHouseholdInfo } from '@/hooks/useHouseholdInfo';
 import { useFamilyNotes } from '@/hooks/useFamilyNotes';
+import { useNannyTokens } from '@/hooks/useNannyTokens';
 
 interface NannyModeProps {
   selectedHousehold: Household;
@@ -32,7 +33,10 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
   const [showMedicationForm, setShowMedicationForm] = useState(false);
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
   const [showChildInfoForm, setShowChildInfoForm] = useState(false);
+  const [showPinSettings, setShowPinSettings] = useState(false);
+  const [newPin, setNewPin] = useState('');
   const { userProfile } = useAuth();
+  const { resetNannyPin, loading: pinLoading } = useNannyTokens();
   
   const { contacts, addContact, deleteContact } = useEmergencyContacts(selectedHousehold?.id);
   const { medications, addMedication, deleteMedication } = useMedications(selectedHousehold?.id);
@@ -81,6 +85,16 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
     } else {
       alert('Incorrect PIN. Please try again.');
       setAccessPin('');
+    }
+  };
+
+  const handleUpdatePin = async () => {
+    if (newPin.length === 4 && selectedHousehold) {
+      const success = await resetNannyPin(selectedHousehold.id, newPin);
+      if (success) {
+        setShowPinSettings(false);
+        setNewPin('');
+      }
     }
   };
 
@@ -200,14 +214,55 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
           </h2>
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">Important information for caregivers</p>
         </div>
-        <Button 
-          onClick={() => setIsLocked(true)} 
-          variant="outline"
-          className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 w-full sm:w-auto"
-        >
-          <Shield size={16} className="mr-2" />
-          Lock Mode
-        </Button>
+        <div className="flex gap-2">
+          {isParent && (
+            <Dialog open={showPinSettings} onOpenChange={setShowPinSettings}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings size={16} className="mr-2" />
+                  PIN Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Update Nanny Access PIN</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="current-pin">Current PIN: {storedPin}</Label>
+                  </div>
+                  <div>
+                    <Label htmlFor="new-pin">New 4-digit PIN</Label>
+                    <Input
+                      id="new-pin"
+                      type="password"
+                      placeholder="Enter new PIN"
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      maxLength={4}
+                      className="text-center text-lg tracking-widest"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleUpdatePin} 
+                    className="w-full"
+                    disabled={newPin.length !== 4 || pinLoading}
+                  >
+                    {pinLoading ? 'Updating...' : 'Update PIN'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+          <Button 
+            onClick={() => setIsLocked(true)} 
+            variant="outline"
+            className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          >
+            <Shield size={16} className="mr-2" />
+            Lock Mode
+          </Button>
+        </div>
       </div>
 
       <Alert className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30">
@@ -217,14 +272,11 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
         </AlertDescription>
       </Alert>
 
-      {/* Token Management for authenticated users */}
+      {/* Token Generation for authenticated users - SINGLE SECTION */}
       {userProfile && selectedHousehold && isParent && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground">Parent Controls</h2>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <NannyTokenGenerator householdId={selectedHousehold.id} />
-            <NannyTokenManager householdId={selectedHousehold.id} />
-          </div>
+          <NannyTokenGenerator householdId={selectedHousehold.id} />
         </div>
       )}
 
