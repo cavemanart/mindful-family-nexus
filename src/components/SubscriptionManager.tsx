@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHouseholds } from '@/hooks/useHouseholds';
@@ -46,7 +45,7 @@ const SubscriptionManager: React.FC = () => {
       }
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        window.location.href = data.url; // Changed from window.open to direct navigation
         toast.success('Redirecting to checkout...');
       } else {
         throw new Error('No checkout URL received');
@@ -81,7 +80,7 @@ const SubscriptionManager: React.FC = () => {
       }
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        window.location.href = data.url; // Changed from window.open to direct navigation
         toast.success('Opening subscription management...');
       } else {
         throw new Error('No portal URL received from server');
