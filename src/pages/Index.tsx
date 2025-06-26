@@ -44,6 +44,11 @@ const Index = () => {
     });
   }, [user, userProfile, loading]);
 
+  // Add effect to track current page changes
+  useEffect(() => {
+    console.log('📊 Index: Current page changed to:', currentPage);
+  }, [currentPage]);
+
   if (loading || householdsLoading || preferencesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
@@ -66,7 +71,6 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
         <CleanTopBar 
-          user={user}
           households={households}
           selectedHousehold={selectedHousehold}
           onHouseholdChange={(householdId) => {
@@ -84,16 +88,22 @@ const Index = () => {
     );
   }
 
+  const handlePageChange = (page: string) => {
+    console.log('📊 Index: Handling page change to:', page);
+    setCurrentPage(page);
+  };
+
   const renderPage = () => {
     const isVisible = (pageKey: string) => {
       const pref = preferences.find(p => p.page_key === pageKey);
       return pref?.is_visible !== false; // Default to visible if no preference
     };
 
+    console.log('📊 Index: Rendering page:', currentPage);
+
     switch (currentPage) {
       case 'overview':
-        // Pass setCurrentPage so Dashboard buttons work!
-        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={setCurrentPage} />;
+        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={handlePageChange} />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':
@@ -119,14 +129,14 @@ const Index = () => {
       case 'mental-load':
         return isVisible('mental-load') ? <MentalLoad /> : null;
       default:
-        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={setCurrentPage} />;
+        console.log('📊 Index: Unknown page, rendering dashboard:', currentPage);
+        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={handlePageChange} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       <CleanTopBar 
-        user={user}
         households={households}
         selectedHousehold={selectedHousehold}
         onHouseholdChange={(householdId) => {
@@ -140,11 +150,11 @@ const Index = () => {
         {currentPage === 'overview' && selectedHousehold ? (
           <Dashboard
             selectedHousehold={selectedHousehold}
-            setActiveSection={setCurrentPage}
+            setActiveSection={handlePageChange}
             WeeklySyncOverviewSlot={
               <WeeklySyncOverview
                 householdId={selectedHousehold.id}
-                onViewFullSync={() => setCurrentPage('weekly-sync')}
+                onViewFullSync={() => handlePageChange('weekly-sync')}
               />
             }
           />
@@ -155,7 +165,7 @@ const Index = () => {
 
       <CleanMobileNavigation 
         activeTab={currentPage}
-        setActiveTab={setCurrentPage}
+        setActiveTab={handlePageChange}
       />
     </div>
   );

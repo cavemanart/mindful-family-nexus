@@ -17,9 +17,9 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Primary navigation items (shown in bottom bar) - profile removed from primary items
+  // Primary navigation items (shown in bottom bar)
   const primaryItems = [
-    { key: 'overview', label: 'Home', icon: Home }, // Changed from 'dashboard' to 'overview'
+    { key: 'overview', label: 'Home', icon: Home },
     { key: 'mvp', label: 'MVP', icon: Trophy },
     { key: 'bills', label: 'Bills', icon: DollarSign },
     { key: 'notes', label: 'Notes', icon: StickyNote },
@@ -29,7 +29,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const secondaryItems = [
     { key: 'calendar', label: 'Calendar', icon: Calendar },
     { key: 'mental-load', label: 'Tasks', icon: Brain },
-    { key: 'nanny-mode', label: 'Nanny', icon: Baby }, // Fixed key to match AVAILABLE_PAGES
+    { key: 'nanny-mode', label: 'Nanny', icon: Baby },
     { key: 'children', label: 'Kids', icon: Users },
     { key: 'weekly-sync', label: 'Goals', icon: Calendar },
     { key: 'subscription', label: 'Subscription', icon: CreditCard },
@@ -43,11 +43,13 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
   const allVisibleItems = [...visiblePrimaryItems, ...visibleSecondaryItems];
 
   const handleTabChange = (tab: string) => {
+    console.log('Navigation: Changing tab to:', tab);
     setActiveTab(tab);
     setIsMoreMenuOpen(false);
   };
 
   const handleProfileClick = () => {
+    console.log('Navigation: Profile clicked');
     navigate('/profile');
   };
 
@@ -78,7 +80,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
               return (
                 <button
                   key={item.key}
-                  onClick={() => setActiveTab(item.key)}
+                  onClick={() => handleTabChange(item.key)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                     activeTab === item.key
                       ? 'bg-primary text-primary-foreground shadow-md'
@@ -94,7 +96,7 @@ const CleanMobileNavigation: React.FC<CleanMobileNavigationProps> = ({ activeTab
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation - Now with 5 tabs including profile */}
+      {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border shadow-lg z-40">
         <div className="grid grid-cols-5 gap-1 p-2">
           {/* First 3 primary navigation items */}
