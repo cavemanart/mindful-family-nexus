@@ -6,13 +6,23 @@ import { useAuth } from '@/hooks/useAuth';
 import HouseholdSelector from './HouseholdSelector';
 import CleanUserProfile from './CleanUserProfile';
 import { useChildSession } from '@/hooks/useChildSession';
+import { Household } from '@/hooks/useHouseholds';
 
 interface CleanTopBarProps {
-  selectedHousehold: any;
-  onHouseholdChange: (household: any) => void;
+  user: any;
+  households: Household[];
+  selectedHousehold: Household | null;
+  onHouseholdChange: (householdId: string) => void;
+  onSignOut: () => void;
 }
 
-const CleanTopBar: React.FC<CleanTopBarProps> = ({ selectedHousehold, onHouseholdChange }) => {
+const CleanTopBar: React.FC<CleanTopBarProps> = ({ 
+  user, 
+  households, 
+  selectedHousehold, 
+  onHouseholdChange, 
+  onSignOut 
+}) => {
   const { userProfile } = useAuth();
   const { isChildMode } = useChildSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -43,11 +53,14 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({ selectedHousehold, onHousehol
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <HouseholdSelector
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              {selectedHousehold?.name || 'No household selected'}
+            </div>
+            <CleanUserProfile 
+              user={user}
               selectedHousehold={selectedHousehold}
-              onHouseholdChange={onHouseholdChange}
+              onSignOut={onSignOut}
             />
-            <CleanUserProfile />
           </div>
 
           {/* Mobile Menu Button */}
@@ -70,7 +83,7 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({ selectedHousehold, onHousehol
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4 space-y-4">
-            {/* Mobile Household Selector */}
+            {/* Mobile Household Display */}
             <div className="px-2">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="h-4 w-4 text-gray-500" />
@@ -78,14 +91,8 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({ selectedHousehold, onHousehol
                   Household
                 </span>
               </div>
-              <div onClick={closeMobileMenu}>
-                <HouseholdSelector
-                  selectedHousehold={selectedHousehold}
-                  onHouseholdChange={(household) => {
-                    onHouseholdChange(household);
-                    closeMobileMenu();
-                  }}
-                />
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedHousehold?.name || 'No household selected'}
               </div>
             </div>
 
@@ -98,7 +105,11 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({ selectedHousehold, onHousehol
                 </span>
               </div>
               <div onClick={closeMobileMenu}>
-                <CleanUserProfile />
+                <CleanUserProfile 
+                  user={user}
+                  selectedHousehold={selectedHousehold}
+                  onSignOut={onSignOut}
+                />
               </div>
             </div>
           </div>

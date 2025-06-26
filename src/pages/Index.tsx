@@ -22,7 +22,7 @@ import WeeklySyncOverview from '@/components/WeeklySyncOverview';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 const Index = () => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, userProfile, loading, signOut } = useAuth();
   const { households, selectedHousehold, selectHousehold, loading: householdsLoading } = useHouseholds();
   const [currentPage, setCurrentPage] = useState('overview');
   const { preferences, loading: preferencesLoading } = usePagePreferences();
@@ -73,7 +73,7 @@ const Index = () => {
             const household = households.find(h => h.id === householdId);
             if (household) selectHousehold(household);
           }}
-          onSignOut={() => {}}
+          onSignOut={signOut}
         />
         <div className="max-w-4xl mx-auto pt-20 px-4">
           <HouseholdSelector 
@@ -133,7 +133,7 @@ const Index = () => {
           const household = households.find(h => h.id === householdId);
           if (household) selectHousehold(household);
         }}
-        onSignOut={() => {}}
+        onSignOut={signOut}
       />
       
       <main className="max-w-7xl mx-auto pt-20 pb-20 px-4">
