@@ -71,6 +71,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
         <CleanTopBar 
+          user={user}
           households={households}
           selectedHousehold={selectedHousehold}
           onHouseholdChange={(householdId) => {
@@ -88,9 +89,17 @@ const Index = () => {
     );
   }
 
+  // Centralized page change handler with debugging
   const handlePageChange = (page: string) => {
-    console.log('📊 Index: Handling page change to:', page);
-    setCurrentPage(page);
+    console.log('📊 Index: Page change requested from', currentPage, 'to', page);
+    
+    // Ensure we're setting a valid page
+    if (page && page !== currentPage) {
+      console.log('📊 Index: Actually changing page to:', page);
+      setCurrentPage(page);
+    } else {
+      console.log('📊 Index: Page change ignored - same page or invalid:', page);
+    }
   };
 
   const renderPage = () => {
@@ -137,6 +146,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
       <CleanTopBar 
+        user={user}
         households={households}
         selectedHousehold={selectedHousehold}
         onHouseholdChange={(householdId) => {
