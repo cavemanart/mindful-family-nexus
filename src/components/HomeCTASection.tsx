@@ -27,10 +27,10 @@ const HomeCTASection: React.FC = () => {
         <Button
           size="lg"
           variant="outline"
-          onClick={() => navigate("/join-household")}
+          onClick={() => navigate("/nanny-access")}
           className="flex-1"
         >
-          👶 Kid&apos;s Login
+          🍼 Nanny Access
         </Button>
       </div>
 

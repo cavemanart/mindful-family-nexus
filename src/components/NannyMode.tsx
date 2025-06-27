@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,8 +74,10 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
 
   const isParent = userProfile?.role === 'parent';
 
-  // Get dynamic PIN from household info or default to 1234
-  const storedPin = householdInfo.find(info => info.info_type === 'nanny_pin')?.value || '1234';
+  // Get dynamic PIN from household info - require parents to set one initially
+  const storedPinInfo = householdInfo.find(info => info.info_type === 'nanny_pin');
+  const storedPin = storedPinInfo?.value;
+  const hasCustomPin = !!storedPin;
 
   const handlePinSubmit = () => {
     if (accessPin === storedPin) {
@@ -161,6 +162,51 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
   const accessCodes = householdInfo.filter(info => info.info_type === 'access_code');
   const childInfo = householdInfo.filter(info => info.info_type === 'child_info');
 
+  // If parent hasn't set a PIN yet, show PIN setup
+  if (isParent && !hasCustomPin) {
+    return (
+      <div className="space-y-6 px-4 sm:px-6 max-w-2xl mx-auto">
+        <div className="text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center justify-center gap-2 mb-2">
+            <Shield className="text-blue-500" size={28} />
+            Set Up Nanny Mode PIN
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base">Create a 4-digit PIN to secure nanny mode access</p>
+        </div>
+
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="text-center text-lg sm:text-xl">Create Access PIN</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="setup-pin">New 4-digit PIN</Label>
+              <Input
+                id="setup-pin"
+                type="password"
+                placeholder="Enter 4-digit PIN"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                maxLength={4}
+                className="text-center text-lg tracking-widest"
+              />
+            </div>
+            <Button 
+              onClick={handleUpdatePin} 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              disabled={newPin.length !== 4 || pinLoading}
+            >
+              {pinLoading ? 'Setting up...' : 'Create PIN'}
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              This PIN will be required to access nanny mode information
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLocked) {
     return (
       <div className="space-y-6 px-4 sm:px-6 max-w-2xl mx-auto">
@@ -188,7 +234,7 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
             <Button 
               onClick={handlePinSubmit} 
               className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={accessPin.length !== 4}
+              disabled={accessPin.length !== 4 || !hasCustomPin}
             >
               <Shield size={16} className="mr-2" />
               Access Nanny Mode
@@ -196,6 +242,11 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
             {!isParent && (
               <p className="text-xs text-center text-muted-foreground mt-4">
                 Contact the family if you need the access PIN
+              </p>
+            )}
+            {!hasCustomPin && isParent && (
+              <p className="text-xs text-center text-red-600 mt-4">
+                No PIN has been set up yet. Please set one up first.
               </p>
             )}
           </CardContent>
@@ -220,7 +271,7 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Settings size={16} className="mr-2" />
-                  PIN Settings
+                  Change PIN
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -229,7 +280,7 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="current-pin">Current PIN: {storedPin}</Label>
+                    <Label htmlFor="current-pin">Current PIN: {storedPin ? '****' : 'Not Set'}</Label>
                   </div>
                   <div>
                     <Label htmlFor="new-pin">New 4-digit PIN</Label>
