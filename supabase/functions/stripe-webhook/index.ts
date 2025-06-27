@@ -66,6 +66,26 @@ serve(async (req) => {
         await handlePaymentFailed(supabaseClient, event.data.object as Stripe.Invoice);
         break;
       
+      case 'customer.subscription.paused':
+        await handleSubscriptionPaused(supabaseClient, event.data.object as Stripe.Subscription);
+        break;
+      
+      case 'customer.subscription.resumed':
+        await handleSubscriptionResumed(supabaseClient, event.data.object as Stripe.Subscription);
+        break;
+      
+      case 'invoice.payment_action_required':
+        await handlePaymentActionRequired(supabaseClient, event.data.object as Stripe.Invoice);
+        break;
+      
+      case 'customer.subscription.trial_will_end':
+        await handleTrialWillEnd(supabaseClient, event.data.object as Stripe.Subscription);
+        break;
+      
+      case 'charge.dispute.created':
+        await handleChargeDispute(supabaseClient, event.data.object as Stripe.Dispute);
+        break;
+      
       default:
         logStep("Unhandled event type", { type: event.type });
     }
@@ -118,6 +138,7 @@ async function handleSubscriptionUpdate(supabase: any, subscription: Stripe.Subs
         plan_type: planType,
         stripe_subscription_id: subscription.id,
         is_active: subscription.status === 'active',
+        status: subscription.status,
         subscription_start_date: subscriptionStart,
         subscription_end_date: subscriptionEnd,
         updated_at: new Date().toISOString(),
@@ -135,6 +156,8 @@ async function handleSubscriptionCancellation(supabase: any, subscription: Strip
     .from('user_subscriptions')
     .update({
       is_active: false,
+      status: 'canceled',
+      canceled_at: new Date().toISOString(),
       subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -151,6 +174,7 @@ async function handlePaymentSuccess(supabase: any, invoice: Stripe.Invoice) {
       .from('user_subscriptions')
       .update({
         is_active: true,
+        status: 'active',
         updated_at: new Date().toISOString(),
       })
       .eq('stripe_subscription_id', invoice.subscription);
@@ -167,10 +191,72 @@ async function handlePaymentFailed(supabase: any, invoice: Stripe.Invoice) {
       .from('user_subscriptions')
       .update({
         is_active: false,
+        status: 'past_due',
         updated_at: new Date().toISOString(),
       })
       .eq('stripe_subscription_id', invoice.subscription);
   }
   
   logStep("Payment failure handled");
+}
+
+async function handleSubscriptionPaused(supabase: any, subscription: Stripe.Subscription) {
+  logStep("Handling subscription paused", { subscriptionId: subscription.id });
+  
+  await supabase
+    .from('user_subscriptions')
+    .update({
+      status: 'paused',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('stripe_subscription_id', subscription.id);
+  
+  logStep("Subscription paused handled");
+}
+
+async function handleSubscriptionResumed(supabase: any, subscription: Stripe.Subscription) {
+  logStep("Handling subscription resumed", { subscriptionId: subscription.id });
+  
+  await supabase
+    .from('user_subscriptions')
+    .update({
+      is_active: true,
+      status: 'active',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('stripe_subscription_id', subscription.id);
+  
+  logStep("Subscription resumed handled");
+}
+
+async function handlePaymentActionRequired(supabase: any, invoice: Stripe.Invoice) {
+  logStep("Handling payment action required", { invoiceId: invoice.id });
+  
+  if (invoice.subscription) {
+    await supabase
+      .from('user_subscriptions')
+      .update({
+        status: 'incomplete',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_subscription_id', invoice.subscription);
+  }
+  
+  logStep("Payment action required handled");
+}
+
+async function handleTrialWillEnd(supabase: any, subscription: Stripe.Subscription) {
+  logStep("Handling trial will end", { subscriptionId: subscription.id });
+  
+  // You can add logic here to send notifications to users
+  // For now, just log the event
+  logStep("Trial ending soon for subscription", { subscriptionId: subscription.id });
+}
+
+async function handleChargeDispute(supabase: any, dispute: Stripe.Dispute) {
+  logStep("Handling charge dispute", { disputeId: dispute.id });
+  
+  // You can add logic here to handle disputes
+  // For now, just log the event
+  logStep("Charge dispute created", { disputeId: dispute.id, amount: dispute.amount });
 }

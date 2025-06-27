@@ -956,11 +956,15 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          canceled_at: string | null
           created_at: string
           household_id: string | null
           id: string
           is_active: boolean
           plan_type: string
+          refund_id: string | null
+          refunded_at: string | null
+          status: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_end_date: string | null
@@ -971,11 +975,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          canceled_at?: string | null
           created_at?: string
           household_id?: string | null
           id?: string
           is_active?: boolean
           plan_type?: string
+          refund_id?: string | null
+          refunded_at?: string | null
+          status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_end_date?: string | null
@@ -986,11 +994,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          canceled_at?: string | null
           created_at?: string
           household_id?: string | null
           id?: string
           is_active?: boolean
           plan_type?: string
+          refund_id?: string | null
+          refunded_at?: string | null
+          status?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_end_date?: string | null
