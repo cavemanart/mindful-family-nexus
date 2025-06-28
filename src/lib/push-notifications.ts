@@ -91,12 +91,18 @@ export class PushNotificationService {
       const authKey = subscription.getKey('auth') ? 
         btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null;
 
-      const { error } = await supabase.rpc('upsert_push_subscription', {
-        p_user_id: user.id,
-        p_endpoint: subscription.endpoint,
-        p_p256dh_key: p256dhKey,
-        p_auth_key: authKey
-      });
+      // Use direct database insert instead of RPC for now
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .upsert({
+          user_id: user.id,
+          endpoint: subscription.endpoint,
+          p256dh_key: p256dhKey,
+          auth_key: authKey,
+          is_active: true
+        }, {
+          onConflict: 'user_id,endpoint'
+        });
 
       if (error) {
         console.error('Error storing push subscription:', error);
@@ -131,12 +137,16 @@ export class PushNotificationService {
         type: data.type,
         url: data.url || '/dashboard',
         id: data.id
-      },
-      vibrate: [100, 50, 100]
+      }
     };
 
     const title = this.getNotificationTitle(data.type);
-    new Notification(title, notificationOptions);
+    const notification = new Notification(title, notificationOptions);
+    
+    // Add vibration manually if supported
+    if ('vibrate' in navigator) {
+      navigator.vibrate([100, 50, 100]);
+    }
   }
 
   /**
