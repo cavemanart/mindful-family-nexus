@@ -14,9 +14,9 @@ export default function NotificationPreferencesCard() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isPushSupported, setIsPushSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
-  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isSettingUp, setIsSettingUp] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [subscriptionStatus, setSubscriptionStatus] = useState<'unknown' | 'subscribed' | 'unsubscribed'>('unknown');
+  const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'ready' | 'not_ready'>('unknown');
 
   // Check browser support and current permission
   useEffect(() => {
@@ -25,15 +25,15 @@ export default function NotificationPreferencesCard() {
         setIsPushSupported(true);
         setPermission(Notification.permission);
         
-        // Check if we have an active subscription
+        // Check if we have an active push setup
         if ('serviceWorker' in navigator && 'PushManager' in window) {
           try {
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
-            setSubscriptionStatus(subscription ? 'subscribed' : 'unsubscribed');
+            setNotificationStatus(subscription ? 'ready' : 'not_ready');
           } catch (error) {
-            console.error('Error checking subscription status:', error);
-            setSubscriptionStatus('unsubscribed');
+            console.error('Error checking notification setup:', error);
+            setNotificationStatus('not_ready');
           }
         }
       } else {
@@ -52,19 +52,19 @@ export default function NotificationPreferencesCard() {
     }
   }, [prefs]);
 
-  // Handle push toggle: require permission and subscription
+  // Handle push toggle: require permission and setup
   const handlePushToggle = async (state: boolean) => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
       return;
     }
 
-    setIsSubscribing(true);
+    setIsSettingUp(true);
     
     try {
       if (state) {
         // Enabling notifications
-        console.log('Enabling push notifications...');
+        console.log('Setting up push notifications...');
         
         // Request permission first
         const permission = await pushNotificationService.requestPermission();
@@ -72,30 +72,30 @@ export default function NotificationPreferencesCard() {
         
         if (permission !== "granted") {
           toast.error("Permission denied for push notifications. Please enable them in your browser settings.");
-          setIsSubscribing(false);
+          setIsSettingUp(false);
           return;
         }
 
-        // Subscribe to push notifications
+        // Set up push notifications
         const subscription = await pushNotificationService.subscribeToPushNotifications();
         if (!subscription) {
-          toast.error("Failed to subscribe to push notifications. Please try again.");
-          setIsSubscribing(false);
+          toast.error("Failed to set up push notifications. Please try again.");
+          setIsSettingUp(false);
           return;
         }
 
-        setSubscriptionStatus('subscribed');
-        toast.success("Successfully subscribed to push notifications!");
+        setNotificationStatus('ready');
+        toast.success("Push notifications are now enabled!");
       } else {
         // Disabling notifications
         console.log('Disabling push notifications...');
         
         const unsubscribed = await pushNotificationService.unsubscribeFromPushNotifications();
         if (unsubscribed) {
-          setSubscriptionStatus('unsubscribed');
-          toast.success("Successfully unsubscribed from push notifications.");
+          setNotificationStatus('not_ready');
+          toast.success("Push notifications have been disabled.");
         } else {
-          toast.info("No active subscription found.");
+          toast.info("No active notifications found to disable.");
         }
       }
 
@@ -106,7 +106,7 @@ export default function NotificationPreferencesCard() {
       if (!success) {
         // Revert the UI state if backend update failed
         setPushEnabled(!state);
-        toast.error("Failed to update preferences. Please try again.");
+        toast.error("Failed to save notification preferences. Please try again.");
       }
       
     } catch (error) {
@@ -122,7 +122,7 @@ export default function NotificationPreferencesCard() {
       // Revert the UI state
       setPushEnabled(!state);
     } finally {
-      setIsSubscribing(false);
+      setIsSettingUp(false);
     }
   };
 
@@ -224,7 +224,7 @@ export default function NotificationPreferencesCard() {
           Push Notifications
         </CardTitle>
         <CardDescription>
-          Manage how you receive push notifications from the app. Get notified about chores, bills, family messages, and more.
+          Get notified on your device about chores, bills, family messages, and more.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -240,7 +240,7 @@ export default function NotificationPreferencesCard() {
           <Switch
             checked={pushEnabled}
             onCheckedChange={handlePushToggle}
-            disabled={saving || isSubscribing || !isPushSupported}
+            disabled={saving || isSettingUp || !isPushSupported}
           />
         </div>
 
@@ -250,18 +250,18 @@ export default function NotificationPreferencesCard() {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Status</h4>
                 {getPermissionStatusDisplay()}
-                {subscriptionStatus !== 'unknown' && (
+                {notificationStatus !== 'unknown' && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Subscription: {subscriptionStatus}</span>
+                    <span>Setup: {notificationStatus === 'ready' ? 'Complete' : 'Pending'}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {isSubscribing && (
+            {isSettingUp && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Updating subscription...</span>
+                <span>Setting up notifications...</span>
               </div>
             )}
           </div>
