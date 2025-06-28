@@ -307,115 +307,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </Card>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total This Month</p>
-                <p className="text-2xl font-bold text-foreground">${totalAmount.toFixed(2)}</p>
-              </div>
-              <DollarSign className="text-muted-foreground" size={24} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Paid So Far</p>
-                <p className="text-2xl font-bold text-green-600">${paidAmount.toFixed(2)}</p>
-              </div>
-              <CheckCircle className="text-green-400" size={24} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Still to Pay</p>
-                <p className="text-2xl font-bold text-red-600">${(totalAmount - paidAmount).toFixed(2)}</p>
-              </div>
-              <AlertCircle className="text-red-400" size={24} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Recurring Bills</p>
-                <p className="text-2xl font-bold text-blue-600">{recurringBills.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">Auto-repeating</p>
-              </div>
-              <Repeat className="text-blue-400" size={24} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Progress Bar */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-foreground">Monthly Payment Progress</span>
-              <span className="text-muted-foreground">{progressPercentage.toFixed(1)}% Complete</span>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-            <p className="text-xs text-muted-foreground mt-2">Track how much of this month's bills you've paid</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recurring Bills Management */}
-      {recurringBills.length > 0 && (
-        <Card className="border-blue-200 dark:border-blue-800">
-          <CardHeader>
-            <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
-              <Repeat size={20} />
-              Recurring Bills Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-foreground">
-                You have {recurringBills.length} recurring bills set up. Generate next month's bills automatically.
-              </p>
-              <Button 
-                onClick={handleProcessRecurring} 
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Clock size={16} className="mr-2" />
-                Generate Next Bills
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {recurringBills.slice(0, 4).map((bill) => (
-                <div key={bill.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <div>
-                    <p className="font-medium text-blue-800 dark:text-blue-200">{bill.name}</p>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">
-                      Every {bill.recurrence_interval} {bill.recurrence_type}(s) • ${bill.amount}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600">
-                    <Repeat size={12} className="mr-1" />
-                    Auto
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Add Bill Form - Updated to use actual family members */}
+      {/* Add Bill Form - Moved to top */}
       {isAddingBill && canCreateMoreBills && (
         <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50 dark:border-green-700 dark:from-green-950 dark:to-blue-950">
           <CardHeader>
@@ -534,6 +426,114 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
               <Button variant="outline" onClick={() => setIsAddingBill(false)}>
                 Cancel
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Summary Cards - Now appear after Add Bill form */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total This Month</p>
+                <p className="text-2xl font-bold text-foreground">${totalAmount.toFixed(2)}</p>
+              </div>
+              <DollarSign className="text-muted-foreground" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Paid So Far</p>
+                <p className="text-2xl font-bold text-green-600">${paidAmount.toFixed(2)}</p>
+              </div>
+              <CheckCircle className="text-green-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Still to Pay</p>
+                <p className="text-2xl font-bold text-red-600">${(totalAmount - paidAmount).toFixed(2)}</p>
+              </div>
+              <AlertCircle className="text-red-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Recurring Bills</p>
+                <p className="text-2xl font-bold text-blue-600">{recurringBills.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">Auto-repeating</p>
+              </div>
+              <Repeat className="text-blue-400" size={24} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Progress Bar */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-foreground">Monthly Payment Progress</span>
+              <span className="text-muted-foreground">{progressPercentage.toFixed(1)}% Complete</span>
+            </div>
+            <Progress value={progressPercentage} className="h-3" />
+            <p className="text-xs text-muted-foreground mt-2">Track how much of this month's bills you've paid</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recurring Bills Management */}
+      {recurringBills.length > 0 && (
+        <Card className="border-blue-200 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
+              <Repeat size={20} />
+              Recurring Bills Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-foreground">
+                You have {recurringBills.length} recurring bills set up. Generate next month's bills automatically.
+              </p>
+              <Button 
+                onClick={handleProcessRecurring} 
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Clock size={16} className="mr-2" />
+                Generate Next Bills
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {recurringBills.slice(0, 4).map((bill) => (
+                <div key={bill.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <div>
+                    <p className="font-medium text-blue-800 dark:text-blue-200">{bill.name}</p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">
+                      Every {bill.recurrence_interval} {bill.recurrence_type}(s) • ${bill.amount}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600">
+                    <Repeat size={12} className="mr-1" />
+                    Auto
+                  </Badge>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
