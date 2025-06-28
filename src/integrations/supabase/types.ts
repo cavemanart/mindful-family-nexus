@@ -919,6 +919,39 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth_key: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          is_active: boolean
+          p256dh_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth_key?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          p256dh_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth_key?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          p256dh_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_page_preferences: {
         Row: {
           created_at: string

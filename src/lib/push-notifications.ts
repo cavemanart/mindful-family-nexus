@@ -86,22 +86,17 @@ export class PushNotificationService {
     if (!user) return;
 
     try {
-      const subscriptionData = {
-        user_id: user.id,
-        endpoint: subscription.endpoint,
-        p256dh_key: subscription.getKey('p256dh') ? 
-          btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))) : null,
-        auth_key: subscription.getKey('auth') ? 
-          btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null,
-        created_at: new Date().toISOString(),
-        is_active: true
-      };
+      const p256dhKey = subscription.getKey('p256dh') ? 
+        btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))) : null;
+      const authKey = subscription.getKey('auth') ? 
+        btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null;
 
-      const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert(subscriptionData, {
-          onConflict: 'user_id,endpoint'
-        });
+      const { error } = await supabase.rpc('upsert_push_subscription', {
+        p_user_id: user.id,
+        p_endpoint: subscription.endpoint,
+        p_p256dh_key: p256dhKey,
+        p_auth_key: authKey
+      });
 
       if (error) {
         console.error('Error storing push subscription:', error);
@@ -137,10 +132,7 @@ export class PushNotificationService {
         url: data.url || '/dashboard',
         id: data.id
       },
-      actions: [
-        { action: 'view', title: 'View' },
-        { action: 'dismiss', title: 'Dismiss' }
-      ]
+      vibrate: [100, 50, 100]
     };
 
     const title = this.getNotificationTitle(data.type);
