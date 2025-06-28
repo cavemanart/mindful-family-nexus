@@ -134,7 +134,7 @@ export default function NotificationPreferencesCard() {
     }
   };
 
-  // Test push notifications with timeout
+  // Improved test notification with better error handling
   const handleTestNotification = async () => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
@@ -146,33 +146,40 @@ export default function NotificationPreferencesCard() {
       return;
     }
 
-    if (permission !== "granted") {
-      toast.error("Please grant notification permission first.");
-      return;
-    }
-
     setIsTesting(true);
     
     const timeoutId = setTimeout(() => {
       setIsTesting(false);
       toast.error("Test notification timed out.");
-    }, 5000);
+    }, 10000); // Increased timeout for test
     
     try {
+      console.log('Starting test notification...');
+      
       await Promise.race([
         pushNotificationService.testNotification(),
         new Promise<void>((_, reject) => 
-          setTimeout(() => reject(new Error('Test notification timed out')), 3000)
+          setTimeout(() => reject(new Error('Test notification timed out')), 8000)
         )
       ]);
       
-      toast.success("Test notification sent! Check your notifications.");
+      toast.success("Test notification sent! You should see it shortly.");
+      console.log('Test notification completed successfully');
+      
     } catch (error) {
-      console.error("Error sending test notification:", error);
+      console.error("Test notification error:", error);
       
       let errorMessage = "Failed to send test notification.";
-      if (error instanceof Error && error.message.includes('timed out')) {
-        errorMessage = "Test timed out. Notifications may still be working.";
+      if (error instanceof Error) {
+        if (error.message.includes('permission')) {
+          errorMessage = "Permission issue: " + error.message;
+        } else if (error.message.includes('not supported')) {
+          errorMessage = "Browser compatibility: " + error.message;
+        } else if (error.message.includes('timed out')) {
+          errorMessage = "Test timed out. Please try again.";
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast.error(errorMessage);

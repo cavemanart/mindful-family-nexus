@@ -215,58 +215,109 @@ export class PushNotificationService {
   }
 
   /**
-   * Send a local notification (optimized for testing)
+   * Send a local notification (improved for better reliability)
    */
   async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
+    console.log('Attempting to send local notification:', data);
+    
     if (!('Notification' in window)) {
       throw new Error('Notifications not supported in this browser');
     }
 
-    if (Notification.permission !== 'granted') {
+    // Check permission first
+    const permission = await this.requestPermission();
+    if (permission !== 'granted') {
       throw new Error('Notification permission not granted');
     }
 
-    const notificationOptions: NotificationOptions = {
-      body: data.message,
-      icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
-      badge: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
-      tag: data.type,
-      data: {
-        type: data.type,
-        url: data.url || '/dashboard',
-        id: data.id
-      },
-      requireInteraction: false // Don't require user interaction for test notifications
-    };
+    try {
+      const notificationOptions: NotificationOptions = {
+        body: data.message,
+        icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+        badge: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+        tag: data.type,
+        data: {
+          type: data.type,
+          url: data.url || '/dashboard',
+          id: data.id
+        },
+        requireInteraction: false,
+        silent: false
+      };
 
-    const title = this.getNotificationTitle(data.type);
-    const notification = new Notification(title, notificationOptions);
-    
-    // Add vibration manually if supported
-    if ('vibrate' in navigator) {
-      navigator.vibrate([100, 50, 100]);
+      const title = this.getNotificationTitle(data.type);
+      console.log('Creating notification with title:', title, 'and options:', notificationOptions);
+      
+      const notification = new Notification(title, notificationOptions);
+      
+      // Add event listeners for debugging
+      notification.onshow = () => {
+        console.log('Notification shown successfully');
+      };
+      
+      notification.onerror = (error) => {
+        console.error('Notification error:', error);
+      };
+      
+      notification.onclick = () => {
+        console.log('Notification clicked');
+        window.focus();
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      };
+      
+      // Add vibration manually if supported
+      if ('vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100]);
+      }
+
+      // Auto-close after 4 seconds for better UX
+      setTimeout(() => {
+        notification.close();
+      }, 4000);
+      
+      console.log('Notification created successfully');
+      
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw new Error(`Failed to create notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    // Auto-close after 4 seconds for better UX
-    setTimeout(() => {
-      notification.close();
-    }, 4000);
   }
 
   /**
-   * Test push notifications (optimized)
+   * Test push notifications (improved with better error handling)
    */
   async testNotification(): Promise<void> {
-    const permission = await this.requestPermission();
-    if (permission !== 'granted') {
-      throw new Error('Notification permission denied');
-    }
+    console.log('Starting test notification...');
+    
+    try {
+      // First check if notifications are supported
+      if (!('Notification' in window)) {
+        throw new Error('Push notifications are not supported in this browser');
+      }
+      
+      // Request permission if needed
+      const permission = await this.requestPermission();
+      console.log('Permission status:', permission);
+      
+      if (permission !== 'granted') {
+        throw new Error('Notification permission was denied. Please enable notifications in your browser settings.');
+      }
 
-    await this.sendLocalNotification({
-      type: 'default',
-      message: 'Test notification from Hublie! Push notifications are working correctly.',
-      url: '/dashboard'
-    });
+      // Send the test notification
+      await this.sendLocalNotification({
+        type: 'default',
+        message: 'Test notification from Hublie! Push notifications are working correctly.',
+        url: '/dashboard'
+      });
+      
+      console.log('Test notification sent successfully');
+      
+    } catch (error) {
+      console.error('Test notification failed:', error);
+      throw error;
+    }
   }
 
   /**
