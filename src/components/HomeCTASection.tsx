@@ -27,7 +27,7 @@ const HomeCTASection: React.FC = () => {
         <Button
           size="lg"
           variant="outline"
-          onClick={() => navigate("/nanny-access")}
+          onClick={() => navigate("/nanny")}
           className="flex-1"
         >
           🍼 Nanny Access
