@@ -215,7 +215,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Send a local notification (improved for better reliability)
+   * Send a local notification (improved for better reliability with service worker)
    */
   async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
     console.log('Attempting to send local notification:', data);
@@ -248,6 +248,23 @@ export class PushNotificationService {
       const title = this.getNotificationTitle(data.type);
       console.log('Creating notification with title:', title, 'and options:', notificationOptions);
       
+      // Check if service worker is available and use it if possible
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          if (registration && registration.showNotification) {
+            console.log('Using service worker registration to show notification');
+            await registration.showNotification(title, notificationOptions);
+            console.log('Service worker notification created successfully');
+            return;
+          }
+        } catch (swError) {
+          console.warn('Service worker notification failed, falling back to regular notification:', swError);
+        }
+      }
+      
+      // Fallback to regular notification if service worker is not available
+      console.log('Using regular Notification constructor');
       const notification = new Notification(title, notificationOptions);
       
       // Add event listeners for debugging
