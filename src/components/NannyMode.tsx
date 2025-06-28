@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Baby, Shield, Phone, Pill, Utensils, Clock, AlertTriangle, Eye, EyeOff, Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
   
   const { contacts, addContact, deleteContact } = useEmergencyContacts(selectedHousehold?.id);
   const { medications, addMedication, deleteMedication } = useMedications(selectedHousehold?.id);
-  const { householdInfo, addHouseholdInfo, deleteHouseholdInfo, refetch: refetchHouseholdInfo } = useHouseholdInfo(selectedHousehold?.id);
+  const { householdInfo, addHouseholdInfo, deleteHouseholdInfo, fetchHouseholdInfo } = useHouseholdInfo(selectedHousehold?.id);
   const { notes } = useFamilyNotes(selectedHousehold?.id);
 
   const [emergencyForm, setEmergencyForm] = useState({
@@ -95,7 +94,7 @@ const NannyMode = ({ selectedHousehold }: NannyModeProps) => {
       const success = await resetNannyPin(selectedHousehold.id, newPin);
       if (success) {
         // Refresh household info to get the new PIN
-        await refetchHouseholdInfo();
+        await fetchHouseholdInfo();
         setShowPinSettings(false);
         setNewPin('');
       }
