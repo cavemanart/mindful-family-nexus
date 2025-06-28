@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'hublie-v2';
 const urlsToCache = [
   '/',
@@ -9,7 +8,7 @@ const urlsToCache = [
   '/static/js/bundle.js',
   '/static/css/main.css',
   '/manifest.json',
-  '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png'
+  '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png'
 ];
 
 // Install event - cache resources
@@ -127,68 +126,68 @@ self.addEventListener('push', (event) => {
     'chore_reminder': {
       title: '🏠 Chore Reminder',
       body: notificationData.message || 'You have chores to complete!',
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: 'chore-reminder',
       requireInteraction: true,
       actions: [
-        { action: 'view', title: 'View Chores', icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png' },
+        { action: 'view', title: 'View Chores', icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
     'bill_reminder': {
       title: '💰 Bill Due Soon',
       body: notificationData.message || 'You have bills due soon!',
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: 'bill-reminder',
       requireInteraction: true,
       actions: [
-        { action: 'view', title: 'View Bills', icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png' },
+        { action: 'view', title: 'View Bills', icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
     'family_message': {
       title: '💬 New Family Message',
       body: notificationData.message || 'You have a new family message!',
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: 'family-message',
       actions: [
-        { action: 'view', title: 'View Message', icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png' },
+        { action: 'view', title: 'View Message', icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
     'calendar_event': {
       title: '📅 Upcoming Event',
       body: notificationData.message || 'You have an upcoming event!',
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: 'calendar-event',
       actions: [
-        { action: 'view', title: 'View Event', icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png' },
+        { action: 'view', title: 'View Event', icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
     'mvp_announcement': {
       title: '⭐ MVP of the Day!',
       body: notificationData.message || 'Check out today\'s MVP!',
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: 'mvp-announcement',
       actions: [
-        { action: 'view', title: 'View MVP', icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png' },
+        { action: 'view', title: 'View MVP', icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
     'default': {
       title: '🏠 Hublie',
       body: notificationData.message || 'You have a new notification!',
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: 'general',
       actions: [
-        { action: 'view', title: 'Open App', icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png' },
+        { action: 'view', title: 'Open App', icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png' },
         { action: 'dismiss', title: 'Dismiss' }
       ]
     }

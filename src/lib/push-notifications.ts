@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PushNotificationData {
@@ -130,8 +129,8 @@ export class PushNotificationService {
 
     const notificationOptions: NotificationOptions = {
       body: data.message,
-      icon: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
-      badge: '/lovable-uploads/ad26d0f4-2b94-4736-96fd-7cad06272616.png',
+      icon: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
+      badge: '/lovable-uploads/549ada70-7c34-4889-b355-5283d168c194.png',
       tag: data.type,
       data: {
         type: data.type,
