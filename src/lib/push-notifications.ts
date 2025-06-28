@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PushNotificationData {
@@ -102,7 +101,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Store push subscription in the database using the RPC function
+   * Store push subscription in the database using direct insert/upsert
    */
   private async storeSubscription(subscription: PushSubscription): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -116,20 +115,54 @@ export class PushNotificationService {
       const authKey = subscription.getKey('auth') ? 
         btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null;
 
-      // Use the RPC function for proper upsert
-      const { error } = await supabase.rpc('upsert_push_subscription', {
-        p_user_id: user.id,
-        p_endpoint: subscription.endpoint,
-        p_p256dh_key: p256dhKey,
-        p_auth_key: authKey
-      });
+      // First try to update existing subscription
+      const { data: existingData, error: selectError } = await supabase
+        .from('push_subscriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('endpoint', subscription.endpoint)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error storing push subscription:', error);
-        throw error;
-      } else {
-        console.log('Push subscription stored successfully');
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.error('Error checking existing subscription:', selectError);
+        throw selectError;
       }
+
+      if (existingData) {
+        // Update existing subscription
+        const { error: updateError } = await supabase
+          .from('push_subscriptions')
+          .update({
+            p256dh_key: p256dhKey,
+            auth_key: authKey,
+            is_active: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingData.id);
+
+        if (updateError) {
+          console.error('Error updating push subscription:', updateError);
+          throw updateError;
+        }
+      } else {
+        // Insert new subscription
+        const { error: insertError } = await supabase
+          .from('push_subscriptions')
+          .insert({
+            user_id: user.id,
+            endpoint: subscription.endpoint,
+            p256dh_key: p256dhKey,
+            auth_key: authKey,
+            is_active: true
+          });
+
+        if (insertError) {
+          console.error('Error inserting push subscription:', insertError);
+          throw insertError;
+        }
+      }
+
+      console.log('Push subscription stored successfully');
     } catch (error) {
       console.error('Error storing push subscription:', error);
       throw error;
