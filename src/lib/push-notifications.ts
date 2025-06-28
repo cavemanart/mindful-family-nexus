@@ -39,12 +39,34 @@ export class PushNotificationService {
   }
 
   /**
+   * Check if service worker is ready and supports push
+   */
+  private async checkServiceWorkerSupport(): Promise<boolean> {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn('Push notifications not supported');
+      return false;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      if (!registration.pushManager) {
+        console.warn('Push manager not available');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Service worker not ready:', error);
+      return false;
+    }
+  }
+
+  /**
    * Subscribe to push notifications
    */
   async subscribeToPushNotifications(): Promise<PushSubscription | null> {
     try {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Push notifications not supported');
+      const isSupported = await this.checkServiceWorkerSupport();
+      if (!isSupported) {
         return null;
       }
 
@@ -54,16 +76,17 @@ export class PushNotificationService {
       const existingSubscription = await registration.pushManager.getSubscription();
       if (existingSubscription) {
         console.log('Already subscribed to push notifications');
+        // Still store/update the subscription in case it's not in our database
+        await this.storeSubscription(existingSubscription);
         return existingSubscription;
       }
 
-      // Subscribe to push notifications
+      // For now, we'll use a basic subscription without VAPID keys
+      // In production, you would need to configure proper VAPID keys
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(
-          // You'll need to replace this with your actual VAPID public key
-          'BEl62iUYgUivxIkv69yViEuiBIa40HI0nQHgYzAK54l-YSKbUvRsLDHJPKSoE2jXOzUyJL5mY2qBWL1LWWJoHr4'
-        )
+        // Commenting out VAPID key for now - this should be configured properly in production
+        // applicationServerKey: this.urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
       });
 
       console.log('Subscribed to push notifications:', subscription);
@@ -74,16 +97,18 @@ export class PushNotificationService {
       return subscription;
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
-      return null;
+      throw error; // Re-throw to handle in UI
     }
   }
 
   /**
-   * Store push subscription in the database
+   * Store push subscription in the database using the RPC function
    */
   private async storeSubscription(subscription: PushSubscription): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
 
     try {
       const p256dhKey = subscription.getKey('p256dh') ? 
@@ -91,26 +116,74 @@ export class PushNotificationService {
       const authKey = subscription.getKey('auth') ? 
         btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null;
 
-      // Use direct database insert instead of RPC for now
-      const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert({
-          user_id: user.id,
-          endpoint: subscription.endpoint,
-          p256dh_key: p256dhKey,
-          auth_key: authKey,
-          is_active: true
-        }, {
-          onConflict: 'user_id,endpoint'
-        });
+      // Use the RPC function for proper upsert
+      const { error } = await supabase.rpc('upsert_push_subscription', {
+        p_user_id: user.id,
+        p_endpoint: subscription.endpoint,
+        p_p256dh_key: p256dhKey,
+        p_auth_key: authKey
+      });
 
       if (error) {
         console.error('Error storing push subscription:', error);
+        throw error;
       } else {
         console.log('Push subscription stored successfully');
       }
     } catch (error) {
       console.error('Error storing push subscription:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unsubscribe from push notifications
+   */
+  async unsubscribeFromPushNotifications(): Promise<boolean> {
+    try {
+      const isSupported = await this.checkServiceWorkerSupport();
+      if (!isSupported) {
+        return false;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        await subscription.unsubscribe();
+        console.log('Unsubscribed from push notifications');
+        
+        // Mark subscription as inactive in database
+        await this.deactivateSubscription(subscription.endpoint);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error unsubscribing from push notifications:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deactivate subscription in database
+   */
+  private async deactivateSubscription(endpoint: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('endpoint', endpoint);
+
+      if (error) {
+        console.error('Error deactivating push subscription:', error);
+      }
+    } catch (error) {
+      console.error('Error deactivating push subscription:', error);
     }
   }
 
@@ -119,13 +192,11 @@ export class PushNotificationService {
    */
   async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
     if (!('Notification' in window)) {
-      console.warn('Notifications not supported');
-      return;
+      throw new Error('Notifications not supported in this browser');
     }
 
     if (Notification.permission !== 'granted') {
-      console.warn('Notification permission not granted');
-      return;
+      throw new Error('Notification permission not granted');
     }
 
     const notificationOptions: NotificationOptions = {
@@ -147,6 +218,11 @@ export class PushNotificationService {
     if ('vibrate' in navigator) {
       navigator.vibrate([100, 50, 100]);
     }
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
   }
 
   /**
@@ -154,13 +230,15 @@ export class PushNotificationService {
    */
   async testNotification(): Promise<void> {
     const permission = await this.requestPermission();
-    if (permission === 'granted') {
-      await this.sendLocalNotification({
-        type: 'default',
-        message: 'Test notification from Hublie! Push notifications are working correctly.',
-        url: '/dashboard'
-      });
+    if (permission !== 'granted') {
+      throw new Error('Notification permission denied');
     }
+
+    await this.sendLocalNotification({
+      type: 'default',
+      message: 'Test notification from Hublie! Push notifications are working correctly.',
+      url: '/dashboard'
+    });
   }
 
   /**

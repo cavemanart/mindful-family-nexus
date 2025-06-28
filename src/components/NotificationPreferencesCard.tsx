@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Bell, TestTube2 } from "lucide-react";
+import { Loader2, Bell, TestTube2, AlertCircle, CheckCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useNotificationPreferences } from "@/hooks/useNotificationPreferences";
@@ -16,19 +16,36 @@ export default function NotificationPreferencesCard() {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'unknown' | 'subscribed' | 'unsubscribed'>('unknown');
 
   // Check browser support and current permission
   useEffect(() => {
-    if ("Notification" in window) {
-      setIsPushSupported(true);
-      setPermission(Notification.permission);
-    } else {
-      setIsPushSupported(false);
-      setPermission("unsupported");
-    }
+    const checkSupport = async () => {
+      if ("Notification" in window) {
+        setIsPushSupported(true);
+        setPermission(Notification.permission);
+        
+        // Check if we have an active subscription
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            setSubscriptionStatus(subscription ? 'subscribed' : 'unsubscribed');
+          } catch (error) {
+            console.error('Error checking subscription status:', error);
+            setSubscriptionStatus('unsubscribed');
+          }
+        }
+      } else {
+        setIsPushSupported(false);
+        setPermission("unsupported");
+      }
+    };
+    
+    checkSupport();
   }, []);
 
-  // Sync with backend
+  // Sync with backend preferences
   useEffect(() => {
     if (prefs) {
       setPushEnabled(prefs.push_enabled);
@@ -46,12 +63,15 @@ export default function NotificationPreferencesCard() {
     
     try {
       if (state) {
-        // Request permission
+        // Enabling notifications
+        console.log('Enabling push notifications...');
+        
+        // Request permission first
         const permission = await pushNotificationService.requestPermission();
         setPermission(permission);
         
         if (permission !== "granted") {
-          toast.error("Permission denied for push notifications.");
+          toast.error("Permission denied for push notifications. Please enable them in your browser settings.");
           setIsSubscribing(false);
           return;
         }
@@ -59,20 +79,48 @@ export default function NotificationPreferencesCard() {
         // Subscribe to push notifications
         const subscription = await pushNotificationService.subscribeToPushNotifications();
         if (!subscription) {
-          toast.error("Failed to subscribe to push notifications.");
+          toast.error("Failed to subscribe to push notifications. Please try again.");
           setIsSubscribing(false);
           return;
         }
 
+        setSubscriptionStatus('subscribed');
         toast.success("Successfully subscribed to push notifications!");
+      } else {
+        // Disabling notifications
+        console.log('Disabling push notifications...');
+        
+        const unsubscribed = await pushNotificationService.unsubscribeFromPushNotifications();
+        if (unsubscribed) {
+          setSubscriptionStatus('unsubscribed');
+          toast.success("Successfully unsubscribed from push notifications.");
+        } else {
+          toast.info("No active subscription found.");
+        }
       }
 
+      // Update backend preferences
       setPushEnabled(state);
-      await upsertPreferences({ push_enabled: state });
+      const success = await upsertPreferences({ push_enabled: state });
+      
+      if (!success) {
+        // Revert the UI state if backend update failed
+        setPushEnabled(!state);
+        toast.error("Failed to update preferences. Please try again.");
+      }
       
     } catch (error) {
       console.error("Error handling push toggle:", error);
-      toast.error("Failed to update push notification settings.");
+      
+      let errorMessage = "Failed to update push notification settings.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      
+      // Revert the UI state
+      setPushEnabled(!state);
     } finally {
       setIsSubscribing(false);
     }
@@ -90,6 +138,11 @@ export default function NotificationPreferencesCard() {
       return;
     }
 
+    if (permission !== "granted") {
+      toast.error("Please grant notification permission first.");
+      return;
+    }
+
     setIsTesting(true);
     
     try {
@@ -97,9 +150,48 @@ export default function NotificationPreferencesCard() {
       toast.success("Test notification sent! Check your notifications.");
     } catch (error) {
       console.error("Error sending test notification:", error);
-      toast.error("Failed to send test notification.");
+      
+      let errorMessage = "Failed to send test notification.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const getPermissionStatusDisplay = () => {
+    switch (permission) {
+      case "granted":
+        return (
+          <div className="flex items-center gap-2 text-green-600">
+            <CheckCircle className="h-4 w-4" />
+            <span className="text-sm">Permission granted</span>
+          </div>
+        );
+      case "denied":
+        return (
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">Permission denied - please enable in browser settings</span>
+          </div>
+        );
+      case "default":
+        return (
+          <div className="flex items-center gap-2 text-yellow-600">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">Permission not yet requested</span>
+          </div>
+        );
+      default:
+        return (
+          <div className="flex items-center gap-2 text-gray-600">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">Not supported in this browser</span>
+          </div>
+        );
     }
   };
 
@@ -141,20 +233,41 @@ export default function NotificationPreferencesCard() {
             <Label>Enable Push Notifications</Label>
             <p className="text-sm text-muted-foreground">
               {isPushSupported
-                ? permission === "granted"
-                  ? "You will receive push notifications on this device."
-                  : "Enable push notifications for alerts on this device."
+                ? "Receive push notifications on this device for important family updates."
                 : "Push notifications are not available in your browser."}
             </p>
           </div>
           <Switch
             checked={pushEnabled}
             onCheckedChange={handlePushToggle}
-            disabled={saving || isSubscribing || !isPushSupported || permission === "denied"}
+            disabled={saving || isSubscribing || !isPushSupported}
           />
         </div>
 
-        {pushEnabled && isPushSupported && (
+        {isPushSupported && (
+          <div className="space-y-3">
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Status</h4>
+                {getPermissionStatusDisplay()}
+                {subscriptionStatus !== 'unknown' && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Subscription: {subscriptionStatus}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {isSubscribing && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Updating subscription...</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {pushEnabled && isPushSupported && permission === "granted" && (
           <div className="pt-4 border-t">
             <div className="space-y-3">
               <div>
