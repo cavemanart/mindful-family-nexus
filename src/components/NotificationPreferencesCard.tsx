@@ -16,7 +16,6 @@ export default function NotificationPreferencesCard() {
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
-  const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'ready' | 'not_ready'>('unknown');
 
   // Check browser support and current permission
   useEffect(() => {
@@ -24,18 +23,6 @@ export default function NotificationPreferencesCard() {
       if ("Notification" in window) {
         setIsPushSupported(true);
         setPermission(Notification.permission);
-        
-        // Check if we have an active push setup
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-          try {
-            const registration = await navigator.serviceWorker.ready;
-            const subscription = await registration.pushManager.getSubscription();
-            setNotificationStatus(subscription ? 'ready' : 'not_ready');
-          } catch (error) {
-            console.error('Error checking notification setup:', error);
-            setNotificationStatus('not_ready');
-          }
-        }
       } else {
         setIsPushSupported(false);
         setPermission("unsupported");
@@ -52,7 +39,7 @@ export default function NotificationPreferencesCard() {
     }
   }, [prefs]);
 
-  // Handle push toggle: require permission and setup
+  // Simplified push toggle handler
   const handlePushToggle = async (state: boolean) => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
@@ -63,51 +50,39 @@ export default function NotificationPreferencesCard() {
     
     try {
       if (state) {
-        // Enabling notifications
-        console.log('Setting up push notifications...');
+        // Enabling notifications - simplified flow
+        console.log('Enabling push notifications...');
         
-        // Request permission first
+        // Request permission
         const permission = await pushNotificationService.requestPermission();
         setPermission(permission);
         
         if (permission !== "granted") {
-          toast.error("Permission denied for push notifications. Please enable them in your browser settings.");
+          toast.error("Permission denied. Please enable notifications in your browser settings.");
           setIsSettingUp(false);
           return;
         }
 
-        // Set up push notifications
-        const subscription = await pushNotificationService.subscribeToPushNotifications();
-        if (!subscription) {
-          toast.error("Failed to set up push notifications. Please try again.");
-          setIsSettingUp(false);
-          return;
-        }
-
-        setNotificationStatus('ready');
-        toast.success("Push notifications are now enabled!");
+        // Set up push notifications (this handles the browser subscription)
+        await pushNotificationService.subscribeToPushNotifications();
+        toast.success("Push notifications enabled!");
       } else {
         // Disabling notifications
         console.log('Disabling push notifications...');
-        
-        const unsubscribed = await pushNotificationService.unsubscribeFromPushNotifications();
-        if (unsubscribed) {
-          setNotificationStatus('not_ready');
-          toast.success("Push notifications have been disabled.");
-        } else {
-          toast.info("No active notifications found to disable.");
-        }
+        await pushNotificationService.unsubscribeFromPushNotifications();
+        toast.success("Push notifications disabled.");
       }
 
-      // Update backend preferences
+      // Update local state first for immediate UI feedback
       setPushEnabled(state);
-      const success = await upsertPreferences({ push_enabled: state });
       
-      if (!success) {
-        // Revert the UI state if backend update failed
+      // Update backend preferences in background
+      upsertPreferences({ push_enabled: state }).catch((error) => {
+        console.error("Failed to save preferences:", error);
+        // Revert UI state if backend fails
         setPushEnabled(!state);
-        toast.error("Failed to save notification preferences. Please try again.");
-      }
+        toast.error("Failed to save notification preferences.");
+      });
       
     } catch (error) {
       console.error("Error handling push toggle:", error);
@@ -118,8 +93,6 @@ export default function NotificationPreferencesCard() {
       }
       
       toast.error(errorMessage);
-      
-      // Revert the UI state
       setPushEnabled(!state);
     } finally {
       setIsSettingUp(false);
@@ -250,11 +223,6 @@ export default function NotificationPreferencesCard() {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Status</h4>
                 {getPermissionStatusDisplay()}
-                {notificationStatus !== 'unknown' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Setup: {notificationStatus === 'ready' ? 'Complete' : 'Pending'}</span>
-                  </div>
-                )}
               </div>
             </div>
 

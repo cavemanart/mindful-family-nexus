@@ -180,6 +180,12 @@ const Profile = () => {
     }
   };
 
+  // Handle navigation to dashboard
+  const handleBackToDashboard = () => {
+    console.log('🏠 Navigating back to dashboard');
+    navigate('/dashboard');
+  };
+
   // Show loading state while authentication is loading
   if (authLoading) {
     console.log('⏳ Auth loading, showing spinner');
@@ -224,7 +230,7 @@ const Profile = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate('/dashboard')}
+            onClick={handleBackToDashboard}
             className="hover:bg-muted"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
