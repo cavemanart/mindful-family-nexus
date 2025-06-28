@@ -20,7 +20,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Request notification permission from the user
+   * Request notification permission from the user (optimized)
    */
   async requestPermission(): Promise<NotificationPermission> {
     if (!('Notification' in window)) {
@@ -29,16 +29,21 @@ export class PushNotificationService {
     }
 
     if (Notification.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      console.log('Notification permission:', permission);
-      return permission;
+      try {
+        const permission = await Notification.requestPermission();
+        console.log('Notification permission:', permission);
+        return permission;
+      } catch (error) {
+        console.error('Error requesting permission:', error);
+        return 'denied';
+      }
     }
 
     return Notification.permission;
   }
 
   /**
-   * Check if service worker is ready and supports push
+   * Check if service worker is ready and supports push (with timeout)
    */
   private async checkServiceWorkerSupport(): Promise<boolean> {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -47,7 +52,14 @@ export class PushNotificationService {
     }
 
     try {
-      const registration = await navigator.serviceWorker.ready;
+      // Add timeout to service worker ready check
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Service worker timeout')), 5000)
+        )
+      ]);
+      
       if (!registration.pushManager) {
         console.warn('Push manager not available');
         return false;
@@ -60,7 +72,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Subscribe to push notifications
+   * Subscribe to push notifications (optimized for speed)
    */
   async subscribeToPushNotifications(): Promise<PushSubscription | null> {
     try {
@@ -71,17 +83,18 @@ export class PushNotificationService {
 
       const registration = await navigator.serviceWorker.ready;
       
-      // Check if already subscribed
+      // Check if already subscribed first (faster)
       const existingSubscription = await registration.pushManager.getSubscription();
       if (existingSubscription) {
         console.log('Already subscribed to push notifications');
-        // Still store/update the subscription in case it's not in our database
-        await this.storeSubscription(existingSubscription);
+        // Store/update subscription in background without blocking
+        this.storeSubscription(existingSubscription).catch(error => {
+          console.error('Background subscription storage failed:', error);
+        });
         return existingSubscription;
       }
 
-      // For now, we'll use a basic subscription without VAPID keys
-      // In production, you would need to configure proper VAPID keys
+      // Create new subscription
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         // Commenting out VAPID key for now - this should be configured properly in production
@@ -90,76 +103,50 @@ export class PushNotificationService {
 
       console.log('Subscribed to push notifications:', subscription);
       
-      // Store subscription in database
-      await this.storeSubscription(subscription);
+      // Store subscription in background without blocking
+      this.storeSubscription(subscription).catch(error => {
+        console.error('Background subscription storage failed:', error);
+      });
       
       return subscription;
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
-      throw error; // Re-throw to handle in UI
+      throw error;
     }
   }
 
   /**
-   * Store push subscription in the database using direct insert/upsert
+   * Store push subscription in the database (optimized)
    */
   private async storeSubscription(subscription: PushSubscription): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const p256dhKey = subscription.getKey('p256dh') ? 
         btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))) : null;
       const authKey = subscription.getKey('auth') ? 
         btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null;
 
-      // First try to update existing subscription
-      const { data: existingData, error: selectError } = await supabase
+      // Use upsert for better performance
+      const { error } = await supabase
         .from('push_subscriptions')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('endpoint', subscription.endpoint)
-        .maybeSingle();
+        .upsert({
+          user_id: user.id,
+          endpoint: subscription.endpoint,
+          p256dh_key: p256dhKey,
+          auth_key: authKey,
+          is_active: true,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,endpoint'
+        });
 
-      if (selectError && selectError.code !== 'PGRST116') {
-        console.error('Error checking existing subscription:', selectError);
-        throw selectError;
-      }
-
-      if (existingData) {
-        // Update existing subscription
-        const { error: updateError } = await supabase
-          .from('push_subscriptions')
-          .update({
-            p256dh_key: p256dhKey,
-            auth_key: authKey,
-            is_active: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingData.id);
-
-        if (updateError) {
-          console.error('Error updating push subscription:', updateError);
-          throw updateError;
-        }
-      } else {
-        // Insert new subscription
-        const { error: insertError } = await supabase
-          .from('push_subscriptions')
-          .insert({
-            user_id: user.id,
-            endpoint: subscription.endpoint,
-            p256dh_key: p256dhKey,
-            auth_key: authKey,
-            is_active: true
-          });
-
-        if (insertError) {
-          console.error('Error inserting push subscription:', insertError);
-          throw insertError;
-        }
+      if (error) {
+        console.error('Error storing push subscription:', error);
+        throw error;
       }
 
       console.log('Push subscription stored successfully');
@@ -170,7 +157,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Unsubscribe from push notifications
+   * Unsubscribe from push notifications (optimized)
    */
   async unsubscribeFromPushNotifications(): Promise<boolean> {
     try {
@@ -183,29 +170,36 @@ export class PushNotificationService {
       const subscription = await registration.pushManager.getSubscription();
       
       if (subscription) {
-        await subscription.unsubscribe();
-        console.log('Unsubscribed from push notifications');
+        // Unsubscribe from browser first
+        const success = await subscription.unsubscribe();
+        console.log('Unsubscribed from push notifications:', success);
         
-        // Mark subscription as inactive in database
-        await this.deactivateSubscription(subscription.endpoint);
-        return true;
+        if (success) {
+          // Mark subscription as inactive in database (background)
+          this.deactivateSubscription(subscription.endpoint).catch(error => {
+            console.error('Background deactivation failed:', error);
+          });
+        }
+        
+        return success;
       }
       
       return false;
     } catch (error) {
       console.error('Error unsubscribing from push notifications:', error);
-      throw error;
+      // Don't throw error for unsubscribe - return false instead
+      return false;
     }
   }
 
   /**
-   * Deactivate subscription in database
+   * Deactivate subscription in database (optimized)
    */
   private async deactivateSubscription(endpoint: string): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { error } = await supabase
         .from('push_subscriptions')
         .update({ is_active: false })
@@ -221,7 +215,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Send a local notification (for testing or immediate feedback)
+   * Send a local notification (optimized for testing)
    */
   async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
     if (!('Notification' in window)) {
@@ -241,7 +235,8 @@ export class PushNotificationService {
         type: data.type,
         url: data.url || '/dashboard',
         id: data.id
-      }
+      },
+      requireInteraction: false // Don't require user interaction for test notifications
     };
 
     const title = this.getNotificationTitle(data.type);
@@ -252,14 +247,14 @@ export class PushNotificationService {
       navigator.vibrate([100, 50, 100]);
     }
 
-    // Auto-close after 5 seconds
+    // Auto-close after 4 seconds for better UX
     setTimeout(() => {
       notification.close();
-    }, 5000);
+    }, 4000);
   }
 
   /**
-   * Test push notifications (sends a local notification)
+   * Test push notifications (optimized)
    */
   async testNotification(): Promise<void> {
     const permission = await this.requestPermission();

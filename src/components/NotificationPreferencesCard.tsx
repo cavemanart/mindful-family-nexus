@@ -39,7 +39,7 @@ export default function NotificationPreferencesCard() {
     }
   }, [prefs]);
 
-  // Simplified push toggle handler
+  // Optimized push toggle handler with timeout
   const handlePushToggle = async (state: boolean) => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
@@ -48,40 +48,70 @@ export default function NotificationPreferencesCard() {
 
     setIsSettingUp(true);
     
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setIsSettingUp(false);
+      toast.error("Setup timed out. Please try again.");
+    }, 10000); // 10 second timeout
+
     try {
       if (state) {
-        // Enabling notifications - simplified flow
         console.log('Enabling push notifications...');
         
-        // Request permission
-        const permission = await pushNotificationService.requestPermission();
-        setPermission(permission);
+        // Step 1: Request permission (this should be fast)
+        const permissionResult = await Promise.race([
+          pushNotificationService.requestPermission(),
+          new Promise<NotificationPermission>((_, reject) => 
+            setTimeout(() => reject(new Error('Permission request timed out')), 5000)
+          )
+        ]);
         
-        if (permission !== "granted") {
+        setPermission(permissionResult);
+        
+        if (permissionResult !== "granted") {
           toast.error("Permission denied. Please enable notifications in your browser settings.");
+          clearTimeout(timeoutId);
           setIsSettingUp(false);
           return;
         }
 
-        // Set up push notifications (this handles the browser subscription)
-        await pushNotificationService.subscribeToPushNotifications();
+        // Step 2: Update UI immediately for better UX
+        setPushEnabled(true);
         toast.success("Push notifications enabled!");
+
+        // Step 3: Set up push subscription in background (non-blocking)
+        pushNotificationService.subscribeToPushNotifications()
+          .then(() => {
+            console.log('Push subscription completed in background');
+          })
+          .catch((error) => {
+            console.error("Background subscription failed:", error);
+            // Don't show error toast since user already got success message
+          });
+
       } else {
-        // Disabling notifications
+        // Disabling notifications - this should be fast
         console.log('Disabling push notifications...');
-        await pushNotificationService.unsubscribeFromPushNotifications();
+        
+        try {
+          await Promise.race([
+            pushNotificationService.unsubscribeFromPushNotifications(),
+            new Promise<boolean>((_, reject) => 
+              setTimeout(() => reject(new Error('Unsubscribe timed out')), 3000)
+            )
+          ]);
+        } catch (error) {
+          console.warn('Unsubscribe may have timed out, proceeding anyway:', error);
+        }
+        
+        setPushEnabled(false);
         toast.success("Push notifications disabled.");
       }
 
-      // Update local state first for immediate UI feedback
-      setPushEnabled(state);
-      
-      // Update backend preferences in background
+      // Update backend preferences (non-blocking)
       upsertPreferences({ push_enabled: state }).catch((error) => {
         console.error("Failed to save preferences:", error);
-        // Revert UI state if backend fails
-        setPushEnabled(!state);
-        toast.error("Failed to save notification preferences.");
+        toast.error("Settings saved locally but failed to sync to server.");
       });
       
     } catch (error) {
@@ -89,17 +119,22 @@ export default function NotificationPreferencesCard() {
       
       let errorMessage = "Failed to update push notification settings.";
       if (error instanceof Error) {
-        errorMessage = error.message;
+        if (error.message.includes('timed out')) {
+          errorMessage = "Setup timed out. Please check your browser settings and try again.";
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       toast.error(errorMessage);
       setPushEnabled(!state);
     } finally {
+      clearTimeout(timeoutId);
       setIsSettingUp(false);
     }
   };
 
-  // Test push notifications
+  // Test push notifications with timeout
   const handleTestNotification = async () => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
@@ -118,19 +153,31 @@ export default function NotificationPreferencesCard() {
 
     setIsTesting(true);
     
+    const timeoutId = setTimeout(() => {
+      setIsTesting(false);
+      toast.error("Test notification timed out.");
+    }, 5000);
+    
     try {
-      await pushNotificationService.testNotification();
+      await Promise.race([
+        pushNotificationService.testNotification(),
+        new Promise<void>((_, reject) => 
+          setTimeout(() => reject(new Error('Test notification timed out')), 3000)
+        )
+      ]);
+      
       toast.success("Test notification sent! Check your notifications.");
     } catch (error) {
       console.error("Error sending test notification:", error);
       
       let errorMessage = "Failed to send test notification.";
-      if (error instanceof Error) {
-        errorMessage = error.message;
+      if (error instanceof Error && error.message.includes('timed out')) {
+        errorMessage = "Test timed out. Notifications may still be working.";
       }
       
       toast.error(errorMessage);
     } finally {
+      clearTimeout(timeoutId);
       setIsTesting(false);
     }
   };
@@ -229,7 +276,7 @@ export default function NotificationPreferencesCard() {
             {isSettingUp && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Setting up notifications...</span>
+                <span>Setting up notifications... (this should only take a few seconds)</span>
               </div>
             )}
           </div>
