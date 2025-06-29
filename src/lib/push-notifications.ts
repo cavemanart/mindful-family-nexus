@@ -1,7 +1,8 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PushNotificationData {
-  type: 'chore_reminder' | 'bill_reminder' | 'family_message' | 'calendar_event' | 'mvp_announcement' | 'default';
+  type: 'chore_reminder' | 'bill_reminder' | 'family_message' | 'calendar_event' | 'mvp_announcement' | 'test' | 'default';
   message: string;
   url?: string;
   id?: string;
@@ -61,7 +62,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Subscribe to push notifications
+   * Subscribe to push notifications (optimized for performance)
    */
   async subscribeToPushNotifications(): Promise<PushSubscription | null> {
     try {
@@ -76,9 +77,12 @@ export class PushNotificationService {
       const existingSubscription = await registration.pushManager.getSubscription();
       if (existingSubscription) {
         console.log('Already subscribed to push notifications');
+        
+        // Store in background without blocking
         this.storeSubscription(existingSubscription).catch(error => {
           console.error('Background subscription storage failed:', error);
         });
+        
         return existingSubscription;
       }
 
@@ -89,6 +93,7 @@ export class PushNotificationService {
 
       console.log('Subscribed to push notifications:', subscription);
       
+      // Store in background
       this.storeSubscription(subscription).catch(error => {
         console.error('Background subscription storage failed:', error);
       });
@@ -101,7 +106,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Store push subscription in the database
+   * Store push subscription in the database (optimized)
    */
   private async storeSubscription(subscription: PushSubscription): Promise<void> {
     try {
@@ -196,67 +201,64 @@ export class PushNotificationService {
   }
 
   /**
-   * Send a local notification (simplified and more reliable)
+   * Send a local test notification (optimized and more reliable)
    */
-  async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
-    console.log('Attempting to send local notification:', data);
+  async sendLocalTestNotification(): Promise<void> {
+    console.log('Sending local test notification...');
     
     if (!('Notification' in window)) {
       throw new Error('Notifications not supported in this browser');
     }
 
-    // Check permission first
-    const permission = await this.requestPermission();
-    if (permission !== 'granted') {
+    // Check permission
+    if (Notification.permission !== 'granted') {
       throw new Error('Notification permission not granted');
     }
 
     try {
       const notificationOptions: NotificationOptions = {
-        body: data.message,
+        body: 'Test notification from Hublie! Push notifications are working correctly. 🎉',
         icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
         badge: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
-        tag: data.type,
+        tag: 'test-notification',
         data: {
-          type: data.type,
-          url: data.url || '/dashboard',
-          id: data.id
+          type: 'test',
+          url: '/dashboard',
+          timestamp: Date.now()
         },
         requireInteraction: false,
         silent: false
       };
 
-      const title = this.getNotificationTitle(data.type);
-      console.log('Creating notification with title:', title);
+      const title = '🧪 Test Notification - Hublie';
+      console.log('Creating test notification with title:', title);
       
-      // Try service worker first, fallback to regular notification
+      // Try service worker first for better reliability
       let notificationCreated = false;
       
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.ready;
           if (registration?.showNotification) {
-            console.log('Using service worker registration');
+            console.log('Using service worker for test notification');
             await registration.showNotification(title, notificationOptions);
             notificationCreated = true;
-            console.log('Service worker notification created');
+            console.log('Service worker test notification created successfully');
           }
         } catch (swError) {
-          console.warn('Service worker notification failed:', swError);
+          console.warn('Service worker notification failed, trying fallback:', swError);
         }
       }
       
       // Fallback to regular notification
       if (!notificationCreated) {
-        console.log('Using regular Notification constructor');
+        console.log('Using regular Notification constructor for test');
         const notification = new Notification(title, notificationOptions);
         
         notification.onclick = () => {
-          console.log('Notification clicked');
+          console.log('Test notification clicked');
           window.focus();
-          if (data.url) {
-            window.location.href = data.url;
-          }
+          window.location.href = '/dashboard';
           notification.close();
         };
         
@@ -269,44 +271,47 @@ export class PushNotificationService {
         navigator.vibrate([100, 50, 100]);
       }
       
-      console.log('Notification sent successfully');
+      console.log('Test notification sent successfully');
       
     } catch (error) {
-      console.error('Error creating notification:', error);
-      throw new Error(`Failed to create notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error creating test notification:', error);
+      throw new Error(`Failed to create test notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
-   * Test push notifications (simplified)
+   * Test push subscription endpoint
    */
-  async testNotification(): Promise<void> {
-    console.log('Starting test notification...');
-    
+  async testPushSubscription(): Promise<void> {
     try {
-      if (!('Notification' in window)) {
-        throw new Error('Push notifications are not supported in this browser');
-      }
-      
-      const permission = await this.requestPermission();
-      console.log('Permission status:', permission);
-      
-      if (permission !== 'granted') {
-        throw new Error('Notification permission was denied. Please enable notifications in your browser settings.');
+      const isSupported = await this.checkServiceWorkerSupport();
+      if (!isSupported) {
+        throw new Error('Push notifications not supported');
       }
 
-      await this.sendLocalNotification({
-        type: 'default',
-        message: 'Test notification from Hublie! Push notifications are working correctly.',
-        url: '/dashboard'
-      });
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
       
-      console.log('Test notification completed successfully');
+      if (!subscription) {
+        throw new Error('No active push subscription found');
+      }
+
+      console.log('Push subscription test successful - subscription exists:', subscription.endpoint);
+      
+      // Here we could call an edge function to send a real push notification
+      // For now, we'll just verify the subscription exists
       
     } catch (error) {
-      console.error('Test notification failed:', error);
+      console.error('Push subscription test failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Legacy test method - kept for compatibility
+   */
+  async testNotification(): Promise<void> {
+    return this.sendLocalTestNotification();
   }
 
   /**
@@ -352,6 +357,77 @@ export class PushNotificationService {
     });
   }
 
+  /**
+   * Send a local notification (optimized version)
+   */
+  private async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
+    console.log('Sending local notification:', data);
+    
+    if (!('Notification' in window)) {
+      throw new Error('Notifications not supported in this browser');
+    }
+
+    if (Notification.permission !== 'granted') {
+      throw new Error('Notification permission not granted');
+    }
+
+    try {
+      const notificationOptions: NotificationOptions = {
+        body: data.message,
+        icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+        badge: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+        tag: data.type,
+        data: {
+          type: data.type,
+          url: data.url || '/dashboard',
+          id: data.id,
+          timestamp: Date.now()
+        },
+        requireInteraction: false,
+        silent: false
+      };
+
+      const title = this.getNotificationTitle(data.type);
+      
+      // Use service worker when available
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          if (registration?.showNotification) {
+            await registration.showNotification(title, notificationOptions);
+            return;
+          }
+        } catch (swError) {
+          console.warn('Service worker notification failed, using fallback:', swError);
+        }
+      }
+      
+      // Fallback to regular notification
+      const notification = new Notification(title, notificationOptions);
+      
+      notification.onclick = () => {
+        console.log('Notification clicked');
+        window.focus();
+        if (data.url) {
+          window.location.href = data.url;
+        }
+        notification.close();
+      };
+      
+      // Auto-close after 5 seconds
+      setTimeout(() => notification.close(), 5000);
+      
+      // Add vibration if supported
+      if ('vibrate' in navigator) {
+        navigator.vibrate([100, 50, 100]);
+      }
+      
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw new Error(`Failed to create notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   private getNotificationTitle(type: string): string {
     const titles = {
       'chore_reminder': '🏠 Chore Reminder',
@@ -359,24 +435,10 @@ export class PushNotificationService {
       'family_message': '💬 New Family Message',
       'calendar_event': '📅 Upcoming Event',
       'mvp_announcement': '⭐ MVP of the Day!',
+      'test': '🧪 Test Notification - Hublie',
       'default': '🏠 Hublie'
     };
     return titles[type as keyof typeof titles] || titles.default;
-  }
-
-  private urlBase64ToUint8Array(base64String: string): Uint8Array {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
   }
 }
 

@@ -14,10 +14,15 @@ const urlsToCache = [
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
+        console.log('Service Worker: Caching files');
         return cache.addAll(urlsToCache);
+      })
+      .catch((error) => {
+        console.error('Service Worker: Cache failed', error);
       })
   );
   // Skip waiting to activate immediately
@@ -26,11 +31,13 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Service Worker: Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -98,17 +105,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Handle background sync (for future offline functionality)
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(
-      // Add background sync logic here
-      console.log('Background sync triggered')
-    );
-  }
-});
-
-// Enhanced push notification handler with different notification types
+// Enhanced push notification handler with better error handling
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
   
@@ -117,9 +114,13 @@ self.addEventListener('push', (event) => {
   try {
     // Try to parse the push data
     notificationData = event.data ? event.data.json() : {};
+    console.log('Parsed notification data:', notificationData);
   } catch (error) {
     console.error('Error parsing push data:', error);
-    notificationData = {};
+    notificationData = {
+      type: 'default',
+      message: 'You have a new notification from Hublie!'
+    };
   }
 
   // Define notification types and their configurations
@@ -181,6 +182,17 @@ self.addEventListener('push', (event) => {
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
+    'test': {
+      title: '🧪 Test Notification - Hublie',
+      body: notificationData.message || 'Test notification is working! 🎉',
+      icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+      badge: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+      tag: 'test-notification',
+      actions: [
+        { action: 'view', title: 'Open App', icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png' },
+        { action: 'dismiss', title: 'Dismiss' }
+      ]
+    },
     'default': {
       title: '🏠 Hublie',
       body: notificationData.message || 'You have a new notification!',
@@ -203,19 +215,28 @@ self.addEventListener('push', (event) => {
     ...notificationConfig,
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: notificationData.id || 1,
+      primaryKey: notificationData.id || Date.now(),
       type: notificationType,
       url: notificationData.url || '/dashboard',
+      timestamp: Date.now(),
       ...notificationData
     }
   };
 
+  console.log('Showing notification with options:', options);
+
   event.waitUntil(
     self.registration.showNotification(options.title, options)
+      .then(() => {
+        console.log('Notification displayed successfully');
+      })
+      .catch((error) => {
+        console.error('Error showing notification:', error);
+      })
   );
 });
 
-// Handle notification click events
+// Handle notification click events with improved error handling
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event);
   
@@ -224,69 +245,120 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification.data || {};
   let targetUrl = '/dashboard';
 
-  // Determine target URL based on notification type and action
-  if (event.action === 'view') {
-    switch (notificationData.type) {
-      case 'chore_reminder':
-        targetUrl = '/dashboard#chores';
-        break;
-      case 'bill_reminder':
-        targetUrl = '/dashboard#bills';
-        break;
-      case 'family_message':
-        targetUrl = '/dashboard#messages';
-        break;
-      case 'calendar_event':
-        targetUrl = '/dashboard#calendar';
-        break;
-      case 'mvp_announcement':
-        targetUrl = '/dashboard#mvp';
-        break;
-      default:
-        targetUrl = notificationData.url || '/dashboard';
+  try {
+    // Determine target URL based on notification type and action
+    if (event.action === 'view') {
+      switch (notificationData.type) {
+        case 'chore_reminder':
+          targetUrl = '/dashboard#chores';
+          break;
+        case 'bill_reminder':
+          targetUrl = '/dashboard#bills';
+          break;
+        case 'family_message':
+          targetUrl = '/dashboard#messages';
+          break;
+        case 'calendar_event':
+          targetUrl = '/dashboard#calendar';
+          break;
+        case 'mvp_announcement':
+          targetUrl = '/dashboard#mvp';
+          break;
+        case 'test':
+          targetUrl = '/dashboard';
+          break;
+        default:
+          targetUrl = notificationData.url || '/dashboard';
+      }
+    } else if (event.action === 'dismiss') {
+      // Just close the notification, don't open the app
+      console.log('Notification dismissed');
+      return;
+    } else {
+      // Default click action (no specific action button clicked)
+      targetUrl = notificationData.url || '/dashboard';
     }
-  } else if (event.action === 'dismiss') {
-    // Just close the notification, don't open the app
-    return;
-  } else {
-    // Default click action (no specific action button clicked)
-    targetUrl = notificationData.url || '/dashboard';
-  }
 
-  // Open or focus the app window
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if app is already open
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            client.focus();
-            client.navigate(targetUrl);
-            return;
+    console.log('Opening/focusing app with URL:', targetUrl);
+
+    // Open or focus the app window
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          console.log('Found clients:', clientList.length);
+          
+          // Check if app is already open
+          for (const client of clientList) {
+            if (client.url.includes(self.location.origin) && 'focus' in client) {
+              console.log('Focusing existing client');
+              client.focus();
+              if ('navigate' in client) {
+                client.navigate(targetUrl);
+              }
+              return client;
+            }
           }
-        }
-        
-        // Open new window if app isn't open
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
-        }
-      })
-  );
+          
+          // Open new window if app isn't open
+          if (clients.openWindow) {
+            console.log('Opening new window');
+            return clients.openWindow(targetUrl);
+          }
+        })
+        .catch((error) => {
+          console.error('Error handling notification click:', error);
+        })
+    );
+  } catch (error) {
+    console.error('Error in notification click handler:', error);
+  }
 });
 
 // Handle notification close events (for analytics)
 self.addEventListener('notificationclose', (event) => {
   console.log('Notification closed:', event.notification.tag);
   
-  // You could send analytics data here about notification dismissals
   const notificationData = event.notification.data || {};
   
-  // Optional: Track notification dismissals
-  // fetch('/api/track-notification-close', {
-  //   method: 'POST',
-  //   body: JSON.stringify({
-  //     type: notificationData.type,
-  //     dismissedAt: Date.now()
-  //   })
-  // });
+  // Log notification dismissal for analytics
+  console.log('Notification dismissed:', {
+    type: notificationData.type,
+    dismissedAt: Date.now(),
+    tag: event.notification.tag
+  });
 });
+
+// Handle background sync (for future offline functionality)
+self.addEventListener('sync', (event) => {
+  console.log('Background sync triggered:', event.tag);
+  
+  if (event.tag === 'background-sync') {
+    event.waitUntil(
+      // Add background sync logic here
+      Promise.resolve().then(() => {
+        console.log('Background sync completed');
+      })
+    );
+  }
+});
+
+// Handle service worker messages
+self.addEventListener('message', (event) => {
+  console.log('Service worker received message:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Global error handler
+self.addEventListener('error', (event) => {
+  console.error('Service worker error:', event.error);
+});
+
+// Unhandled promise rejection handler
+self.addEventListener('unhandledrejection', (event) => {
+  console.error('Service worker unhandled promise rejection:', event.reason);
+});
+
+console.log('Service Worker: Loaded and ready');

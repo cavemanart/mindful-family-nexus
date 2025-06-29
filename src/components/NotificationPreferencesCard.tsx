@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -39,58 +38,56 @@ export default function NotificationPreferencesCard() {
     }
   }, [prefs]);
 
-  // Simplified push toggle handler
+  // Optimized push toggle handler - non-blocking UI
   const handlePushToggle = async (state: boolean) => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
       return;
     }
 
+    // Immediate UI feedback
+    setPushEnabled(state);
     setIsSettingUp(true);
 
     try {
       if (state) {
         console.log('Enabling push notifications...');
         
+        // Request permission first
         const permissionResult = await pushNotificationService.requestPermission();
         setPermission(permissionResult);
         
         if (permissionResult !== "granted") {
           toast.error("Permission denied. Please enable notifications in your browser settings.");
-          setIsSettingUp(false);
+          setPushEnabled(false);
           return;
         }
 
-        setPushEnabled(true);
         toast.success("Push notifications enabled!");
 
-        // Set up push subscription in background
-        pushNotificationService.subscribeToPushNotifications()
-          .then(() => {
-            console.log('Push subscription completed');
-          })
-          .catch((error) => {
-            console.error("Background subscription failed:", error);
-          });
+        // Background operations - don't await to keep UI responsive
+        Promise.all([
+          pushNotificationService.subscribeToPushNotifications(),
+          upsertPreferences({ push_enabled: true })
+        ]).then(() => {
+          console.log('Background setup completed successfully');
+        }).catch((error) => {
+          console.error("Background setup failed:", error);
+          toast.error("Setup completed but some background operations failed.");
+        });
 
       } else {
         console.log('Disabling push notifications...');
         
-        try {
-          await pushNotificationService.unsubscribeFromPushNotifications();
-        } catch (error) {
-          console.warn('Unsubscribe error:', error);
-        }
+        // Background cleanup
+        pushNotificationService.unsubscribeFromPushNotifications()
+          .catch((error) => console.warn('Unsubscribe error:', error));
         
-        setPushEnabled(false);
+        upsertPreferences({ push_enabled: false })
+          .catch((error) => console.error("Failed to save preferences:", error));
+        
         toast.success("Push notifications disabled.");
       }
-
-      // Update backend preferences
-      upsertPreferences({ push_enabled: state }).catch((error) => {
-        console.error("Failed to save preferences:", error);
-        toast.error("Settings saved locally but failed to sync to server.");
-      });
       
     } catch (error) {
       console.error("Error handling push toggle:", error);
@@ -107,7 +104,7 @@ export default function NotificationPreferencesCard() {
     }
   };
 
-  // Simplified test notification handler
+  // Enhanced test notification handler with better error handling
   const handleTestNotification = async () => {
     if (!isPushSupported) {
       toast.error("Push notifications are not supported in this browser.");
@@ -119,13 +116,29 @@ export default function NotificationPreferencesCard() {
       return;
     }
 
+    if (permission !== "granted") {
+      toast.error("Notification permission not granted. Please check your browser settings.");
+      return;
+    }
+
     setIsTesting(true);
     
     try {
-      console.log('Testing notification...');
+      console.log('Starting test notification...');
       
-      await pushNotificationService.testNotification();
-      toast.success("Test notification sent! You should see it shortly.");
+      // First try a simple local notification test
+      await pushNotificationService.sendLocalTestNotification();
+      
+      toast.success("Test notification sent! You should see it now.");
+      
+      // Also test the subscription endpoint in background
+      pushNotificationService.testPushSubscription()
+        .then(() => {
+          console.log('Push subscription test successful');
+        })
+        .catch((error) => {
+          console.warn('Push subscription test failed:', error);
+        });
       
     } catch (error) {
       console.error("Test notification error:", error);
@@ -133,9 +146,9 @@ export default function NotificationPreferencesCard() {
       let errorMessage = "Failed to send test notification.";
       if (error instanceof Error) {
         if (error.message.includes('permission')) {
-          errorMessage = "Permission issue: " + error.message;
+          errorMessage = "Permission issue: Please check browser notification settings.";
         } else if (error.message.includes('not supported')) {
-          errorMessage = "Browser compatibility: " + error.message;
+          errorMessage = "Browser compatibility issue: Notifications not fully supported.";
         } else {
           errorMessage = error.message;
         }
@@ -167,7 +180,7 @@ export default function NotificationPreferencesCard() {
         return (
           <div className="flex items-center gap-2 text-yellow-600">
             <AlertCircle className="h-4 w-4" />
-            <span className="text-sm">Permission not yet requested</span>
+            <span className="text-sm">Permission will be requested when enabled</span>
           </div>
         );
       default:
@@ -235,15 +248,14 @@ export default function NotificationPreferencesCard() {
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Status</h4>
                 {getPermissionStatusDisplay()}
+                {isSettingUp && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Setting up notifications...</span>
+                  </div>
+                )}
               </div>
             </div>
-
-            {isSettingUp && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Setting up notifications...</span>
-              </div>
-            )}
           </div>
         )}
 
