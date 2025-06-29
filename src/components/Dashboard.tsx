@@ -137,6 +137,7 @@ export default function Dashboard() {
             addGoal={() => Promise.resolve(false)}
             toggleGoal={() => Promise.resolve(false)}
             deleteGoal={() => Promise.resolve(false)}
+            editGoal={() => Promise.resolve(false)}
             currentUserName=""
             familyMembers={[]}
           />
