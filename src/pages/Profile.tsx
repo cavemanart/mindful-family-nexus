@@ -41,19 +41,23 @@ const Profile = () => {
     if (activeTab && activeTab !== 'profile') {
       // Define routing for standard tabs
       const routeMap: Record<string, string> = {
+        overview: '/dashboard', // Fixed: Added proper route for Home button
         dashboard: '/dashboard',
         mvp: '/dashboard?tab=mvp',
         bills: '/dashboard?tab=bills',
         notes: '/dashboard?tab=notes',
         calendar: '/dashboard?tab=calendar',
         'mental-load': '/dashboard?tab=mental-load',
-        nanny: '/dashboard?tab=nanny-mode',
+        'nanny-mode': '/dashboard?tab=nanny-mode',
         children: '/dashboard?tab=children',
         'weekly-sync': '/dashboard?tab=weekly-sync',
         subscription: '/subscription',
       };
       const to = routeMap[activeTab];
-      if (to) navigate(to);
+      if (to) {
+        console.log('🏠 Navigating from profile to:', to);
+        navigate(to);
+      }
     }
   }, [activeTab, navigate]);
 
