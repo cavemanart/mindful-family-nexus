@@ -1,119 +1,123 @@
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useHouseholds } from "@/hooks/useHouseholds";
+import { usePagePreferences } from "@/hooks/usePagePreferences";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import HouseholdSelector from "./HouseholdSelector";
+import TopBar from "./TopBar";
+import Navigation from "./Navigation";
+import ChoresSection from "./ChoresSection";
+import BillsTracker from "./BillsTracker";
+import FamilyCalendar from "./FamilyCalendar";
+import MVPOfTheDay from "./MVPOfTheDay";
+import FamilyNotes from "./FamilyNotes";
+import PersonalGoalsSection from "./PersonalGoalsSection";
+import WeeklyGoalsSection from "./WeeklyGoalsSection";
+import WeeklyWinsSection from "./WeeklyWinsSection";
+import WeeklySync from "./WeeklySync";
+import NotificationScheduler from "./NotificationScheduler";
 
-import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Household } from '@/hooks/useHouseholds';
-import QuickActions from './QuickActions';
-import OverviewCards from './OverviewCards';
-import SubscriptionStatusCard from './SubscriptionStatusCard';
-import ChoresOverviewCard from './ChoresOverviewCard';
-import AddChoreDialog from './AddChoreDialog';
-import { useChildren } from '@/hooks/useChildren';
+export default function Dashboard() {
+  const { user } = useAuth();
+  const { currentHousehold, households, loading: householdsLoading } = useHouseholds();
+  const { pagePreferences, loading: preferencesLoading } = usePagePreferences();
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
 
-interface DashboardProps {
-  setActiveSection: (section: string) => void;
-  selectedHousehold?: Household | null;
-  WeeklySyncOverviewSlot?: React.ReactNode;
-}
+  useEffect(() => {
+    // Handle URL hash navigation
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        setSelectedSection(hash);
+      }
+    };
 
-const Dashboard: React.FC<DashboardProps> = ({ setActiveSection, selectedHousehold, WeeklySyncOverviewSlot }) => {
-  const { user, userProfile } = useAuth();
-  const { children } = useChildren(selectedHousehold?.id);
+    // Check initial hash
+    handleHashChange();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
-  // Check if user is a parent (not a child)
-  const isParent = userProfile?.role !== 'child';
+  const handleSectionSelect = (section: string) => {
+    setSelectedSection(section);
+    // Update URL hash
+    window.location.hash = section;
+  };
 
-  // If not logged in, prompt to log in
-  if (!user) {
+  if (householdsLoading || preferencesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">Please log in to continue</p>
-        </div>
+        <Loader2 className="animate-spin h-8 w-8" />
       </div>
     );
   }
 
-  // If no household selected, show message
-  if (!selectedHousehold) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-2">No Household Selected</h2>
-          <p className="text-muted-foreground">Please select or create a household to continue</p>
-        </div>
-      </div>
-    );
+  if (!currentHousehold) {
+    return <HouseholdSelector />;
   }
 
-  // Main dashboard content
+  const visiblePages = pagePreferences?.filter(pref => pref.is_visible) || [];
+
   return (
-    <div className="space-y-8 p-6">
-      {/* Welcome Header */}
-      <div className="text-center py-8 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-2xl border border-blue-100 dark:border-blue-800 shadow-sm">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-          Welcome to Hublie! 🏠
-        </h1>
-        <p className="text-muted-foreground text-lg md:text-xl mb-2">
-          Your family's digital headquarters
-        </p>
-        <p className="text-muted-foreground text-base">
-          Managing {selectedHousehold.name}
-        </p>
-      </div>
-
-      {/* Grid layout for main content */}
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left column - Main actions and overview */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Quick Actions */}
-          <div className="bg-card rounded-2xl border shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-              {children.length > 0 && isParent && (
-                <AddChoreDialog 
-                  householdId={selectedHousehold.id}
-                  trigger={
-                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                      + Assign Chore
-                    </button>
-                  }
-                />
-              )}
-            </div>
-            <QuickActions setActiveSection={setActiveSection} />
-          </div>
-
-          {/* Overview Cards */}
-          <div className="bg-card rounded-2xl border shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Overview</h2>
-            <OverviewCards setActiveSection={setActiveSection} />
-          </div>
-
-          {/* Chores Overview */}
-          {children.length > 0 && (
-            <div className="bg-card rounded-2xl border shadow-sm p-6">
-              <ChoresOverviewCard 
-                householdId={selectedHousehold.id}
-                onNavigateToChildren={() => setActiveSection('children')}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Right column - Subscription status */}
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground mb-4">Your Plan</h2>
-            <SubscriptionStatusCard />
-          </div>
-          {/* Weekly Sync Overview */}
-          {WeeklySyncOverviewSlot ? (
-            <div>{WeeklySyncOverviewSlot}</div>
-          ) : null}
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Add the notification scheduler */}
+      <NotificationScheduler householdId={currentHousehold.id} />
+      
+      <TopBar />
+      <Navigation onSectionSelect={handleSectionSelect} />
+      
+      <main className="pb-20 px-4 pt-4 max-w-4xl mx-auto space-y-6">
+        {(!selectedSection || selectedSection === 'chores') && 
+          visiblePages.some(p => p.page_key === 'chores') && (
+          <ChoresSection />
+        )}
+        
+        {(!selectedSection || selectedSection === 'bills') && 
+          visiblePages.some(p => p.page_key === 'bills') && (
+          <BillsTracker />
+        )}
+        
+        {(!selectedSection || selectedSection === 'calendar') && 
+          visiblePages.some(p => p.page_key === 'calendar') && (
+          <FamilyCalendar />
+        )}
+        
+        {(!selectedSection || selectedSection === 'mvp') && 
+          visiblePages.some(p => p.page_key === 'mvp') && (
+          <MVPOfTheDay />
+        )}
+        
+        {(!selectedSection || selectedSection === 'notes') && 
+          visiblePages.some(p => p.page_key === 'notes') && (
+          <FamilyNotes />
+        )}
+        
+        {(!selectedSection || selectedSection === 'goals') && 
+          visiblePages.some(p => p.page_key === 'goals') && (
+          <PersonalGoalsSection />
+        )}
+        
+        {(!selectedSection || selectedSection === 'weekly-goals') && 
+          visiblePages.some(p => p.page_key === 'weekly-goals') && (
+          <WeeklyGoalsSection />
+        )}
+        
+        {(!selectedSection || selectedSection === 'weekly-wins') && 
+          visiblePages.some(p => p.page_key === 'weekly-wins') && (
+          <WeeklyWinsSection />
+        )}
+        
+        {(!selectedSection || selectedSection === 'weekly-sync') && 
+          visiblePages.some(p => p.page_key === 'weekly-sync') && (
+          <WeeklySync />
+        )}
+      </main>
     </div>
   );
-};
-
-export default Dashboard;
+}

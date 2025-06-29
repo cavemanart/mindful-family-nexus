@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { pushNotificationService } from '@/lib/push-notifications';
 
 export interface MVPNomination {
   id: string;
@@ -142,6 +142,14 @@ export const useMVPOfTheDay = (householdId?: string) => {
       if (error) throw error;
 
       toast.success(`🏆 ${data.nominated_for} has been nominated as MVP!`);
+      
+      // Send push notification for MVP announcement
+      try {
+        await pushNotificationService.sendMVPAnnouncement(data.nominated_for);
+      } catch (notifError) {
+        console.warn('Failed to send MVP notification:', notifError);
+      }
+      
       await fetchTodaysMVP();
       return true;
     } catch (error: any) {

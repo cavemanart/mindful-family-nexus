@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { pushNotificationService } from '@/lib/push-notifications';
 
 export interface Chore {
   id: string;
@@ -61,6 +61,16 @@ export const useChores = (householdId: string | null) => {
         title: "Success",
         description: "Chore added successfully!",
       });
+      
+      // Send push notification for chore assignment
+      try {
+        await pushNotificationService.sendChoreReminder(
+          choreData.title,
+          choreData.assigned_to
+        );
+      } catch (notifError) {
+        console.warn('Failed to send chore notification:', notifError);
+      }
       
       fetchChores();
       return true;
@@ -147,6 +157,19 @@ export const useChores = (householdId: string | null) => {
         .eq('id', id);
 
       if (error) throw error;
+      
+      // Send notification when chore is completed
+      if (!chore.completed) {
+        try {
+          await pushNotificationService.sendChoreReminder(
+            `${chore.title} completed by ${chore.assigned_to}! 🎉`,
+            'Family'
+          );
+        } catch (notifError) {
+          console.warn('Failed to send completion notification:', notifError);
+        }
+      }
+      
       fetchChores();
       return true;
     } catch (error: any) {

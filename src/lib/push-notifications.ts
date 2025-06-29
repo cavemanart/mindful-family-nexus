@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PushNotificationData {
@@ -425,6 +424,77 @@ export class PushNotificationService {
     } catch (error) {
       console.error('Error creating notification:', error);
       throw new Error(`Failed to create notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Check for upcoming bills and send reminders
+   * This can be called periodically or triggered by the app
+   */
+  async sendUpcomingBillReminders(bills: any[]): Promise<void> {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const upcomingBills = bills.filter(bill => {
+      if (bill.is_paid) return false;
+      
+      const dueDate = new Date(bill.due_date);
+      const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Send reminder for bills due today, tomorrow, or in 3 days
+      return daysDiff >= 0 && daysDiff <= 3;
+    });
+
+    for (const bill of upcomingBills) {
+      const dueDate = new Date(bill.due_date);
+      const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let message = '';
+      if (daysDiff === 0) {
+        message = `${bill.name} is due today! ($${bill.amount})`;
+      } else if (daysDiff === 1) {
+        message = `${bill.name} is due tomorrow! ($${bill.amount})`;
+      } else {
+        message = `${bill.name} is due in ${daysDiff} days ($${bill.amount})`;
+      }
+
+      try {
+        await this.sendLocalNotification({
+          type: 'bill_reminder',
+          message,
+          url: '/dashboard#bills'
+        });
+      } catch (error) {
+        console.warn(`Failed to send reminder for bill ${bill.name}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Check for upcoming calendar events and send reminders
+   */
+  async sendUpcomingEventReminders(events: any[]): Promise<void> {
+    const now = new Date();
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+    
+    const upcomingEvents = events.filter(event => {
+      const eventStart = new Date(event.start_datetime);
+      return eventStart > now && eventStart <= oneHourFromNow;
+    });
+
+    for (const event of upcomingEvents) {
+      const eventTime = new Date(event.start_datetime).toLocaleTimeString();
+      
+      try {
+        await this.sendLocalNotification({
+          type: 'calendar_event',
+          message: `${event.title} starts at ${eventTime}`,
+          url: '/dashboard#calendar'
+        });
+      } catch (error) {
+        console.warn(`Failed to send reminder for event ${event.title}:`, error);
+      }
     }
   }
 

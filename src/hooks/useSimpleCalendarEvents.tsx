@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { pushNotificationService } from '@/lib/push-notifications';
 
 export interface SimpleCalendarEvent {
   id: string;
@@ -83,6 +83,18 @@ export const useSimpleCalendarEvents = (householdId: string | null) => {
 
       console.log('✅ Calendar event created:', data.id);
       toast.success('Event created successfully');
+      
+      // Send push notification for new calendar event
+      try {
+        const eventTime = new Date(eventData.start_datetime).toLocaleString();
+        await pushNotificationService.sendCalendarReminder(
+          eventData.title,
+          eventTime
+        );
+      } catch (notifError) {
+        console.warn('Failed to send calendar notification:', notifError);
+      }
+      
       await fetchEvents(); // Refresh events
       return data;
     } catch (error) {
