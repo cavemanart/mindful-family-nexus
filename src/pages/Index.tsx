@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -112,7 +111,7 @@ const Index = () => {
 
     switch (currentPage) {
       case 'overview':
-        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={handlePageChange} />;
+        return <Dashboard />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':
@@ -139,7 +138,7 @@ const Index = () => {
         return isVisible('mental-load') ? <MentalLoad /> : null;
       default:
         console.log('📊 Index: Unknown page, rendering dashboard:', currentPage);
-        return <Dashboard selectedHousehold={selectedHousehold} setActiveSection={handlePageChange} />;
+        return <Dashboard />;
     }
   };
 
@@ -158,16 +157,7 @@ const Index = () => {
       
       <main className="max-w-7xl mx-auto pt-20 pb-20 px-4">
         {currentPage === 'overview' && selectedHousehold ? (
-          <Dashboard
-            selectedHousehold={selectedHousehold}
-            setActiveSection={handlePageChange}
-            WeeklySyncOverviewSlot={
-              <WeeklySyncOverview
-                householdId={selectedHousehold.id}
-                onViewFullSync={() => handlePageChange('weekly-sync')}
-              />
-            }
-          />
+          <Dashboard />
         ) : (
           renderPage()
         )}

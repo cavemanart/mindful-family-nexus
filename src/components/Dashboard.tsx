@@ -124,9 +124,8 @@ export default function Dashboard() {
             addPersonalGoal={() => Promise.resolve(false)}
             updatePersonalGoal={() => Promise.resolve(false)}
             deletePersonalGoal={() => Promise.resolve(false)}
-            togglePersonalGoal={() => Promise.resolve(false)}
-            householdId={selectedHousehold.id}
             currentUserName=""
+            currentUserId=""
           />
         )}
         
@@ -138,7 +137,6 @@ export default function Dashboard() {
             addGoal={() => Promise.resolve(false)}
             toggleGoal={() => Promise.resolve(false)}
             deleteGoal={() => Promise.resolve(false)}
-            householdId={selectedHousehold.id}
             currentUserName=""
             familyMembers={[]}
           />

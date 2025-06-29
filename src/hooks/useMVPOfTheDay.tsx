@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,7 +5,7 @@ import { useChildren } from '@/hooks/useChildren';
 import { toast } from 'sonner';
 import { pushNotificationService } from '@/lib/push-notifications';
 
-interface MVPNomination {
+export interface MVPNomination {
   id: string;
   nominated_for: string;
   nominated_by: string;
@@ -17,9 +16,10 @@ interface MVPNomination {
   nominated_by_user_id?: string;
 }
 
-interface HouseholdMember {
+export interface HouseholdMember {
   id: string;
   name: string;
+  full_name: string;
 }
 
 export const useMVPOfTheDay = (householdId: string | null) => {
@@ -32,8 +32,16 @@ export const useMVPOfTheDay = (householdId: string | null) => {
 
   // Create household members list from user profile and children
   const householdMembers: HouseholdMember[] = [
-    ...(userProfile?.first_name ? [{ id: userProfile.id, name: userProfile.first_name }] : []),
-    ...children.map(child => ({ id: child.id, name: child.first_name }))
+    ...(userProfile?.first_name ? [{ 
+      id: userProfile.id, 
+      name: userProfile.first_name,
+      full_name: userProfile.first_name 
+    }] : []),
+    ...children.map(child => ({ 
+      id: child.id, 
+      name: child.first_name,
+      full_name: child.first_name 
+    }))
   ].filter(Boolean);
 
   const currentUserName = userProfile?.first_name || 'Family Member';
