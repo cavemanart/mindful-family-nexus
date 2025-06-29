@@ -1,74 +1,56 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useChildren } from '@/hooks/useChildren';
 import { toast } from 'sonner';
 import { pushNotificationService } from '@/lib/push-notifications';
 
-export interface MVPNomination {
+interface MVPNomination {
   id: string;
-  household_id: string;
-  nominated_by: string;
   nominated_for: string;
+  nominated_by: string;
   reason: string;
   emoji: string;
-  created_at: string;
   nomination_date: string;
-  nominated_by_user_id?: string;
   nominated_for_user_id?: string;
+  nominated_by_user_id?: string;
 }
 
-export interface HouseholdMember {
+interface HouseholdMember {
   id: string;
-  full_name: string;
+  name: string;
 }
 
-export const useMVPOfTheDay = (householdId?: string) => {
+export const useMVPOfTheDay = (householdId: string | null) => {
   const { user, userProfile } = useAuth();
+  const { children } = useChildren(householdId);
   const [todaysMVP, setTodaysMVP] = useState<MVPNomination | null>(null);
-  const [householdMembers, setHouseholdMembers] = useState<HouseholdMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasNominatedToday, setHasNominatedToday] = useState(false);
 
-  const currentUserName = userProfile?.first_name && userProfile?.last_name 
-    ? `${userProfile.first_name} ${userProfile.last_name}` 
-    : user?.email || 'Unknown User';
+  // Create household members list from user profile and children
+  const householdMembers: HouseholdMember[] = [
+    ...(userProfile?.first_name ? [{ id: userProfile.id, name: userProfile.first_name }] : []),
+    ...children.map(child => ({ id: child.id, name: child.first_name }))
+  ].filter(Boolean);
 
-  const fetchHouseholdMembers = async () => {
-    if (!householdId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('household_members')
-        .select(`
-          user_id,
-          profiles!inner(id, first_name, last_name, is_child_account)
-        `)
-        .eq('household_id', householdId);
-
-      if (error) throw error;
-
-      const members = data.map(member => ({
-        id: member.user_id,
-        full_name: `${member.profiles.first_name || ''} ${member.profiles.last_name || ''}`.trim() || 'Unknown User'
-      }));
-
-      setHouseholdMembers(members);
-    } catch (error) {
-      console.error('Error fetching household members:', error);
-      setError('Failed to load household members');
-    }
-  };
+  const currentUserName = userProfile?.first_name || 'Family Member';
 
   const fetchTodaysMVP = async () => {
-    if (!householdId) return;
+    if (!householdId) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      setLoading(true);
+      setError(null);
 
-      // Try to get today's MVP first
-      let { data: todayData, error: todayError } = await supabase
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data, error: fetchError } = await supabase
         .from('mvp_nominations')
         .select('*')
         .eq('household_id', householdId)
@@ -76,27 +58,13 @@ export const useMVPOfTheDay = (householdId?: string) => {
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (todayError) throw todayError;
+      if (fetchError) throw fetchError;
 
-      // If no MVP for today, try yesterday
-      if (!todayData || todayData.length === 0) {
-        const { data: yesterdayData, error: yesterdayError } = await supabase
-          .from('mvp_nominations')
-          .select('*')
-          .eq('household_id', householdId)
-          .eq('nomination_date', yesterday)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (yesterdayError) throw yesterdayError;
-        setTodaysMVP(yesterdayData?.[0] || null);
-      } else {
-        setTodaysMVP(todayData[0]);
-      }
+      setTodaysMVP(data?.[0] || null);
 
       // Check if current user has nominated today
       if (user?.id) {
-        const { data: userNomination, error: nominationError } = await supabase
+        const { data: userNomination } = await supabase
           .from('mvp_nominations')
           .select('id')
           .eq('household_id', householdId)
@@ -104,13 +72,15 @@ export const useMVPOfTheDay = (householdId?: string) => {
           .eq('nomination_date', today)
           .limit(1);
 
-        if (nominationError) throw nominationError;
-        setHasNominatedToday((userNomination?.length || 0) > 0);
+        setHasNominatedToday(!!userNomination?.[0]);
       }
 
-    } catch (error) {
-      console.error('Error fetching MVP:', error);
-      setError('Failed to load MVP data');
+    } catch (err: any) {
+      console.error('Error fetching MVP:', err);
+      setError(err.message);
+      toast.error('Failed to load MVP data');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -166,43 +136,11 @@ export const useMVPOfTheDay = (householdId?: string) => {
   };
 
   const refreshMVP = async () => {
-    setLoading(true);
     await fetchTodaysMVP();
-    setLoading(false);
   };
 
   useEffect(() => {
-    if (householdId && user) {
-      const initialize = async () => {
-        setLoading(true);
-        setError(null);
-        await Promise.all([fetchHouseholdMembers(), fetchTodaysMVP()]);
-        setLoading(false);
-      };
-
-      initialize();
-
-      // Set up real-time subscription
-      const channel = supabase
-        .channel('mvp_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'mvp_nominations',
-            filter: `household_id=eq.${householdId}`
-          },
-          () => {
-            fetchTodaysMVP();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
+    fetchTodaysMVP();
   }, [householdId, user?.id]);
 
   return {

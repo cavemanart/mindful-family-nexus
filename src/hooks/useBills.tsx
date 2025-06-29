@@ -55,15 +55,13 @@ export const useBills = (householdId: string | null) => {
     }
   };
 
-  const createBill = async (billData: Omit<Bill, 'id' | 'created_at' | 'updated_at' | 'household_id'>) => {
-    if (!householdId) return null;
+  const addBill = async (billData: Omit<Bill, 'id' | 'created_at' | 'updated_at' | 'household_id'>) => {
+    if (!householdId) return false;
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('bills')
-        .insert([{ ...billData, household_id: householdId }])
-        .select()
-        .single();
+        .insert([{ ...billData, household_id: householdId }]);
 
       if (error) throw error;
 
@@ -81,48 +79,80 @@ export const useBills = (householdId: string | null) => {
       }
       
       await fetchBills();
-      return data;
+      return true;
     } catch (err: any) {
       console.error('Error creating bill:', err);
       toast.error('Failed to create bill');
-      return null;
+      return false;
     }
   };
 
-  const updateBill = async (id: string, updates: Partial<Bill>) => {
+  const togglePaid = async (id: string) => {
     try {
-      const { data, error } = await supabase
+      const bill = bills.find(b => b.id === id);
+      if (!bill) return false;
+
+      const { error } = await supabase
         .from('bills')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+        .update({ is_paid: !bill.is_paid })
+        .eq('id', id);
 
       if (error) throw error;
 
-      toast.success('Bill updated successfully');
+      toast.success(!bill.is_paid ? 'Bill marked as paid' : 'Bill marked as unpaid');
       
       // Send notification if bill is marked as paid
-      if (updates.is_paid === true) {
-        const bill = bills.find(b => b.id === id);
-        if (bill) {
-          try {
-            await pushNotificationService.sendBillReminder(
-              `${bill.name} has been paid! ✅`,
-              'Today'
-            );
-          } catch (notifError) {
-            console.warn('Failed to send payment notification:', notifError);
-          }
+      if (!bill.is_paid) {
+        try {
+          await pushNotificationService.sendBillReminder(
+            `${bill.name} has been paid! ✅`,
+            'Today'
+          );
+        } catch (notifError) {
+          console.warn('Failed to send payment notification:', notifError);
         }
       }
       
       await fetchBills();
-      return data;
+      return true;
     } catch (err: any) {
       console.error('Error updating bill:', err);
       toast.error('Failed to update bill');
-      return null;
+      return false;
+    }
+  };
+
+  const generateNextInstance = async (billId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('generate_next_bill_instance', {
+        p_bill_id: billId
+      });
+
+      if (error) throw error;
+
+      toast.success('Next bill instance generated');
+      await fetchBills();
+      return true;
+    } catch (err: any) {
+      console.error('Error generating next bill:', err);
+      toast.error('Failed to generate next bill');
+      return false;
+    }
+  };
+
+  const processRecurringBills = async () => {
+    try {
+      const { data, error } = await supabase.rpc('process_recurring_bills');
+
+      if (error) throw error;
+
+      toast.success(`Generated ${data || 0} recurring bills`);
+      await fetchBills();
+      return true;
+    } catch (err: any) {
+      console.error('Error processing recurring bills:', err);
+      toast.error('Failed to process recurring bills');
+      return false;
     }
   };
 
@@ -145,6 +175,14 @@ export const useBills = (householdId: string | null) => {
     }
   };
 
+  // Calculate bills this month for subscription limits
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const billsThisMonth = bills.filter(bill => {
+    const billDate = new Date(bill.created_at);
+    return billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear;
+  }).length;
+
   useEffect(() => {
     fetchBills();
   }, [householdId]);
@@ -153,8 +191,11 @@ export const useBills = (householdId: string | null) => {
     bills,
     loading,
     error,
-    createBill,
-    updateBill,
+    billsThisMonth,
+    addBill,
+    togglePaid,
+    generateNextInstance,
+    processRecurringBills,
     deleteBill,
     refetch: fetchBills,
   };
