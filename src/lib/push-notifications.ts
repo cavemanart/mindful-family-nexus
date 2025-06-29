@@ -20,7 +20,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Request notification permission from the user (optimized)
+   * Request notification permission from the user
    */
   async requestPermission(): Promise<NotificationPermission> {
     if (!('Notification' in window)) {
@@ -43,7 +43,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Check if service worker is ready and supports push (with timeout)
+   * Check if service worker is ready
    */
   private async checkServiceWorkerSupport(): Promise<boolean> {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -52,19 +52,8 @@ export class PushNotificationService {
     }
 
     try {
-      // Add timeout to service worker ready check
-      const registration = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Service worker timeout')), 5000)
-        )
-      ]);
-      
-      if (!registration.pushManager) {
-        console.warn('Push manager not available');
-        return false;
-      }
-      return true;
+      const registration = await navigator.serviceWorker.ready;
+      return !!registration.pushManager;
     } catch (error) {
       console.error('Service worker not ready:', error);
       return false;
@@ -72,7 +61,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Subscribe to push notifications (optimized for speed)
+   * Subscribe to push notifications
    */
   async subscribeToPushNotifications(): Promise<PushSubscription | null> {
     try {
@@ -83,11 +72,10 @@ export class PushNotificationService {
 
       const registration = await navigator.serviceWorker.ready;
       
-      // Check if already subscribed first (faster)
+      // Check if already subscribed first
       const existingSubscription = await registration.pushManager.getSubscription();
       if (existingSubscription) {
         console.log('Already subscribed to push notifications');
-        // Store/update subscription in background without blocking
         this.storeSubscription(existingSubscription).catch(error => {
           console.error('Background subscription storage failed:', error);
         });
@@ -97,13 +85,10 @@ export class PushNotificationService {
       // Create new subscription
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        // Commenting out VAPID key for now - this should be configured properly in production
-        // applicationServerKey: this.urlBase64ToUint8Array('YOUR_VAPID_PUBLIC_KEY')
       });
 
       console.log('Subscribed to push notifications:', subscription);
       
-      // Store subscription in background without blocking
       this.storeSubscription(subscription).catch(error => {
         console.error('Background subscription storage failed:', error);
       });
@@ -116,7 +101,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Store push subscription in the database (optimized)
+   * Store push subscription in the database
    */
   private async storeSubscription(subscription: PushSubscription): Promise<void> {
     try {
@@ -130,7 +115,6 @@ export class PushNotificationService {
       const authKey = subscription.getKey('auth') ? 
         btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))) : null;
 
-      // Use upsert for better performance
       const { error } = await supabase
         .from('push_subscriptions')
         .upsert({
@@ -157,7 +141,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Unsubscribe from push notifications (optimized)
+   * Unsubscribe from push notifications
    */
   async unsubscribeFromPushNotifications(): Promise<boolean> {
     try {
@@ -170,12 +154,10 @@ export class PushNotificationService {
       const subscription = await registration.pushManager.getSubscription();
       
       if (subscription) {
-        // Unsubscribe from browser first
         const success = await subscription.unsubscribe();
         console.log('Unsubscribed from push notifications:', success);
         
         if (success) {
-          // Mark subscription as inactive in database (background)
           this.deactivateSubscription(subscription.endpoint).catch(error => {
             console.error('Background deactivation failed:', error);
           });
@@ -187,13 +169,12 @@ export class PushNotificationService {
       return false;
     } catch (error) {
       console.error('Error unsubscribing from push notifications:', error);
-      // Don't throw error for unsubscribe - return false instead
       return false;
     }
   }
 
   /**
-   * Deactivate subscription in database (optimized)
+   * Deactivate subscription in database
    */
   private async deactivateSubscription(endpoint: string): Promise<void> {
     try {
@@ -215,7 +196,7 @@ export class PushNotificationService {
   }
 
   /**
-   * Send a local notification (improved for better reliability with service worker)
+   * Send a local notification (simplified and more reliable)
    */
   async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
     console.log('Attempting to send local notification:', data);
@@ -246,55 +227,49 @@ export class PushNotificationService {
       };
 
       const title = this.getNotificationTitle(data.type);
-      console.log('Creating notification with title:', title, 'and options:', notificationOptions);
+      console.log('Creating notification with title:', title);
       
-      // Check if service worker is available and use it if possible
+      // Try service worker first, fallback to regular notification
+      let notificationCreated = false;
+      
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.ready;
-          if (registration && registration.showNotification) {
-            console.log('Using service worker registration to show notification');
+          if (registration?.showNotification) {
+            console.log('Using service worker registration');
             await registration.showNotification(title, notificationOptions);
-            console.log('Service worker notification created successfully');
-            return;
+            notificationCreated = true;
+            console.log('Service worker notification created');
           }
         } catch (swError) {
-          console.warn('Service worker notification failed, falling back to regular notification:', swError);
+          console.warn('Service worker notification failed:', swError);
         }
       }
       
-      // Fallback to regular notification if service worker is not available
-      console.log('Using regular Notification constructor');
-      const notification = new Notification(title, notificationOptions);
+      // Fallback to regular notification
+      if (!notificationCreated) {
+        console.log('Using regular Notification constructor');
+        const notification = new Notification(title, notificationOptions);
+        
+        notification.onclick = () => {
+          console.log('Notification clicked');
+          window.focus();
+          if (data.url) {
+            window.location.href = data.url;
+          }
+          notification.close();
+        };
+        
+        // Auto-close after 5 seconds
+        setTimeout(() => notification.close(), 5000);
+      }
       
-      // Add event listeners for debugging
-      notification.onshow = () => {
-        console.log('Notification shown successfully');
-      };
-      
-      notification.onerror = (error) => {
-        console.error('Notification error:', error);
-      };
-      
-      notification.onclick = () => {
-        console.log('Notification clicked');
-        window.focus();
-        if (data.url) {
-          window.location.href = data.url;
-        }
-      };
-      
-      // Add vibration manually if supported
+      // Add vibration if supported
       if ('vibrate' in navigator) {
         navigator.vibrate([100, 50, 100]);
       }
-
-      // Auto-close after 4 seconds for better UX
-      setTimeout(() => {
-        notification.close();
-      }, 4000);
       
-      console.log('Notification created successfully');
+      console.log('Notification sent successfully');
       
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -303,18 +278,16 @@ export class PushNotificationService {
   }
 
   /**
-   * Test push notifications (improved with better error handling)
+   * Test push notifications (simplified)
    */
   async testNotification(): Promise<void> {
     console.log('Starting test notification...');
     
     try {
-      // First check if notifications are supported
       if (!('Notification' in window)) {
         throw new Error('Push notifications are not supported in this browser');
       }
       
-      // Request permission if needed
       const permission = await this.requestPermission();
       console.log('Permission status:', permission);
       
@@ -322,14 +295,13 @@ export class PushNotificationService {
         throw new Error('Notification permission was denied. Please enable notifications in your browser settings.');
       }
 
-      // Send the test notification
       await this.sendLocalNotification({
         type: 'default',
         message: 'Test notification from Hublie! Push notifications are working correctly.',
         url: '/dashboard'
       });
       
-      console.log('Test notification sent successfully');
+      console.log('Test notification completed successfully');
       
     } catch (error) {
       console.error('Test notification failed:', error);
