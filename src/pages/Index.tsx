@@ -111,7 +111,7 @@ const Index = () => {
 
     switch (currentPage) {
       case 'overview':
-        return <Dashboard />;
+        return <Dashboard onNavigate={handlePageChange} />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':
@@ -138,7 +138,7 @@ const Index = () => {
         return isVisible('mental-load') ? <MentalLoad /> : null;
       default:
         console.log('📊 Index: Unknown page, rendering dashboard:', currentPage);
-        return <Dashboard />;
+        return <Dashboard onNavigate={handlePageChange} />;
     }
   };
 
@@ -156,11 +156,7 @@ const Index = () => {
       />
       
       <main className="max-w-7xl mx-auto pt-20 pb-20 px-4">
-        {currentPage === 'overview' && selectedHousehold ? (
-          <Dashboard />
-        ) : (
-          renderPage()
-        )}
+        {renderPage()}
       </main>
 
       <CleanMobileNavigation 

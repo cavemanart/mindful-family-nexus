@@ -13,7 +13,11 @@ import WeeklySyncOverview from "./WeeklySyncOverview";
 import ChoresOverviewCard from "./ChoresOverviewCard";
 import NotificationScheduler from "./NotificationScheduler";
 
-export default function Dashboard() {
+interface DashboardProps {
+  onNavigate?: (section: string) => void;
+}
+
+export default function Dashboard({ onNavigate }: DashboardProps) {
   const { user, signOut } = useAuth();
   const { households, selectedHousehold, selectHousehold, loading: householdsLoading } = useHouseholds();
   const { preferences, loading: preferencesLoading } = usePagePreferences();
@@ -40,9 +44,15 @@ export default function Dashboard() {
   }, []);
 
   const handleSectionSelect = (section: string) => {
+    console.log('Dashboard: Section selected:', section);
     setSelectedSection(section);
     // Update URL hash
     window.location.hash = section;
+    
+    // Call parent navigation handler if provided
+    if (onNavigate) {
+      onNavigate(section);
+    }
   };
 
   if (householdsLoading || preferencesLoading) {
@@ -62,51 +72,33 @@ export default function Dashboard() {
       {/* Add the notification scheduler */}
       <NotificationScheduler householdId={selectedHousehold.id} />
       
-      <TopBar 
-        user={user}
-        households={households}
-        selectedHousehold={selectedHousehold}
-        onHouseholdChange={(householdId) => {
-          const household = households.find(h => h.id === householdId);
-          if (household) selectHousehold(household);
-        }}
-        onSignOut={signOut}
-      />
-      <Navigation 
-        activeSection={selectedSection || 'dashboard'}
-        setActiveSection={handleSectionSelect}
-        selectedHousehold={selectedHousehold}
-      />
-      
-      <main className="pb-20 px-4 pt-4 max-w-4xl mx-auto space-y-6">
-        {/* Welcome Section */}
-        <div className="text-center py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to {selectedHousehold.name}
-          </h1>
-          <p className="text-gray-600">
-            Stay organized and connected with your family
-          </p>
-        </div>
+      {/* Welcome Section */}
+      <div className="text-center py-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Welcome to {selectedHousehold.name}
+        </h1>
+        <p className="text-gray-600">
+          Stay organized and connected with your family
+        </p>
+      </div>
 
-        {/* Quick Actions */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
-          <QuickActions setActiveSection={handleSectionSelect} />
-        </div>
+      {/* Quick Actions */}
+      <div className="space-y-4 mb-8">
+        <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
+        <QuickActions setActiveSection={handleSectionSelect} />
+      </div>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ChoresOverviewCard 
-            householdId={selectedHousehold.id}
-            onNavigateToChildren={() => handleSectionSelect('children')}
-          />
-          <WeeklySyncOverview 
-            householdId={selectedHousehold.id}
-            onViewFullSync={() => handleSectionSelect('weekly-sync')}
-          />
-        </div>
-      </main>
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ChoresOverviewCard 
+          householdId={selectedHousehold.id}
+          onNavigateToChildren={() => handleSectionSelect('children')}
+        />
+        <WeeklySyncOverview 
+          householdId={selectedHousehold.id}
+          onViewFullSync={() => handleSectionSelect('weekly-sync')}
+        />
+      </div>
     </div>
   );
 }
