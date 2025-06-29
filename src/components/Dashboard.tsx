@@ -97,7 +97,10 @@ export default function Dashboard() {
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ChoresOverviewCard selectedHousehold={selectedHousehold} />
+          <ChoresOverviewCard 
+            householdId={selectedHousehold.id}
+            onNavigateToChildren={() => handleSectionSelect('children')}
+          />
           <WeeklySyncOverview 
             householdId={selectedHousehold.id}
             onViewFullSync={() => handleSectionSelect('weekly-sync')}
