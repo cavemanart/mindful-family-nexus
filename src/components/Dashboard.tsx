@@ -8,15 +8,9 @@ import { toast } from "sonner";
 import HouseholdSelector from "./HouseholdSelector";
 import TopBar from "./TopBar";
 import Navigation from "./Navigation";
-import ChoresSection from "./ChoresSection";
-import BillsTracker from "./BillsTracker";
-import FamilyCalendar from "./FamilyCalendar";
-import MVPOfTheDay from "./MVPOfTheDay";
-import FamilyNotes from "./FamilyNotes";
-import PersonalGoalsSection from "./PersonalGoalsSection";
-import WeeklyGoalsSection from "./WeeklyGoalsSection";
-import WeeklyWinsSection from "./WeeklyWinsSection";
-import WeeklySync from "./WeeklySync";
+import QuickActions from "./QuickActions";
+import WeeklySyncOverview from "./WeeklySyncOverview";
+import ChoresOverviewCard from "./ChoresOverviewCard";
 import NotificationScheduler from "./NotificationScheduler";
 
 export default function Dashboard() {
@@ -63,8 +57,6 @@ export default function Dashboard() {
     return <HouseholdSelector onHouseholdSelect={selectHousehold} />;
   }
 
-  const visiblePages = preferences?.filter(pref => pref.is_visible) || [];
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Add the notification scheduler */}
@@ -87,76 +79,30 @@ export default function Dashboard() {
       />
       
       <main className="pb-20 px-4 pt-4 max-w-4xl mx-auto space-y-6">
-        {(!selectedSection || selectedSection === 'chores') && 
-          visiblePages.some((p: any) => p.page_key === 'chores') && (
-          <ChoresSection 
-            selectedChild={null}
-            childChores={[]}
-            handleCompleteChore={() => {}}
-          />
-        )}
-        
-        {(!selectedSection || selectedSection === 'bills') && 
-          visiblePages.some((p: any) => p.page_key === 'bills') && (
-          <BillsTracker selectedHousehold={selectedHousehold} />
-        )}
-        
-        {(!selectedSection || selectedSection === 'calendar') && 
-          visiblePages.some((p: any) => p.page_key === 'calendar') && (
-          <FamilyCalendar selectedHousehold={selectedHousehold} />
-        )}
-        
-        {(!selectedSection || selectedSection === 'mvp') && 
-          visiblePages.some((p: any) => p.page_key === 'mvp') && (
-          <MVPOfTheDay selectedHousehold={selectedHousehold} />
-        )}
-        
-        {(!selectedSection || selectedSection === 'notes') && 
-          visiblePages.some((p: any) => p.page_key === 'notes') && (
-          <FamilyNotes householdId={selectedHousehold.id} canEdit={true} />
-        )}
-        
-        {(!selectedSection || selectedSection === 'goals') && 
-          visiblePages.some((p: any) => p.page_key === 'goals') && (
-          <PersonalGoalsSection 
-            personalGoals={[]}
-            loading={false}
-            addPersonalGoal={() => Promise.resolve(false)}
-            updatePersonalGoal={() => Promise.resolve(false)}
-            deletePersonalGoal={() => Promise.resolve(false)}
-            currentUserName=""
-            currentUserId=""
-          />
-        )}
-        
-        {(!selectedSection || selectedSection === 'weekly-goals') && 
-          visiblePages.some((p: any) => p.page_key === 'weekly-goals') && (
-          <WeeklyGoalsSection 
-            goals={[]}
-            loading={false}
-            addGoal={() => Promise.resolve(false)}
-            toggleGoal={() => Promise.resolve(false)}
-            deleteGoal={() => Promise.resolve(false)}
-            editGoal={() => Promise.resolve(false)}
-            currentUserName=""
-            familyMembers={[]}
-          />
-        )}
-        
-        {(!selectedSection || selectedSection === 'weekly-wins') && 
-          visiblePages.some((p: any) => p.page_key === 'weekly-wins') && (
-          <WeeklyWinsSection 
-            wins={[]}
-            loading={false}
-            addWin={() => Promise.resolve(false)}
+        {/* Welcome Section */}
+        <div className="text-center py-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome to {selectedHousehold.name}
+          </h1>
+          <p className="text-gray-600">
+            Stay organized and connected with your family
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
+          <QuickActions setActiveSection={handleSectionSelect} />
+        </div>
+
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ChoresOverviewCard selectedHousehold={selectedHousehold} />
+          <WeeklySyncOverview 
             householdId={selectedHousehold.id}
+            onViewFullSync={() => handleSectionSelect('weekly-sync')}
           />
-        )}
-        
-        {(!selectedSection || selectedSection === 'weekly-sync') && 
-          visiblePages.some((p: any) => p.page_key === 'weekly-sync') && (
-          <WeeklySync selectedHousehold={selectedHousehold} />
-        )}
+        </div>
       </main>
     </div>
   );
