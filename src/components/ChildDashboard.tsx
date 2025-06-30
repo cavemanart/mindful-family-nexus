@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
@@ -20,7 +19,7 @@ interface ChildDashboardProps {
 const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
   const { wins, goals, toggleGoal } = useWeeklyData(selectedHousehold?.id || null);
-  const { initializeChildPoints, getChildPoints } = useChorePoints(selectedHousehold?.id || null);
+  const { initializeChildPoints, getChildPoints, refetch: refetchPoints } = useChorePoints(selectedHousehold?.id || null);
   const { 
     personalGoals, 
     loading: goalsLoading, 
@@ -37,6 +36,13 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
       initializeChildPoints(userProfile.id);
     }
   }, [userProfile?.id, selectedHousehold?.id, userProfile?.is_child_account, initializeChildPoints]);
+
+  // Refresh points when returning to dashboard
+  useEffect(() => {
+    if (activeSection === 'overview') {
+      refetchPoints();
+    }
+  }, [activeSection, refetchPoints]);
 
   if (!selectedHousehold) {
     return (

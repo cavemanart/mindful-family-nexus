@@ -35,8 +35,8 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
     const success = await redeemReward(rewardId, targetChildId, pointCost);
     
     if (success) {
-      // Refresh points to reflect the reduction
-      refetchPoints();
+      // Force refresh points data to reflect the reduction
+      await refetchPoints();
       
       // Send push notification to parents
       try {
@@ -63,10 +63,13 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
     );
   }
 
+  // Get fresh child points after potential redemption
+  const currentChildPoints = childId ? getChildPoints(childId) : null;
+
   return (
     <div className="space-y-6">
       {/* Child Points Display */}
-      {childId && childPoints && (
+      {childId && currentChildPoints && (
         <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -75,8 +78,8 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{childPoints.total_points}</div>
-            <div className="text-sm opacity-90">Level {childPoints.level}</div>
+            <div className="text-3xl font-bold">{currentChildPoints.total_points}</div>
+            <div className="text-sm opacity-90">Level {currentChildPoints.level}</div>
           </CardContent>
         </Card>
       )}
@@ -85,7 +88,7 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {rewards.map((reward) => {
           const isRedeemed = isRewardRedeemed(reward.id);
-          const canAfford = childPoints ? childPoints.total_points >= reward.point_cost : false;
+          const canAfford = currentChildPoints ? currentChildPoints.total_points >= reward.point_cost : false;
           
           return (
             <Card key={reward.id} className={`transition-all hover:shadow-md ${
@@ -117,7 +120,7 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
                     )}
                   </div>
 
-                  {isChild && childId && childPoints && (
+                  {isChild && childId && currentChildPoints && (
                     <Button 
                       onClick={() => handleRedeem(reward.id, reward.point_cost, reward.name)}
                       disabled={!canAfford || isRedeemed}
