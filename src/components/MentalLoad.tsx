@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Brain } from 'lucide-react';
 import { useChildren } from '@/hooks/useChildren';
@@ -14,9 +13,11 @@ interface MentalLoadProps {
 }
 
 const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
-  const { children } = useChildren(householdId);
+  const { children, loading: childrenLoading } = useChildren(householdId);
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  console.log('🧠 MentalLoad: Component rendered with:', { householdId, childrenCount: children.length, user: !!user });
   
   const [items, setItems] = useState<MentalLoadItemType[]>([
     {
@@ -67,43 +68,85 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
     dueDate: '',
   });
 
-  // Get current user name
-  const currentUserName = user?.user_metadata?.first_name || 'You';
+  // Get current user name with better fallback handling
+  const currentUserName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'You';
   
-  // Create assignable members list including current user and children
-  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim()).filter(Boolean);
-  const assignableMembers = [currentUserName, ...familyMembers].filter(Boolean);
+  // Create assignable members list with proper error handling
+  const familyMembers = React.useMemo(() => {
+    try {
+      if (!children || children.length === 0) {
+        console.log('🧠 MentalLoad: No children found');
+        return [];
+      }
+      
+      const members = children
+        .filter(child => child && child.first_name) // Filter out invalid entries
+        .map(child => `${child.first_name} ${child.last_name || ''}`.trim())
+        .filter(name => name.length > 0); // Filter out empty names
+      
+      console.log('🧠 MentalLoad: Family members:', members);
+      return members;
+    } catch (error) {
+      console.error('🧠 MentalLoad: Error processing family members:', error);
+      return [];
+    }
+  }, [children]);
+
+  const assignableMembers = React.useMemo(() => {
+    const members = [currentUserName, ...familyMembers].filter(Boolean);
+    console.log('🧠 MentalLoad: Assignable members:', members);
+    return members;
+  }, [currentUserName, familyMembers]);
+
   const categories = ['Healthcare', 'Education', 'Events', 'Household', 'Finance', 'Social', 'Other'];
 
   const handleItemChange = (field: string, value: string) => {
+    console.log('🧠 MentalLoad: Item field changed:', { field, value });
     setNewItem(prev => ({ ...prev, [field]: value }));
   };
 
   const addItem = async () => {
-    // Validate required fields
-    const errors: string[] = [];
+    console.log('🧠 MentalLoad: Adding item started', { newItem, householdId });
     
-    if (!newItem.title.trim()) {
-      errors.push('Title is required');
-    }
-    if (!newItem.category) {
-      errors.push('Category is required');
-    }
-
-    if (errors.length > 0) {
-      toast({
-        title: "Please fill in required fields",
-        description: errors.join(', '),
-        variant: "destructive"
-      });
-      return;
-    }
-
+    // Reset any previous errors
     setIsSubmitting(true);
 
     try {
+      // Comprehensive validation
+      const validationErrors: string[] = [];
+      
+      if (!newItem.title || !newItem.title.trim()) {
+        validationErrors.push('Title is required');
+      }
+      
+      if (!newItem.category || !newItem.category.trim()) {
+        validationErrors.push('Category is required');
+      }
+      
+      if (!householdId) {
+        validationErrors.push('Household ID is missing');
+      }
+
+      console.log('🧠 MentalLoad: Validation check:', { 
+        errors: validationErrors, 
+        titleLength: newItem.title?.length || 0,
+        categoryLength: newItem.category?.length || 0,
+        householdId: !!householdId
+      });
+
+      if (validationErrors.length > 0) {
+        console.error('🧠 MentalLoad: Validation failed:', validationErrors);
+        toast({
+          title: "Please fill in required fields",
+          description: validationErrors.join(', '),
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create the item
       const item: MentalLoadItemType = {
-        id: Date.now().toString(),
+        id: `mental_load_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title: newItem.title.trim(),
         description: newItem.description.trim() || 'No additional details provided',
         category: newItem.category,
@@ -115,7 +158,14 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         createdAt: new Date(),
       };
 
-      setItems(prevItems => [item, ...prevItems]);
+      console.log('🧠 MentalLoad: Created item object:', item);
+
+      // Add to state
+      setItems(prevItems => {
+        const updated = [item, ...prevItems];
+        console.log('🧠 MentalLoad: Updated items list:', updated.length);
+        return updated;
+      });
       
       // Reset form
       setNewItem({ 
@@ -128,18 +178,26 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
       });
       setIsAddingItem(false);
 
+      // Success feedback
       toast({
         title: "Mental load item shared!",
         description: `"${item.title}" has been added to your family's mental load tracker.`,
       });
 
-      console.log('✅ Mental load item added successfully:', item);
+      console.log('✅ MentalLoad: Item added successfully:', item.id);
 
     } catch (error) {
-      console.error('❌ Error adding mental load item:', error);
+      console.error('❌ MentalLoad: Error adding mental load item:', error);
+      
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.error('❌ MentalLoad: Error message:', error.message);
+        console.error('❌ MentalLoad: Error stack:', error.stack);
+      }
+      
       toast({
-        title: "Something went wrong",
-        description: "Failed to add mental load item. Please try again.",
+        title: "Failed to add item",
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -182,6 +240,17 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
     return activeItems.filter(item => item.assignedTo === assignee);
   };
 
+  // Show loading state while children are loading
+  if (childrenLoading) {
+    return (
+      <div className="space-y-4 p-4 md:p-6">
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div className="flex flex-col gap-4 items-start justify-between">
@@ -191,6 +260,11 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
             Mental Load Sharing
           </h2>
           <p className="text-muted-foreground text-sm">Share the invisible work and mental tasks</p>
+          {assignableMembers.length === 0 && (
+            <p className="text-yellow-600 text-xs mt-1">
+              Note: Add family members to assign tasks to them
+            </p>
+          )}
         </div>
         <MentalLoadForm
           isVisible={isAddingItem}
