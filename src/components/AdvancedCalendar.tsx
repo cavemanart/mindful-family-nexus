@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,9 @@ import SubscriptionBadge from './SubscriptionBadge';
 import { CalendarView, AdvancedCalendarEvent } from '@/types/calendar';
 import EventDetailsModal from './EventDetailsModal';
 import { toast } from 'sonner';
+import QuickAddFloatingButton from './QuickAddFloatingButton';
+import QuickAddEventInput from './QuickAddEventInput';
+import { ParsedEventData } from '@/utils/naturalLanguageParser';
 
 interface Household {
   id: string;
@@ -41,6 +43,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   const [showDayModal, setShowDayModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AdvancedCalendarEvent | null>(null);
   const [showEventDetails, setShowEventDetails] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   // Allow all authenticated users (including children) to create events
   const canCreateEvents = !!userProfile;
@@ -114,6 +117,35 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
     setShowEventDetails(true);
   };
 
+  const handleQuickAddEvent = async (parsedData: ParsedEventData) => {
+    if (!selectedHousehold) return;
+
+    console.log('🚀 Quick adding event:', parsedData);
+
+    // Convert parsed data to event format
+    const eventData = {
+      household_id: selectedHousehold.id,
+      title: parsedData.title,
+      description: `Created via quick add (${Math.round(parsedData.confidence * 100)}% confidence)`,
+      start_datetime: parsedData.start_datetime,
+      end_datetime: parsedData.end_datetime || null,
+      category: parsedData.category || 'general',
+      color: null,
+      assigned_to: [],
+      is_recurring: false,
+      recurrence_pattern: null,
+      recurrence_end: null,
+    };
+
+    const result = await createEvent(eventData);
+    if (result) {
+      toast.success(`Event "${parsedData.title}" created successfully!`);
+      if (parsedData.suggestions && parsedData.suggestions.length > 0) {
+        toast.info('Check the event details to refine the information');
+      }
+    }
+  };
+
   if (!selectedHousehold) {
     return (
       <div className="text-center py-8">
@@ -161,13 +193,36 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
             {isGridView ? 'List View' : 'Grid View'}
           </Button>
           {canCreateEvents && (
-            <Button onClick={() => setShowEventForm(true)} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Add Event
-            </Button>
+            <>
+              <Button 
+                onClick={() => setShowQuickAdd(true)} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                Quick Add
+              </Button>
+              <Button onClick={() => setShowEventForm(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add Event
+              </Button>
+            </>
           )}
         </div>
       </div>
+
+      {/* Quick Add Modal */}
+      {showQuickAdd && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <QuickAddEventInput
+            onEventParsed={(data) => {
+              handleQuickAddEvent(data);
+              setShowQuickAdd(false);
+            }}
+            onCancel={() => setShowQuickAdd(false)}
+          />
+        </div>
+      )}
 
       {/* Navigation and Filters */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -296,6 +351,11 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
             You need to be signed in to create events.
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Floating Quick Add Button */}
+      {canCreateEvents && !showQuickAdd && !showEventForm && !showEventDetails && !showDayModal && (
+        <QuickAddFloatingButton onEventParsed={handleQuickAddEvent} />
       )}
     </div>
   );
