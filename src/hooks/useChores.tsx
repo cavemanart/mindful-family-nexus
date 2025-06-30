@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +41,7 @@ export const useChores = (householdId: string | null) => {
       if (error) throw error;
       setChores(data || []);
     } catch (error: any) {
+      console.error('Error fetching chores:', error);
       toast({
         title: "Error fetching chores",
         description: error.message,
@@ -54,11 +56,25 @@ export const useChores = (householdId: string | null) => {
     if (!householdId) return false;
 
     try {
-      const { error } = await supabase
+      console.log('Creating chore with data:', choreData);
+      
+      const { data, error } = await supabase
         .from('chores')
-        .insert([{ ...choreData, household_id: householdId }]);
+        .insert([{ 
+          ...choreData, 
+          household_id: householdId,
+          recurrence_type: choreData.recurrence_type || 'once',
+          recurrence_interval: choreData.recurrence_interval || 1,
+          requires_approval: choreData.requires_approval ?? true
+        }])
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Chore created successfully:', data);
       
       toast({
         title: "Success",
@@ -78,6 +94,7 @@ export const useChores = (householdId: string | null) => {
       fetchChores();
       return true;
     } catch (error: any) {
+      console.error('Error adding chore:', error);
       toast({
         title: "Error adding chore",
         description: error.message,

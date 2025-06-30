@@ -33,6 +33,13 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.title.trim() || !formData.assigned_to || !formData.due_date) {
+      console.error('Missing required fields:', { formData });
+      return;
+    }
+
+    console.log('Submitting chore with data:', formData);
+    
     const success = await createChore({
       title: formData.title,
       description: formData.description,
@@ -117,6 +124,7 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
               <Select 
                 value={formData.assigned_to} 
                 onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
+                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select child" />
