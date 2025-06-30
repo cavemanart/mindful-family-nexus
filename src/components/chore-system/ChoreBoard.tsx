@@ -20,9 +20,24 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   const { submitChoreForApproval, getChildPoints } = useChorePoints(householdId);
   const { children } = useChildren(householdId);
 
-  const filteredChores = childId 
-    ? chores.filter(chore => chore.assigned_to === children.find(c => c.id === childId)?.first_name)
-    : chores;
+  // Improved filtering logic
+  const filteredChores = React.useMemo(() => {
+    if (!childId) return chores;
+    
+    const selectedChild = children.find(c => c.id === childId);
+    if (!selectedChild) return [];
+    
+    // Match by full name, first name, or child ID
+    const childName = selectedChild.first_name;
+    const fullName = `${selectedChild.first_name} ${selectedChild.last_name}`.trim();
+    
+    return chores.filter(chore => {
+      const assignedTo = chore.assigned_to.toLowerCase();
+      return assignedTo === childName.toLowerCase() || 
+             assignedTo === fullName.toLowerCase() ||
+             assignedTo === childId;
+    });
+  }, [chores, childId, children]);
 
   const childPoints = childId ? getChildPoints(childId) : null;
 
@@ -32,7 +47,6 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   };
 
   const getChoreStatusColor = (chore: any) => {
-    // Check if the chore has approval_status property, otherwise use fallback logic
     const approvalStatus = chore.approval_status || (chore.completed ? 'completed' : 'pending');
     
     if (approvalStatus === 'approved') return 'bg-green-100 border-green-300';
@@ -50,7 +64,11 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   };
 
   if (choresLoading) {
-    return <div className="animate-pulse">Loading chores...</div>;
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (

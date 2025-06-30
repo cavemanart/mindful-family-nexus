@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -68,6 +67,42 @@ export const useChorePoints = (householdId: string | null) => {
         description: "Failed to fetch child points",
         variant: "destructive"
       });
+    }
+  };
+
+  const initializeChildPoints = async (childId: string) => {
+    if (!householdId) return false;
+
+    try {
+      // Check if child points record already exists
+      const { data: existingPoints } = await supabase
+        .from('child_points')
+        .select('id')
+        .eq('child_id', childId)
+        .eq('household_id', householdId)
+        .single();
+
+      if (existingPoints) return true; // Already exists
+
+      // Create new child points record
+      const { error } = await supabase
+        .from('child_points')
+        .insert([{
+          child_id: childId,
+          household_id: householdId,
+          total_points: 0,
+          level: 1,
+          streak_days: 0,
+          last_activity_date: new Date().toISOString().split('T')[0]
+        }]);
+
+      if (error) throw error;
+      
+      await fetchChildPoints(); // Refresh the data
+      return true;
+    } catch (error: any) {
+      console.error('Error initializing child points:', error);
+      return false;
     }
   };
 
@@ -206,6 +241,9 @@ export const useChorePoints = (householdId: string | null) => {
     if (!householdId) return false;
 
     try {
+      // Initialize child points if they don't exist
+      await initializeChildPoints(childId);
+
       // Get or create child points record
       let { data: existingPoints, error: fetchError } = await supabase
         .from('child_points')
@@ -219,7 +257,7 @@ export const useChorePoints = (householdId: string | null) => {
       }
 
       if (!existingPoints) {
-        // Create new points record
+        // This shouldn't happen after initialization, but just in case
         const { error: insertError } = await supabase
           .from('child_points')
           .insert([{
@@ -296,6 +334,7 @@ export const useChorePoints = (householdId: string | null) => {
     submitChoreForApproval,
     approveChoreSubmission,
     addPointsToChild,
+    initializeChildPoints,
     getChildPoints,
     getPendingSubmissions,
     refetch: () => {

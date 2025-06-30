@@ -1,8 +1,8 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
 import { useChores } from '@/hooks/useChores';
+import { useChorePoints } from '@/hooks/useChorePoints';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,14 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   const { userProfile } = useAuth();
   const { chores, toggleChore, deleteChore } = useChores(selectedHousehold?.id);
   const { wins, goals, toggleGoal, deleteGoal } = useWeeklyData(selectedHousehold?.id || null);
+  const { initializeChildPoints, getChildPoints } = useChorePoints(selectedHousehold?.id || null);
+
+  // Initialize child points when component mounts
+  useEffect(() => {
+    if (userProfile?.id && selectedHousehold?.id && userProfile.is_child_account) {
+      initializeChildPoints(userProfile.id);
+    }
+  }, [userProfile?.id, selectedHousehold?.id, userProfile?.is_child_account, initializeChildPoints]);
 
   if (!selectedHousehold) {
     return (
@@ -45,19 +53,25 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   const childName = userProfile?.first_name || '';
   const childFullName = `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim();
 
-  const myChores = chores.filter(chore => 
-    chore.assigned_to.toLowerCase() === childName.toLowerCase() ||
-    chore.assigned_to.toLowerCase() === childFullName.toLowerCase()
-  );
+  // Improved chore filtering to match the ChoreBoard logic
+  const myChores = chores.filter(chore => {
+    const assignedTo = chore.assigned_to.toLowerCase();
+    return assignedTo === childName.toLowerCase() || 
+           assignedTo === childFullName.toLowerCase() ||
+           assignedTo === userProfile?.id;
+  });
 
   const myGoals = goals.filter(goal =>
     goal.assigned_to.toLowerCase() === childName.toLowerCase() ||
     goal.assigned_to.toLowerCase() === childFullName.toLowerCase()
   );
 
-  const completedChores = myChores.filter(chore => chore.completed);
+  const completedChores = myChores.filter(chore => chore.completed || chore.approval_status === 'approved');
   const completedGoals = myGoals.filter(goal => goal.completed);
-  const totalPoints = completedChores.reduce((sum, chore) => sum + chore.points, 0);
+  
+  // Get points from the chore system
+  const childPoints = userProfile?.id ? getChildPoints(userProfile.id) : null;
+  const totalPoints = childPoints?.total_points || completedChores.reduce((sum, chore) => sum + chore.points, 0);
 
   const getRewardLevel = (points: number) => {
     if (points >= 50) return { level: 'Super Star', color: 'text-purple-600', icon: '🌟' };
@@ -100,6 +114,11 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
             <div className={`text-lg font-semibold ${reward.color} mt-1`}>
               {reward.icon} {reward.level}
             </div>
+            {childPoints && (
+              <div className="text-sm text-muted-foreground mt-1">
+                Level {childPoints.level} • {childPoints.streak_days} day streak
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -143,17 +162,29 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
             ) : (
               myChores.map((chore) => (
                 <div key={chore.id} className={`border rounded-lg p-4 ${
-                  chore.completed ? 'bg-green-50 border-green-200' : 'bg-white hover:shadow-md transition-shadow'
+                  chore.approval_status === 'approved' 
+                    ? 'bg-green-50 border-green-200' 
+                    : chore.completed || chore.approval_status === 'pending'
+                    ? 'bg-yellow-50 border-yellow-200'
+                    : 'bg-white hover:shadow-md transition-shadow'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h3 className={`font-semibold text-lg ${
-                        chore.completed ? 'text-green-800 line-through' : 'text-gray-800'
+                        chore.approval_status === 'approved' 
+                          ? 'text-green-800 line-through' 
+                          : chore.completed
+                          ? 'text-yellow-800'
+                          : 'text-gray-800'
                       }`}>
                         {chore.title}
                       </h3>
                       <p className={`text-sm ${
-                        chore.completed ? 'text-green-600' : 'text-gray-600'
+                        chore.approval_status === 'approved' 
+                          ? 'text-green-600' 
+                          : chore.completed
+                          ? 'text-yellow-600'
+                          : 'text-gray-600'
                       }`}>
                         {chore.description}
                       </p>
@@ -165,20 +196,32 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                         <span className="text-sm text-gray-500">
                           Due: {new Date(chore.due_date).toLocaleDateString()}
                         </span>
+                        {chore.approval_status && (
+                          <Badge variant={
+                            chore.approval_status === 'approved' ? 'default' : 
+                            chore.approval_status === 'pending' ? 'secondary' : 'outline'
+                          }>
+                            {chore.approval_status === 'approved' ? '✅ Approved' : 
+                             chore.approval_status === 'pending' ? '⏳ Pending' : chore.approval_status}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant={chore.completed ? "secondary" : "default"}
+                        variant={chore.approval_status === 'approved' ? "secondary" : chore.completed ? "outline" : "default"}
                         size="sm"
                         onClick={() => toggleChore(chore.id)}
-                        className={chore.completed ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                        className={chore.approval_status === 'approved' ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                        disabled={chore.approval_status === 'approved'}
                       >
-                        {chore.completed ? (
+                        {chore.approval_status === 'approved' ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Done!
+                            Completed!
                           </>
+                        ) : chore.completed ? (
+                          "Submitted"
                         ) : (
                           "Mark Done"
                         )}
@@ -208,7 +251,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteChore(chore.id)}>
+                            <AlertDialogAction onClick={() => deleteChore(chore.id)}>
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
