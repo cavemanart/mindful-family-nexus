@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +14,9 @@ export interface Chore {
   created_at: string;
   updated_at: string;
   household_id: string;
+  recurrence_type?: string;
+  recurrence_interval?: number;
+  requires_approval?: boolean;
 }
 
 export const useChores = (householdId: string | null) => {
