@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Home, Calendar, DollarSign, StickyNote, Users, CheckSquare, Star, Baby, Shield, Brain, MoreHorizontal, X, Trophy, Target } from 'lucide-react';
+import { Home, Calendar, DollarSign, StickyNote, Users, CheckSquare, Star, Baby, Shield, Brain, MoreHorizontal, Trophy, Target } from 'lucide-react';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 import { useAuth } from '@/hooks/useAuth';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -89,16 +89,8 @@ export default function CleanMobileNavigation({ activeTab, setActiveTab }: Clean
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-auto">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <h3 className="text-lg font-semibold">More Options</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsMoreMenuOpen(false)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X size={16} />
-                </Button>
               </div>
               <div className="grid grid-cols-2 gap-3 pb-4">
                 {visibleSecondaryItems.map((item) => {
