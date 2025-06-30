@@ -43,7 +43,8 @@ const MentalLoadForm: React.FC<MentalLoadFormProps> = ({
     newItem: {
       title: newItem.title.length,
       category: newItem.category.length,
-      hasDescription: !!newItem.description
+      hasDescription: !!newItem.description,
+      assignedTo: newItem.assignedTo
     }
   });
 
@@ -168,7 +169,7 @@ const MentalLoadForm: React.FC<MentalLoadFormProps> = ({
                     <SelectValue placeholder="Leave unassigned" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Leave unassigned</SelectItem>
+                    <SelectItem value="unassigned">Leave unassigned</SelectItem>
                     {assignableMembers.map((member) => (
                       <SelectItem key={member} value={member}>{member}</SelectItem>
                     ))}

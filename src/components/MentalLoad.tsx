@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Brain } from 'lucide-react';
 import { useChildren } from '@/hooks/useChildren';
@@ -64,7 +65,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
     description: '',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    assignedTo: '',
+    assignedTo: 'unassigned',
     dueDate: '',
   });
 
@@ -131,7 +132,8 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         errors: validationErrors, 
         titleLength: newItem.title?.length || 0,
         categoryLength: newItem.category?.length || 0,
-        householdId: !!householdId
+        householdId: !!householdId,
+        assignedTo: newItem.assignedTo
       });
 
       if (validationErrors.length > 0) {
@@ -144,6 +146,9 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         return;
       }
 
+      // Handle assignment - convert "unassigned" to "Unassigned" for display
+      const assignedTo = newItem.assignedTo === 'unassigned' ? 'Unassigned' : newItem.assignedTo;
+
       // Create the item
       const item: MentalLoadItemType = {
         id: `mental_load_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -151,7 +156,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         description: newItem.description.trim() || 'No additional details provided',
         category: newItem.category,
         priority: newItem.priority,
-        assignedTo: newItem.assignedTo || 'Unassigned',
+        assignedTo: assignedTo,
         sharedBy: currentUserName,
         isCompleted: false,
         dueDate: newItem.dueDate ? new Date(newItem.dueDate) : undefined,
@@ -173,7 +178,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         description: '', 
         category: '', 
         priority: 'medium', 
-        assignedTo: '', 
+        assignedTo: 'unassigned', 
         dueDate: '' 
       });
       setIsAddingItem(false);
