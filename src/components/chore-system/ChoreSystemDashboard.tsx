@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { CheckSquare, Clock, Gift, Trophy, Users } from 'lucide-react';
+import { CheckSquare, Clock, Gift, Trophy, Users, Plus } from 'lucide-react';
 import ChoreBoard from './ChoreBoard';
 import ApprovalCenter from './ApprovalCenter';
 import RewardsShop from './RewardsShop';
+import AddChoreDialog from './AddChoreDialog';
 import { useChorePoints } from '@/hooks/useChorePoints';
 import { useChildren } from '@/hooks/useChildren';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,6 +41,17 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
 
   return (
     <div className="space-y-6">
+      {/* Header with Add Chore Button for Parents */}
+      {isParent && (
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Chore System</h1>
+            <p className="text-muted-foreground">Manage chores, track progress, and reward achievements</p>
+          </div>
+          <AddChoreDialog householdId={householdId} />
+        </div>
+      )}
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>

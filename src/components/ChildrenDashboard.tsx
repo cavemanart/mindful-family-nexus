@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
 
   console.log(`🔍 ChildrenDashboard: Rendering with ${children.length} children for household:`, selectedHousehold?.id);
-  console.log(`🔍 ChildrenDashboard: Children data:`, children);
 
   // Update selected child when children list changes
   React.useEffect(() => {
@@ -96,6 +96,15 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
       <div className="flex items-center justify-center py-8">
         <Loader2 className="animate-spin" size={24} />
         <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  if (!selectedHousehold) {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-2xl font-bold text-foreground mb-2">No Household Selected</h2>
+        <p className="text-muted-foreground">Please select a household to view children's dashboard</p>
       </div>
     );
   }
@@ -146,15 +155,6 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             <connectionStatus.icon className={`h-3 w-3 ${connectionStatus.color} ${subscriptionStatus === 'connecting' ? 'animate-spin' : ''}`} />
             <span>{connectionStatus.text}</span>
           </div>
-          
-          {selectedHousehold && (
-            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-              <p>Household ID: {selectedHousehold.id}</p>
-              {lastRefreshTime && (
-                <p>Last refresh: {lastRefreshTime.toLocaleTimeString()}</p>
-              )}
-            </div>
-          )}
         </div>
       </div>
     );
