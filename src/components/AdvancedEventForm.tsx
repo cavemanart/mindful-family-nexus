@@ -12,7 +12,7 @@ import { AdvancedCalendarEvent, EventCategory } from '@/types/calendar';
 import { useChildren } from '@/hooks/useChildren';
 
 interface AdvancedEventFormProps {
-  onEventCreated: (event: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => void;
+  onEventCreated: (event: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at' | 'updated_at'>) => void;
   onCancel: () => void;
   categories: EventCategory[];
   householdId: string;

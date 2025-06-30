@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -77,7 +76,7 @@ export const useAdvancedCalendar = (householdId: string | null) => {
     }
   }, [householdId, user]);
 
-  const createEvent = async (eventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
+  const createEvent = async (eventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at' | 'updated_at'>) => {
     if (!user || !householdId) {
       console.error('❌ Missing user or householdId for event creation');
       toast.error('Authentication required to create event');

@@ -53,7 +53,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   };
 
   // FIXED: Handler for updating the event from AdvancedEventForm with proper typing
-  const handleUpdateEvent = async (formEventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
+  const handleUpdateEvent = async (formEventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at' | 'updated_at'>) => {
     console.log('📝 EventDetailsModal - Received form data for update:', JSON.stringify(formEventData, null, 2));
     
     // Create properly typed update data with only the fields that can be updated
