@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,7 +48,15 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   };
 
   const handleMarkComplete = async (choreId: string) => {
-    await toggleChore(choreId);
+    if (!childId) return;
+    
+    // For child view, this should submit for approval
+    if (!isParentView) {
+      await submitChoreForApproval(choreId, childId);
+    } else {
+      // For parent view, toggle completion
+      await toggleChore(choreId);
+    }
   };
 
   const getChoreStatusColor = (chore: any) => {
@@ -92,18 +99,18 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
       return null;
     }
 
-    // Child view - different workflow
-    if (chore.completed) {
+    // Child view workflow
+    if (chore.approval_status === 'approved') {
       return (
-        <Badge variant="default" className="w-full justify-center bg-green-600">
-          ✅ Completed
+        <Badge variant="default" className="w-full justify-center bg-green-600 text-white">
+          ✅ Approved
         </Badge>
       );
     }
 
     if (chore.approval_status === 'pending') {
       return (
-        <Badge variant="secondary" className="w-full justify-center bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-400">
+        <Badge variant="secondary" className="w-full justify-center bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">
           ⏳ Waiting for Approval
         </Badge>
       );
@@ -111,18 +118,22 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
 
     if (chore.approval_status === 'rejected') {
       return (
-        <Button 
-          onClick={() => handleMarkComplete(chore.id)}
-          className="w-full"
-          size="sm"
-          variant="outline"
-        >
-          Mark as Complete
-        </Button>
+        <div className="space-y-2">
+          <Badge variant="destructive" className="w-full justify-center">
+            ❌ Needs Revision
+          </Badge>
+          <Button 
+            onClick={() => handleMarkComplete(chore.id)}
+            className="w-full"
+            size="sm"
+          >
+            Mark as Complete
+          </Button>
+        </div>
       );
     }
 
-    // Not completed yet
+    // Default state - not submitted yet
     return (
       <Button 
         onClick={() => handleMarkComplete(chore.id)}
@@ -178,13 +189,13 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
       {/* Chores Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredChores.map((chore) => (
-          <Card key={chore.id} className={`${getChoreStatusColor(chore)} transition-all hover:shadow-md`}>
+          <Card key={chore.id} className={`${getChoreStatusColor(chore)} transition-all hover:shadow-md border`}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <CardTitle className="text-lg">{chore.title}</CardTitle>
+                <CardTitle className="text-lg text-foreground">{chore.title}</CardTitle>
                 {getStatusIcon(chore)}
               </div>
-              <CardDescription className="dark:text-gray-400">{chore.description}</CardDescription>
+              <CardDescription className="text-muted-foreground">{chore.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -199,7 +210,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                  Assigned to: {getChildName(chore.assigned_to)}
+                  Assigned to: {isParentView ? getChildName(chore.assigned_to) : 'Me'}
                 </div>
 
                 {/* Action Buttons */}

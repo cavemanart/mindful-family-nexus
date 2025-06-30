@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/hooks/useAuth";
 import { PersonalGoal } from "@/hooks/usePersonalGoals";
 
 interface PersonalGoalsSectionProps {
@@ -35,11 +36,14 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
   currentUserName,
   currentUserId,
 }) => {
+  const { userProfile } = useAuth();
+  const isChild = userProfile?.is_child_account;
+
   const [isAddingGoal, setIsAddingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: "",
     description: "",
-    is_shared_with_family: false,
+    is_shared_with_family: isChild ? true : false, // Default to shared for children
     target_date: ""
   });
 
@@ -60,7 +64,7 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
         target_date: newGoal.target_date || undefined
       });
       if (success) {
-        setNewGoal({ title: '', description: '', is_shared_with_family: false, target_date: '' });
+        setNewGoal({ title: '', description: '', is_shared_with_family: isChild ? true : false, target_date: '' });
         setIsAddingGoal(false);
       }
     }
@@ -109,30 +113,32 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Target className="text-purple-500" size={24} />
-            My Personal Goals
+            {isChild ? 'My Goals' : 'My Personal Goals'}
           </h3>
           <Button 
             onClick={() => setIsAddingGoal(true)} 
             className="bg-purple-600 hover:bg-purple-700"
           >
             <Plus size={16} className="mr-2" />
-            Add Personal Goal
+            {isChild ? 'Add Goal' : 'Add Personal Goal'}
           </Button>
         </div>
 
         {isAddingGoal && (
-          <Card className="border-2 border-dashed border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50">
+          <Card className="border-2 border-dashed border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
             <CardHeader>
-              <CardTitle className="text-purple-800">Create Your Personal Goal</CardTitle>
+              <CardTitle className="text-purple-800 dark:text-purple-200">
+                {isChild ? 'Create Your Goal' : 'Create Your Personal Goal'}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Input
-                placeholder="What do you want to achieve?"
+                placeholder={isChild ? "What do you want to achieve?" : "What do you want to achieve?"}
                 value={newGoal.title}
                 onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
               />
               <Textarea
-                placeholder="Describe your goal..."
+                placeholder={isChild ? "Tell us more about your goal..." : "Describe your goal..."}
                 value={newGoal.description}
                 onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
                 rows={3}
@@ -143,13 +149,15 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
                 value={newGoal.target_date}
                 onChange={(e) => setNewGoal({ ...newGoal, target_date: e.target.value })}
               />
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={newGoal.is_shared_with_family}
-                  onCheckedChange={(checked) => setNewGoal({ ...newGoal, is_shared_with_family: checked })}
-                />
-                <label className="text-sm">Share with family</label>
-              </div>
+              {!isChild && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={newGoal.is_shared_with_family}
+                    onCheckedChange={(checked) => setNewGoal({ ...newGoal, is_shared_with_family: checked })}
+                  />
+                  <label className="text-sm">Share with family</label>
+                </div>
+              )}
               <div className="flex gap-2">
                 <Button onClick={handleAddGoal} className="bg-purple-600 hover:bg-purple-700">
                   <Target size={16} className="mr-2" />
@@ -167,8 +175,8 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
           {myGoals.map((goal) => (
             <Card key={goal.id} className={`${
               goal.completed 
-                ? 'bg-green-50 border-green-200' 
-                : 'bg-purple-50 border-purple-200'
+                ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800' 
+                : 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800'
             }`}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -200,13 +208,15 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
                             value={editData.target_date}
                             onChange={(e) => setEditData({ ...editData, target_date: e.target.value })}
                           />
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={editData.is_shared_with_family}
-                              onCheckedChange={(checked) => setEditData({ ...editData, is_shared_with_family: checked })}
-                            />
-                            <label className="text-sm">Share with family</label>
-                          </div>
+                          {!isChild && (
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={editData.is_shared_with_family}
+                                onCheckedChange={(checked) => setEditData({ ...editData, is_shared_with_family: checked })}
+                              />
+                              <label className="text-sm">Share with family</label>
+                            </div>
+                          )}
                           <div className="flex gap-2 mt-2">
                             <Button onClick={() => handleEditSave(goal.id)} size="sm">
                               Save
@@ -219,12 +229,12 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
                       ) : (
                         <>
                           <h4 className={`font-semibold ${
-                            goal.completed ? 'text-green-800 line-through' : 'text-foreground'
+                            goal.completed ? 'text-green-800 dark:text-green-200 line-through' : 'text-foreground'
                           }`}>
                             {goal.title}
                           </h4>
                           <p className={`text-sm ${
-                            goal.completed ? 'text-green-700' : 'text-foreground'
+                            goal.completed ? 'text-green-700 dark:text-green-300' : 'text-foreground'
                           }`}>
                             {goal.description}
                           </p>
@@ -242,18 +252,20 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
                       <Badge variant={goal.completed ? "default" : "secondary"}>
                         {goal.completed ? 'Completed' : 'In Progress'}
                       </Badge>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => toggleSharing(goal)}
-                        className="h-6 w-6"
-                      >
-                        {goal.is_shared_with_family ? (
-                          <Eye className="w-3 h-3 text-blue-600" />
-                        ) : (
-                          <EyeOff className="w-3 h-3 text-gray-400" />
-                        )}
-                      </Button>
+                      {!isChild && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => toggleSharing(goal)}
+                          className="h-6 w-6"
+                        >
+                          {goal.is_shared_with_family ? (
+                            <Eye className="w-3 h-3 text-blue-600" />
+                          ) : (
+                            <EyeOff className="w-3 h-3 text-gray-400" />
+                          )}
+                        </Button>
+                      )}
                     </div>
                     {editingId !== goal.id && (
                       <div className="flex gap-1">
@@ -271,10 +283,12 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
             </Card>
           ))}
           {myGoals.length === 0 && (
-            <Card className="border-2 border-dashed border-gray-300">
+            <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
               <CardContent className="p-6 text-center">
                 <Target className="text-gray-300 mx-auto mb-2" size={32} />
-                <p className="text-muted-foreground">No personal goals yet. Create your first goal!</p>
+                <p className="text-muted-foreground">
+                  {isChild ? 'No goals yet. Create your first goal!' : 'No personal goals yet. Create your first goal!'}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -290,19 +304,19 @@ const PersonalGoalsSection: React.FC<PersonalGoalsSectionProps> = ({
           </h3>
           <div className="grid gap-4">
             {sharedGoals.map((goal) => (
-              <Card key={goal.id} className="bg-blue-50 border-blue-200">
+              <Card key={goal.id} className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h4 className={`font-medium ${
-                        goal.completed ? 'text-blue-800 line-through' : 'text-blue-900'
+                        goal.completed ? 'text-blue-800 dark:text-blue-200 line-through' : 'text-blue-900 dark:text-blue-100'
                       }`}>
                         {goal.title}
                       </h4>
-                      <p className="text-sm text-blue-700 mb-1">
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-1">
                         by {goal.created_by_name}
                       </p>
-                      <p className="text-sm text-blue-600">{goal.description}</p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">{goal.description}</p>
                     </div>
                     <Badge variant={goal.completed ? "default" : "secondary"}>
                       {goal.completed ? 'Completed' : 'In Progress'}

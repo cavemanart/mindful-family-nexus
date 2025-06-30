@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, StickyNote, Users, Calendar, Baby, Trophy, CheckCircle } from 'lucide-react';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
+import { useAuth } from '@/hooks/useAuth';
 import { useChildren } from '@/hooks/useChildren';
 import AddChoreDialog from './AddChoreDialog';
 
@@ -12,6 +12,9 @@ interface QuickActionsProps {
 
 const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
   const { getVisiblePages } = usePagePreferences();
+  const { userProfile } = useAuth();
+
+  const isChild = userProfile?.is_child_account;
 
   const actions = [
     {
@@ -30,7 +33,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: DollarSign,
       action: () => setActiveSection('bills'),
       color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/30 dark:to-emerald-950/30'
+      bgColor: 'bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/30 dark:to-emerald-950/30',
+      parentOnly: true
     },
     {
       key: 'notes',
@@ -43,8 +47,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
     },
     {
       key: 'children',
-      title: 'Kids Dashboard',
-      description: 'Manage children activities',
+      title: isChild ? 'My Goals' : 'Kids Dashboard',
+      description: isChild ? 'Track my progress' : 'Manage children activities',
       icon: Users,
       action: () => setActiveSection('children'),
       color: 'from-purple-500 to-violet-500',
@@ -57,7 +61,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: Calendar,
       action: () => setActiveSection('weekly-sync'),
       color: 'from-blue-500 to-cyan-500',
-      bgColor: 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/30 dark:to-cyan-950/30'
+      bgColor: 'bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/30 dark:to-cyan-950/30',
+      parentOnly: true
     },
     {
       key: 'nanny-mode',
@@ -66,12 +71,16 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       icon: Baby,
       action: () => setActiveSection('nanny-mode'),
       color: 'from-orange-500 to-red-500',
-      bgColor: 'bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/30 dark:to-red-950/30'
+      bgColor: 'bg-gradient-to-br from-orange-50/50 to-red-50/50 dark:from-orange-950/30 dark:to-red-950/30',
+      parentOnly: true
     },
   ];
 
-  // Filter actions based on user preferences (this will now exclude parent-only pages for children)
-  const visibleActions = getVisiblePages(actions);
+  // Filter out parent-only actions for children
+  const filteredActions = actions.filter(action => !isChild || !action.parentOnly);
+
+  // Filter actions based on user preferences
+  const visibleActions = getVisiblePages(filteredActions);
 
   if (visibleActions.length === 0) {
     return (

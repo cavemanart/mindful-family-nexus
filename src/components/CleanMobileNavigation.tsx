@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Home, Calendar, DollarSign, StickyNote, Users, CheckSquare, Star, Baby, Shield, Brain, MoreHorizontal, X, Trophy, Target } from 'lucide-react';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
+import { useAuth } from '@/hooks/useAuth';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -12,7 +13,10 @@ interface CleanMobileNavigationProps {
 
 export default function CleanMobileNavigation({ activeTab, setActiveTab }: CleanMobileNavigationProps) {
   const { preferences } = usePagePreferences();
+  const { userProfile } = useAuth();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+
+  const isChild = userProfile?.is_child_account;
 
   const isVisible = (pageKey: string) => {
     const pref = preferences.find(p => p.page_key === pageKey);
@@ -24,18 +28,18 @@ export default function CleanMobileNavigation({ activeTab, setActiveTab }: Clean
     { id: 'overview', icon: Home, label: 'Home', visible: true },
     { id: 'chores', icon: CheckSquare, label: 'Chores', visible: true },
     { id: 'calendar', icon: Calendar, label: 'Calendar', visible: isVisible('calendar') },
-    { id: 'children', icon: Users, label: 'Kids', visible: isVisible('children') },
+    { id: 'children', icon: Users, label: isChild ? 'My Goals' : 'Kids', visible: isVisible('children') },
   ];
 
-  // Secondary navigation items (shown in "More" menu)
+  // Secondary navigation items (shown in "More" menu) - filter out parent-only pages for children
   const secondaryItems = [
-    { id: 'bills', icon: DollarSign, label: 'Bills', visible: isVisible('bills') },
+    { id: 'bills', icon: DollarSign, label: 'Bills', visible: isVisible('bills') && !isChild },
     { id: 'notes', icon: StickyNote, label: 'Notes', visible: isVisible('notes') },
     { id: 'mvp', icon: Trophy, label: 'MVP', visible: isVisible('mvp') },
-    { id: 'weekly-sync', icon: Target, label: 'Weekly Sync', visible: isVisible('weekly-sync') },
-    { id: 'mental-load', icon: Brain, label: 'Mental Load', visible: isVisible('mental-load') },
-    { id: 'nanny-mode', icon: Baby, label: 'Nanny Mode', visible: isVisible('nanny-mode') },
-    { id: 'subscription', icon: Star, label: 'Subscription', visible: true },
+    { id: 'weekly-sync', icon: Target, label: 'Weekly Sync', visible: isVisible('weekly-sync') && !isChild },
+    { id: 'mental-load', icon: Brain, label: 'Mental Load', visible: isVisible('mental-load') && !isChild },
+    { id: 'nanny-mode', icon: Baby, label: 'Nanny Mode', visible: isVisible('nanny-mode') && !isChild },
+    { id: 'subscription', icon: Star, label: 'Subscription', visible: !isChild },
   ];
 
   const visiblePrimaryItems = primaryItems.filter(item => item.visible);
