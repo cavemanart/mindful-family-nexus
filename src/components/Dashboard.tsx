@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHouseholds } from "@/hooks/useHouseholds";
@@ -68,23 +69,23 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Add the notification scheduler */}
       <NotificationScheduler householdId={selectedHousehold.id} />
       
       {/* Welcome Section */}
       <div className="text-center py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Welcome to {selectedHousehold.name}
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Stay organized and connected with your family
         </p>
       </div>
 
       {/* Quick Actions */}
       <div className="space-y-4 mb-8">
-        <h2 className="text-xl font-semibold text-gray-800">Quick Actions</h2>
+        <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
         <QuickActions setActiveSection={handleSectionSelect} />
       </div>
 
