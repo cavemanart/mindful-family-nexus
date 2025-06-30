@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Star, Trophy } from 'lucide-react';
+import { CheckCircle, Star, Trophy, Trash2 } from 'lucide-react';
 import { useChores } from '@/hooks/useChores';
 import { useChorePoints } from '@/hooks/useChorePoints';
 import { useChildren } from '@/hooks/useChildren';
@@ -18,8 +18,8 @@ interface ChoreBoardProps {
 }
 
 export default function ChoreBoard({ householdId, childId, isParentView = false }: ChoreBoardProps) {
-  const { chores, loading: choresLoading, toggleChore, refetch: refetchChores } = useChores(householdId);
-  const { addPointsToChild, getChildPoints } = useChorePoints(householdId);
+  const { chores, loading: choresLoading, toggleChore, deleteChore, refetch: refetchChores } = useChores(householdId);
+  const { addPointsToChild, getChildPoints, refetch: refetchPoints } = useChorePoints(householdId);
   const { children } = useChildren(householdId);
   const { userProfile } = useAuth();
   const { toast } = useToast();
@@ -94,6 +94,17 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
         title: "Points Awarded!",
         description: `${chore.points} points awarded to ${assignedChild.first_name}! 🌟`,
       });
+      
+      // Refresh both chores and points
+      refetchChores();
+      refetchPoints();
+    }
+  };
+
+  const handleDeleteChore = async (choreId: string) => {
+    const success = await deleteChore(choreId);
+    if (success) {
+      refetchChores();
     }
   };
 
@@ -124,17 +135,35 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
 
   const getActionButton = (chore: any) => {
     if (isParentView) {
-      // Parent view - show award points button for completed chores
+      // Parent view - show different states
       if (chore.completed) {
+        // Check if points were already awarded by looking for a transaction
+        const hasBeenAwarded = chore.points_awarded || false; // We'll need to track this
+        
         return (
-          <Button 
-            onClick={() => handleAwardPoints(chore.id)}
-            className="w-full bg-green-600 hover:bg-green-700"
-            size="sm"
-          >
-            <Star className="h-4 w-4 mr-1" />
-            Award {chore.points} Points
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={() => handleAwardPoints(chore.id)}
+              className="w-full bg-green-600 hover:bg-green-700"
+              size="sm"
+              disabled={hasBeenAwarded}
+            >
+              <Star className="h-4 w-4 mr-1" />
+              {hasBeenAwarded ? 'Points Awarded' : `Award ${chore.points} Points`}
+            </Button>
+            
+            {chore.completed && (
+              <Button 
+                onClick={() => handleDeleteChore(chore.id)}
+                variant="outline"
+                className="w-full text-red-600 hover:text-red-700"
+                size="sm"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Delete
+              </Button>
+            )}
+          </div>
         );
       }
       return (

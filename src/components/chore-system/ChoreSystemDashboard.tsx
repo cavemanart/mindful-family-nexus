@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckSquare, Gift, Trophy, Users } from 'lucide-react';
+import { CheckSquare, Gift, Trophy, Users, BarChart3 } from 'lucide-react';
 import ChoreBoard from './ChoreBoard';
 import RewardsShop from './RewardsShop';
 import RewardsAdmin from './RewardsAdmin';
+import ChildPointsTracker from './ChildPointsTracker';
 import AddChoreDialog from './AddChoreDialog';
 import { useChorePoints } from '@/hooks/useChorePoints';
 import { useChildren } from '@/hooks/useChildren';
@@ -87,7 +88,7 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
 
       {/* Main Content */}
       <Tabs defaultValue={isChild ? "my-chores" : "chores"} className="w-full">
-        <TabsList className={`grid w-full ${isParent ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <TabsList className={`grid w-full ${isParent ? 'grid-cols-4' : 'grid-cols-2'}`}>
           <TabsTrigger value="chores" className="flex items-center gap-2">
             <CheckSquare className="h-4 w-4" />
             {isChild ? "My Chores" : "Chores"}
@@ -97,10 +98,16 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
             Rewards
           </TabsTrigger>
           {isParent && (
-            <TabsTrigger value="rewards-admin" className="flex items-center gap-2">
-              <Gift className="h-4 w-4" />
-              Rewards Admin
-            </TabsTrigger>
+            <>
+              <TabsTrigger value="points-tracker" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Points Tracker
+              </TabsTrigger>
+              <TabsTrigger value="rewards-admin" className="flex items-center gap-2">
+                <Gift className="h-4 w-4" />
+                Rewards Admin
+              </TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -157,9 +164,15 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
         </TabsContent>
 
         {isParent && (
-          <TabsContent value="rewards-admin" className="space-y-4">
-            <RewardsAdmin householdId={householdId} />
-          </TabsContent>
+          <>
+            <TabsContent value="points-tracker" className="space-y-4">
+              <ChildPointsTracker householdId={householdId} />
+            </TabsContent>
+            
+            <TabsContent value="rewards-admin" className="space-y-4">
+              <RewardsAdmin householdId={householdId} />
+            </TabsContent>
+          </>
         )}
       </Tabs>
     </div>
