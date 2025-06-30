@@ -8,6 +8,7 @@ import { CheckCircle, Clock, Star, Trophy } from 'lucide-react';
 import { useChores } from '@/hooks/useChores';
 import { useChorePoints } from '@/hooks/useChorePoints';
 import { useChildren } from '@/hooks/useChildren';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ChoreBoardProps {
   householdId: string;
@@ -16,9 +17,10 @@ interface ChoreBoardProps {
 }
 
 export default function ChoreBoard({ householdId, childId, isParentView = false }: ChoreBoardProps) {
-  const { chores, loading: choresLoading } = useChores(householdId);
+  const { chores, loading: choresLoading, toggleChore } = useChores(householdId);
   const { submitChoreForApproval, getChildPoints } = useChorePoints(householdId);
   const { children } = useChildren(householdId);
+  const { userProfile } = useAuth();
 
   // Improved filtering logic
   const filteredChores = React.useMemo(() => {
@@ -46,11 +48,15 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     await submitChoreForApproval(choreId, childId);
   };
 
+  const handleMarkComplete = async (choreId: string) => {
+    await toggleChore(choreId);
+  };
+
   const getChoreStatusColor = (chore: any) => {
-    if (chore.approval_status === 'approved') return 'bg-green-100 border-green-300';
-    if (chore.approval_status === 'pending') return 'bg-yellow-100 border-yellow-300';
-    if (chore.approval_status === 'rejected') return 'bg-red-100 border-red-300';
-    return 'bg-white border-gray-200';
+    if (chore.approval_status === 'approved') return 'bg-green-100 dark:bg-green-950/30 border-green-300 dark:border-green-700';
+    if (chore.approval_status === 'pending') return 'bg-yellow-100 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700';
+    if (chore.approval_status === 'rejected') return 'bg-red-100 dark:bg-red-950/30 border-red-300 dark:border-red-700';
+    return 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700';
   };
 
   const getStatusIcon = (chore: any) => {
@@ -59,24 +65,45 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     return null;
   };
 
+  const getChildName = (assignedTo: string) => {
+    // First try to find by ID
+    const childById = children.find(child => child.id === assignedTo);
+    if (childById) return childById.first_name;
+
+    // Then try to find by name
+    const childByName = children.find(child => 
+      child.first_name.toLowerCase() === assignedTo.toLowerCase() ||
+      `${child.first_name} ${child.last_name || ''}`.trim().toLowerCase() === assignedTo.toLowerCase()
+    );
+    if (childByName) return childByName.first_name;
+
+    // If it's the current user, return "Me"
+    if (userProfile && (assignedTo === userProfile.id || assignedTo.toLowerCase() === userProfile.first_name?.toLowerCase())) {
+      return 'Me';
+    }
+
+    // If still not found, return the original assigned_to value
+    return assignedTo;
+  };
+
   const getActionButton = (chore: any) => {
     if (isParentView) {
       // Parents don't interact with chores directly from this view
       return null;
     }
 
-    // Child view - they can submit chores for approval
-    if (chore.approval_status === 'approved') {
+    // Child view - different workflow
+    if (chore.completed) {
       return (
         <Badge variant="default" className="w-full justify-center bg-green-600">
-          ✅ Completed & Approved
+          ✅ Completed
         </Badge>
       );
     }
 
     if (chore.approval_status === 'pending') {
       return (
-        <Badge variant="secondary" className="w-full justify-center bg-yellow-100 text-yellow-800">
+        <Badge variant="secondary" className="w-full justify-center bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-400">
           ⏳ Waiting for Approval
         </Badge>
       );
@@ -85,24 +112,24 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     if (chore.approval_status === 'rejected') {
       return (
         <Button 
-          onClick={() => handleSubmitChore(chore.id)}
+          onClick={() => handleMarkComplete(chore.id)}
           className="w-full"
           size="sm"
           variant="outline"
         >
-          Resubmit for Approval
+          Mark as Complete
         </Button>
       );
     }
 
-    // Not submitted yet
+    // Not completed yet
     return (
       <Button 
-        onClick={() => handleSubmitChore(chore.id)}
+        onClick={() => handleMarkComplete(chore.id)}
         className="w-full"
         size="sm"
       >
-        Submit for Approval
+        Mark as Complete
       </Button>
     );
   };
@@ -157,7 +184,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
                 <CardTitle className="text-lg">{chore.title}</CardTitle>
                 {getStatusIcon(chore)}
               </div>
-              <CardDescription>{chore.description}</CardDescription>
+              <CardDescription className="dark:text-gray-400">{chore.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -172,7 +199,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                  Assigned to: {chore.assigned_to}
+                  Assigned to: {getChildName(chore.assigned_to)}
                 </div>
 
                 {/* Action Buttons */}

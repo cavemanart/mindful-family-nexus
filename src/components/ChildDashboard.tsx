@@ -65,18 +65,18 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
       {/* Welcome Header */}
-      <div className="text-center py-8 bg-gradient-to-br from-green-50 to-blue-50 rounded-xl border">
+      <div className="text-center py-8 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/30 dark:to-blue-950/30 rounded-xl border">
         <h1 className="text-4xl font-bold text-foreground mb-2">
-          Hi {childName}! 🌟
+          My Dashboard 🌟
         </h1>
         <p className="text-muted-foreground text-xl">
-          Let's see what you can accomplish today!
+          Manage my activities
         </p>
       </div>
 
       {/* Progress Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Trophy className="h-6 w-6 text-yellow-500" />
@@ -94,7 +94,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-200">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Target className="h-6 w-6 text-green-500" />
@@ -140,7 +140,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
             ) : (
               myGoals.map((goal) => (
                 <div key={goal.id} className={`rounded-lg p-3 border ${
-                  goal.completed ? 'bg-green-50 border-green-200' : 'bg-white'
+                  goal.completed ? 'bg-green-50 dark:bg-green-950/30 border-green-200' : 'bg-white dark:bg-gray-800'
                 }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-2 flex-1">
@@ -152,7 +152,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                       </button>
                       <div>
                         <h4 className={`font-medium text-sm ${
-                          goal.completed ? 'text-green-800 line-through' : 'text-gray-800'
+                          goal.completed ? 'text-green-800 dark:text-green-400 line-through' : 'text-gray-800 dark:text-gray-200'
                         }`}>
                           {goal.title}
                         </h4>
@@ -171,7 +171,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
       </Card>
 
       {/* Family Wins (Read-only for kids) */}
-      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/30 dark:to-orange-950/30 border-yellow-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
@@ -184,7 +184,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
               <p className="text-center text-muted-foreground py-4">No family wins shared yet this week!</p>
             ) : (
               wins.slice(0, 3).map((win) => (
-                <div key={win.id} className="bg-white rounded-lg p-3 border">
+                <div key={win.id} className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
                   <div className="flex items-start gap-2">
                     <Trophy className="h-4 w-4 text-yellow-500 mt-1 flex-shrink-0" />
                     <div className="flex-1">

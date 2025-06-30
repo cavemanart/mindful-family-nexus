@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +12,7 @@ import BillsErrorBoundary from '@/components/BillsErrorBoundary';
 import FamilyNotes from '@/components/FamilyNotes';
 import WeeklySync from '@/components/WeeklySync';
 import ChildrenDashboard from '@/components/ChildrenDashboard';
+import ChildDashboard from '@/components/ChildDashboard';
 import MVPOfTheDay from '@/components/MVPOfTheDay';
 import SubscriptionManager from '@/components/SubscriptionManager';
 import NannyMode from '@/components/NannyMode';
@@ -34,7 +34,8 @@ const Index = () => {
     selectedHousehold: !!selectedHousehold,
     currentPage,
     loading,
-    householdsLoading
+    householdsLoading,
+    isChildAccount: userProfile?.is_child_account
   });
 
   useEffect(() => {
@@ -138,8 +139,26 @@ const Index = () => {
       return pref?.is_visible !== false; // Default to visible if no preference
     };
 
-    console.log('📊 Index: Rendering page:', currentPage);
+    console.log('📊 Index: Rendering page:', currentPage, 'isChildAccount:', userProfile?.is_child_account);
 
+    // If user is a child account, render child-specific pages
+    if (userProfile?.is_child_account) {
+      switch (currentPage) {
+        case 'overview':
+        case 'children':
+          return <ChildDashboard selectedHousehold={selectedHousehold} />;
+        case 'chores':
+          return <ChoreSystemDashboard householdId={selectedHousehold.id} />;
+        case 'calendar':
+          return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
+        case 'notes':
+          return isVisible('notes') ? <FamilyNotes householdId={selectedHousehold.id} canEdit={true} /> : null;
+        default:
+          return <ChildDashboard selectedHousehold={selectedHousehold} />;
+      }
+    }
+
+    // Parent/admin view
     switch (currentPage) {
       case 'overview':
         return <Dashboard onNavigate={handlePageChange} />;
