@@ -69,7 +69,10 @@ export const useRewards = (householdId: string | null) => {
         .order('redeemed_at', { ascending: false });
 
       if (error) throw error;
-      setRedemptions(data || []);
+      setRedemptions((data || []).map(item => ({
+        ...item,
+        status: item.status as 'pending' | 'fulfilled' | 'cancelled'
+      })));
     } catch (error: any) {
       console.error('Error fetching redemptions:', error);
     }

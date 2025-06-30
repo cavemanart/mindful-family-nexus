@@ -32,15 +32,20 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   };
 
   const getChoreStatusColor = (chore: any) => {
-    if (chore.approval_status === 'approved') return 'bg-green-100 border-green-300';
-    if (chore.approval_status === 'pending') return 'bg-yellow-100 border-yellow-300';
+    // Check if the chore has approval_status property, otherwise use fallback logic
+    const approvalStatus = chore.approval_status || (chore.completed ? 'completed' : 'pending');
+    
+    if (approvalStatus === 'approved') return 'bg-green-100 border-green-300';
+    if (approvalStatus === 'pending' && chore.completed) return 'bg-yellow-100 border-yellow-300';
     if (chore.completed) return 'bg-blue-100 border-blue-300';
     return 'bg-white border-gray-200';
   };
 
   const getStatusIcon = (chore: any) => {
-    if (chore.approval_status === 'approved') return <CheckCircle className="h-5 w-5 text-green-600" />;
-    if (chore.approval_status === 'pending') return <Clock className="h-5 w-5 text-yellow-600" />;
+    const approvalStatus = chore.approval_status || (chore.completed ? 'completed' : 'pending');
+    
+    if (approvalStatus === 'approved') return <CheckCircle className="h-5 w-5 text-green-600" />;
+    if (approvalStatus === 'pending' && chore.completed) return <Clock className="h-5 w-5 text-yellow-600" />;
     return null;
   };
 

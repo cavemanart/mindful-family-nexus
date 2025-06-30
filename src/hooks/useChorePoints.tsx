@@ -82,7 +82,10 @@ export const useChorePoints = (householdId: string | null) => {
         .order('submitted_at', { ascending: false });
 
       if (error) throw error;
-      setChoreSubmissions(data || []);
+      setChoreSubmissions((data || []).map(item => ({
+        ...item,
+        status: item.status as 'pending' | 'approved' | 'rejected'
+      })));
     } catch (error: any) {
       console.error('Error fetching chore submissions:', error);
     }

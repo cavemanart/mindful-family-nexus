@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,12 +51,12 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
 
   const createDefaultRewards = async () => {
     const defaultRewards = [
-      { name: 'Extra Screen Time', description: '30 minutes of extra screen time', point_cost: 25, category: 'privilege' },
-      { name: 'Choose Family Movie', description: 'Pick the movie for family night', point_cost: 50, category: 'privilege' },
-      { name: 'Special Treat', description: 'Ice cream or special snack', point_cost: 30, category: 'treat' },
-      { name: 'Stay Up Late', description: '30 minutes past bedtime on weekend', point_cost: 40, category: 'privilege' },
-      { name: 'Friend Playdate', description: 'Invite a friend over to play', point_cost: 75, category: 'experience' },
-      { name: 'Small Toy', description: 'Choose a small toy under $10', point_cost: 100, category: 'toy' },
+      { name: 'Extra Screen Time', description: '30 minutes of extra screen time', point_cost: 25, category: 'privilege', is_active: true, age_restriction: null },
+      { name: 'Choose Family Movie', description: 'Pick the movie for family night', point_cost: 50, category: 'privilege', is_active: true, age_restriction: null },
+      { name: 'Special Treat', description: 'Ice cream or special snack', point_cost: 30, category: 'treat', is_active: true, age_restriction: null },
+      { name: 'Stay Up Late', description: '30 minutes past bedtime on weekend', point_cost: 40, category: 'privilege', is_active: true, age_restriction: null },
+      { name: 'Friend Playdate', description: 'Invite a friend over to play', point_cost: 75, category: 'experience', is_active: true, age_restriction: null },
+      { name: 'Small Toy', description: 'Choose a small toy under $10', point_cost: 100, category: 'toy', is_active: true, age_restriction: null },
     ];
 
     for (const reward of defaultRewards) {

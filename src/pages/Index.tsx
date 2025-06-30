@@ -114,7 +114,7 @@ const Index = () => {
       case 'overview':
         return <Dashboard onNavigate={handlePageChange} />;
       case 'chores':
-        return <ChoreSystemDashboard selectedHousehold={selectedHousehold} />;
+        return <ChoreSystemDashboard householdId={selectedHousehold.id} />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':
