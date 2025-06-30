@@ -69,17 +69,23 @@ export const useMiniCoach = (householdId: string | null) => {
 
     setGenerating(true);
     try {
-      const response = await supabase.functions.invoke('generate-mini-coach', {
+      console.log('Generating new coaching moments for household:', householdId);
+      
+      const { data, error } = await supabase.functions.invoke('generate-mini-coach', {
         body: { householdId }
       });
 
-      if (response.error) throw response.error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to generate coaching insights');
+      }
       
+      console.log('Coaching moments generated successfully:', data);
       toast.success('New coaching insights generated!');
       await fetchMoments();
     } catch (error: any) {
       console.error('Error generating moments:', error);
-      toast.error('Failed to generate coaching insights');
+      toast.error('Failed to generate coaching insights: ' + error.message);
     } finally {
       setGenerating(false);
     }

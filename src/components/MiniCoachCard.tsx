@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useMiniCoach } from '@/hooks/useMiniCoach';
 import { useHouseholdSubscription } from '@/hooks/useHouseholdSubscription';
-import { Sparkles, Brain, Target, Trophy, RefreshCw, Eye } from 'lucide-react';
+import { Sparkles, Brain, Target, Trophy, RefreshCw, Eye, Zap } from 'lucide-react';
 
 interface MiniCoachCardProps {
   householdId: string;
@@ -13,7 +13,6 @@ interface MiniCoachCardProps {
 
 const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
   const { moments, loading, generating, markAsRead, generateNewMoments } = useMiniCoach(householdId);
-  const { hasProAccess } = useHouseholdSubscription();
 
   const getCoachingIcon = (type: string) => {
     switch (type) {
@@ -32,28 +31,6 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
       default: return 'bg-purple-50 border-purple-200';
     }
   };
-
-  if (!hasProAccess) {
-    return (
-      <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-purple-500" />
-            Mini Coach AI
-            <Badge variant="outline" className="text-xs">Pro Feature</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600 mb-3">
-            Get personalized AI coaching insights based on your family's weekly activities and goals.
-          </p>
-          <p className="text-xs text-purple-600 font-medium">
-            Upgrade to Pro to unlock AI-powered family coaching!
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (loading) {
     return (
@@ -77,6 +54,10 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
           <CardTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-purple-500" />
             Mini Coach AI
+            <Badge className="bg-green-500 text-white text-xs flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Free
+            </Badge>
             {unreadMoments.length > 0 && (
               <Badge className="bg-purple-500 text-white text-xs">
                 {unreadMoments.length} new
@@ -103,8 +84,11 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
         {moments.length === 0 ? (
           <div className="text-center py-6">
             <Brain className="h-12 w-12 mx-auto text-purple-400 mb-3" />
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-gray-600 mb-2">
               No coaching insights yet this week
+            </p>
+            <p className="text-xs text-gray-500 mb-3">
+              Get personalized insights based on your family's activities
             </p>
             <Button
               variant="outline"
@@ -112,6 +96,11 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
               onClick={generateNewMoments}
               disabled={generating}
             >
+              {generating ? (
+                <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
               Generate Your First Insights
             </Button>
           </div>
@@ -160,6 +149,12 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
             )}
           </div>
         )}
+        
+        <div className="mt-4 p-2 bg-green-50 rounded-lg border border-green-200">
+          <p className="text-xs text-green-700 text-center">
+            ✨ Powered by free AI - no API keys required!
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
