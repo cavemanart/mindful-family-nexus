@@ -719,6 +719,39 @@ export type Database = {
           },
         ]
       }
+      mini_coach_moments: {
+        Row: {
+          coaching_type: string
+          content: string
+          created_at: string
+          expires_at: string
+          generated_for_week: string
+          household_id: string
+          id: string
+          is_read: boolean
+        }
+        Insert: {
+          coaching_type?: string
+          content: string
+          created_at?: string
+          expires_at?: string
+          generated_for_week: string
+          household_id: string
+          id?: string
+          is_read?: boolean
+        }
+        Update: {
+          coaching_type?: string
+          content?: string
+          created_at?: string
+          expires_at?: string
+          generated_for_week?: string
+          household_id?: string
+          id?: string
+          is_read?: boolean
+        }
+        Relationships: []
+      }
       mvp_nominations: {
         Row: {
           created_at: string
@@ -1218,6 +1251,10 @@ export type Database = {
       check_profile_access: {
         Args: { target_user_id: string; current_user_id: string }
         Returns: boolean
+      }
+      cleanup_expired_coaching_moments: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       create_child_profile: {
         Args: {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useHouseholds } from "@/hooks/useHouseholds";
@@ -12,6 +11,7 @@ import QuickActions from "./QuickActions";
 import WeeklySyncOverview from "./WeeklySyncOverview";
 import ChoresOverviewCard from "./ChoresOverviewCard";
 import NotificationScheduler from "./NotificationScheduler";
+import MiniCoachCard from "./MiniCoachCard";
 
 interface DashboardProps {
   onNavigate?: (section: string) => void;
@@ -89,7 +89,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <ChoresOverviewCard 
           householdId={selectedHousehold.id}
           onNavigateToChildren={() => handleSectionSelect('children')}
@@ -98,6 +98,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           householdId={selectedHousehold.id}
           onViewFullSync={() => handleSectionSelect('weekly-sync')}
         />
+        <MiniCoachCard householdId={selectedHousehold.id} />
       </div>
     </div>
   );
