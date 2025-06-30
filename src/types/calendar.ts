@@ -1,4 +1,3 @@
-
 export interface AdvancedCalendarEvent {
   id: string;
   household_id: string;
@@ -14,6 +13,7 @@ export interface AdvancedCalendarEvent {
   recurrence_pattern?: string;
   recurrence_end?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface EventCategory {

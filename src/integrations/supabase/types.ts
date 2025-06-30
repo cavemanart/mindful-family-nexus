@@ -94,6 +94,7 @@ export type Database = {
           recurrence_pattern: string | null
           start_datetime: string
           title: string
+          updated_at: string | null
         }
         Insert: {
           assigned_to?: string[] | null
@@ -110,6 +111,7 @@ export type Database = {
           recurrence_pattern?: string | null
           start_datetime: string
           title: string
+          updated_at?: string | null
         }
         Update: {
           assigned_to?: string[] | null
@@ -126,6 +128,7 @@ export type Database = {
           recurrence_pattern?: string | null
           start_datetime?: string
           title?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
