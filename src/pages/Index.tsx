@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,7 +11,6 @@ import FamilyCalendar from '@/components/FamilyCalendar';
 import BillsTracker from '@/components/BillsTracker';
 import BillsErrorBoundary from '@/components/BillsErrorBoundary';
 import FamilyNotes from '@/components/FamilyNotes';
-import HouseRulesManager from '@/components/HouseRulesManager';
 import WeeklySync from '@/components/WeeklySync';
 import ChildrenDashboard from '@/components/ChildrenDashboard';
 import MVPOfTheDay from '@/components/MVPOfTheDay';
@@ -125,8 +125,6 @@ const Index = () => {
         ) : null;
       case 'notes':
         return isVisible('notes') ? <FamilyNotes householdId={selectedHousehold.id} canEdit={true} /> : null;
-      case 'rules':
-        return isVisible('rules') ? <HouseRulesManager householdId={selectedHousehold.id} canEdit={true} /> : null;
       case 'weekly-sync':
         return isVisible('weekly-sync') ? <WeeklySync selectedHousehold={selectedHousehold} /> : null;
       case 'children':

@@ -35,7 +35,6 @@ export default function CleanMobileNavigation({ activeTab, setActiveTab }: Clean
     { id: 'weekly-sync', icon: Target, label: 'Weekly Sync', visible: isVisible('weekly-sync') },
     { id: 'mental-load', icon: Brain, label: 'Mental Load', visible: isVisible('mental-load') },
     { id: 'nanny-mode', icon: Baby, label: 'Nanny Mode', visible: isVisible('nanny-mode') },
-    { id: 'rules', icon: Shield, label: 'Rules', visible: isVisible('rules') },
     { id: 'subscription', icon: Star, label: 'Subscription', visible: true },
   ];
 
