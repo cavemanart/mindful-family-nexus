@@ -918,7 +918,7 @@ export type Database = {
           created_at: string
           expires_at: string
           generated_for_date: string | null
-          generated_for_week: string
+          generated_for_week: string | null
           household_id: string
           id: string
           is_daily_auto: boolean | null
@@ -930,7 +930,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           generated_for_date?: string | null
-          generated_for_week: string
+          generated_for_week?: string | null
           household_id: string
           id?: string
           is_daily_auto?: boolean | null
@@ -942,7 +942,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           generated_for_date?: string | null
-          generated_for_week?: string
+          generated_for_week?: string | null
           household_id?: string
           id?: string
           is_daily_auto?: boolean | null

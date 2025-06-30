@@ -22,8 +22,10 @@ serve(async (req) => {
     const { householdId } = await req.json();
     const today = new Date().toISOString().split('T')[0];
     
+    console.log(`Generating daily coaching moment for household: ${householdId}, date: ${today}`);
+    
     // Check if daily moment already exists for today
-    const { data: existingMoment } = await supabaseClient
+    const { data: existingMoment, error: checkError } = await supabaseClient
       .from('mini_coach_moments')
       .select('id')
       .eq('household_id', householdId)
@@ -31,11 +33,18 @@ serve(async (req) => {
       .eq('is_daily_auto', true)
       .limit(1);
 
+    if (checkError) {
+      console.error('Error checking existing moments:', checkError);
+      throw checkError;
+    }
+
     if (existingMoment && existingMoment.length > 0) {
+      console.log('Daily moment already exists for today');
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Daily moment already exists for today' 
+          message: 'Daily moment already exists for today',
+          momentId: existingMoment[0].id
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -69,30 +78,39 @@ serve(async (req) => {
     const goals = goalsResponse.data || [];
     const chores = choresResponse.data || [];
 
+    console.log(`Found ${wins.length} wins, ${goals.length} goals, ${chores.length} chores for personalization`);
+
     // Generate daily coaching insight
     const dailyInsight = generateDailyInsight(wins, goals, chores);
 
-    // Insert the daily moment
-    const { error: insertError } = await supabaseClient
+    // Insert the daily moment with proper schema handling
+    const { data: insertedMoment, error: insertError } = await supabaseClient
       .from('mini_coach_moments')
       .insert({
         household_id: householdId,
         content: dailyInsight.content,
         coaching_type: dailyInsight.type,
         generated_for_date: today,
+        generated_for_week: null, // Explicitly set to null for daily auto-generated moments
         is_daily_auto: true,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
-      });
+      })
+      .select()
+      .single();
 
     if (insertError) {
+      console.error('Error inserting daily moment:', insertError);
       throw insertError;
     }
+
+    console.log('Successfully generated daily coaching moment:', insertedMoment.id);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         generated: 1,
-        insight: dailyInsight 
+        insight: dailyInsight,
+        momentId: insertedMoment.id
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
