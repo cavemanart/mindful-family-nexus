@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +18,7 @@ import SubscriptionManager from '@/components/SubscriptionManager';
 import NannyMode from '@/components/NannyMode';
 import MentalLoad from '@/components/MentalLoad';
 import WeeklySyncOverview from '@/components/WeeklySyncOverview';
+import ChoreSystemDashboard from '@/components/chore-system/ChoreSystemDashboard';
 import { usePagePreferences } from '@/hooks/usePagePreferences';
 
 const Index = () => {
@@ -113,6 +113,8 @@ const Index = () => {
     switch (currentPage) {
       case 'overview':
         return <Dashboard onNavigate={handlePageChange} />;
+      case 'chores':
+        return <ChoreSystemDashboard selectedHousehold={selectedHousehold} />;
       case 'calendar':
         return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
       case 'bills':

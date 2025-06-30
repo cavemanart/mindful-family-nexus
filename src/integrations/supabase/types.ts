@@ -196,8 +196,89 @@ export type Database = {
           },
         ]
       }
+      child_points: {
+        Row: {
+          child_id: string
+          created_at: string
+          household_id: string
+          id: string
+          last_activity_date: string | null
+          level: number
+          streak_days: number
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          household_id: string
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          streak_days?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          last_activity_date?: string | null
+          level?: number
+          streak_days?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chore_submissions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          child_id: string
+          chore_id: string
+          household_id: string
+          id: string
+          points_awarded: number | null
+          rejection_reason: string | null
+          status: string
+          submission_note: string | null
+          submitted_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          child_id: string
+          chore_id: string
+          household_id: string
+          id?: string
+          points_awarded?: number | null
+          rejection_reason?: string | null
+          status?: string
+          submission_note?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          child_id?: string
+          chore_id?: string
+          household_id?: string
+          id?: string
+          points_awarded?: number | null
+          rejection_reason?: string | null
+          status?: string
+          submission_note?: string | null
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       chores: {
         Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           assigned_to: string
           completed: boolean
           created_at: string
@@ -210,10 +291,15 @@ export type Database = {
           is_assigned_by_parent: boolean | null
           is_shared_with_family: boolean | null
           points: number
+          requires_approval: boolean | null
+          submission_id: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_to: string
           completed?: boolean
           created_at?: string
@@ -226,10 +312,15 @@ export type Database = {
           is_assigned_by_parent?: boolean | null
           is_shared_with_family?: boolean | null
           points?: number
+          requires_approval?: boolean | null
+          submission_id?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_to?: string
           completed?: boolean
           created_at?: string
@@ -242,6 +333,8 @@ export type Database = {
           is_assigned_by_parent?: boolean | null
           is_shared_with_family?: boolean | null
           points?: number
+          requires_approval?: boolean | null
+          submission_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -372,6 +465,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      family_challenges: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          current_points: number
+          description: string | null
+          end_date: string
+          household_id: string
+          id: string
+          is_active: boolean
+          reward_description: string | null
+          start_date: string
+          target_points: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          current_points?: number
+          description?: string | null
+          end_date: string
+          household_id: string
+          id?: string
+          is_active?: boolean
+          reward_description?: string | null
+          start_date: string
+          target_points: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          current_points?: number
+          description?: string | null
+          end_date?: string
+          household_id?: string
+          id?: string
+          is_active?: boolean
+          reward_description?: string | null
+          start_date?: string
+          target_points?: number
+          title?: string
+        }
+        Relationships: []
       }
       family_messages: {
         Row: {
@@ -893,6 +1031,81 @@ export type Database = {
         }
         Relationships: []
       }
+      point_goals: {
+        Row: {
+          child_id: string
+          created_at: string
+          current_points: number
+          goal_date: string
+          goal_type: string
+          household_id: string
+          id: string
+          is_completed: boolean
+          target_points: number
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          current_points?: number
+          goal_date: string
+          goal_type: string
+          household_id: string
+          id?: string
+          is_completed?: boolean
+          target_points: number
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          current_points?: number
+          goal_date?: string
+          goal_type?: string
+          household_id?: string
+          id?: string
+          is_completed?: boolean
+          target_points?: number
+        }
+        Relationships: []
+      }
+      point_transactions: {
+        Row: {
+          child_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          household_id: string
+          id: string
+          points_change: number
+          related_chore_id: string | null
+          related_reward_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          household_id: string
+          id?: string
+          points_change: number
+          related_chore_id?: string | null
+          related_reward_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          household_id?: string
+          id?: string
+          points_change?: number
+          related_chore_id?: string | null
+          related_reward_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_selection: string | null
@@ -982,6 +1195,84 @@ export type Database = {
           p256dh_key?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      reward_redemptions: {
+        Row: {
+          child_id: string
+          fulfilled_at: string | null
+          fulfilled_by: string | null
+          household_id: string
+          id: string
+          points_spent: number
+          redeemed_at: string
+          reward_id: string
+          status: string
+        }
+        Insert: {
+          child_id: string
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          household_id: string
+          id?: string
+          points_spent: number
+          redeemed_at?: string
+          reward_id: string
+          status?: string
+        }
+        Update: {
+          child_id?: string
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          household_id?: string
+          id?: string
+          points_spent?: number
+          redeemed_at?: string
+          reward_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      rewards_catalog: {
+        Row: {
+          age_restriction: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          household_id: string
+          id: string
+          is_active: boolean
+          name: string
+          point_cost: number
+          updated_at: string
+        }
+        Insert: {
+          age_restriction?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          household_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          point_cost: number
+          updated_at?: string
+        }
+        Update: {
+          age_restriction?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          household_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          point_cost?: number
+          updated_at?: string
         }
         Relationships: []
       }
