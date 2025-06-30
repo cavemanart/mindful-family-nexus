@@ -2,10 +2,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { CheckSquare, Clock, Gift, Trophy, Users, Plus, Settings } from 'lucide-react';
+import { CheckSquare, Gift, Trophy, Users, Settings } from 'lucide-react';
 import ChoreBoard from './ChoreBoard';
-import ApprovalCenter from './ApprovalCenter';
 import RewardsShop from './RewardsShop';
 import RewardsAdmin from './RewardsAdmin';
 import AddChoreDialog from './AddChoreDialog';
@@ -21,11 +19,10 @@ interface ChoreSystemDashboardProps {
 export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboardProps) {
   const { userProfile } = useAuth();
   const { children } = useChildren(householdId);
-  const { getPendingSubmissions, childPoints } = useChorePoints(householdId);
+  const { childPoints } = useChorePoints(householdId);
   const { rewards } = useRewards(householdId);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
 
-  const pendingCount = getPendingSubmissions().length;
   const isParent = userProfile?.role === 'parent';
   const isChild = userProfile?.is_child_account;
 
@@ -56,7 +53,7 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
       )}
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Children</CardTitle>
@@ -77,18 +74,6 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
           </CardContent>
         </Card>
 
-        {isParent && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingCount}</div>
-            </CardContent>
-          </Card>
-        )}
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rewards Available</CardTitle>
@@ -102,7 +87,7 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
 
       {/* Main Content */}
       <Tabs defaultValue={isChild ? "my-chores" : "chores"} className="w-full">
-        <TabsList className={`grid w-full ${isParent ? 'grid-cols-4' : 'grid-cols-2'}`}>
+        <TabsList className={`grid w-full ${isParent ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="chores" className="flex items-center gap-2">
             <CheckSquare className="h-4 w-4" />
             {isChild ? "My Chores" : "Chores"}
@@ -112,21 +97,10 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
             Rewards
           </TabsTrigger>
           {isParent && (
-            <>
-              <TabsTrigger value="approvals" className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Approvals
-                {pendingCount > 0 && (
-                  <Badge variant="destructive" className="ml-1">
-                    {pendingCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="rewards-admin" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Rewards Admin
-              </TabsTrigger>
-            </>
+            <TabsTrigger value="rewards-admin" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Rewards Admin
+            </TabsTrigger>
           )}
         </TabsList>
 
@@ -183,15 +157,9 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
         </TabsContent>
 
         {isParent && (
-          <>
-            <TabsContent value="approvals" className="space-y-4">
-              <ApprovalCenter householdId={householdId} />
-            </TabsContent>
-            
-            <TabsContent value="rewards-admin" className="space-y-4">
-              <RewardsAdmin householdId={householdId} />
-            </TabsContent>
-          </>
+          <TabsContent value="rewards-admin" className="space-y-4">
+            <RewardsAdmin householdId={householdId} />
+          </TabsContent>
         )}
       </Tabs>
     </div>

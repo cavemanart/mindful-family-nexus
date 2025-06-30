@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Clock, Star, Trophy, AlertCircle } from 'lucide-react';
+import { CheckCircle, Star, Trophy } from 'lucide-react';
 import { useChores } from '@/hooks/useChores';
 import { useChorePoints } from '@/hooks/useChorePoints';
 import { useChildren } from '@/hooks/useChildren';
@@ -18,8 +18,8 @@ interface ChoreBoardProps {
 }
 
 export default function ChoreBoard({ householdId, childId, isParentView = false }: ChoreBoardProps) {
-  const { chores, loading: choresLoading, refetch: refetchChores } = useChores(householdId);
-  const { submitChoreForApproval, getChildPoints, approveChoreSubmission, rejectChoreSubmission, choreSubmissions } = useChorePoints(householdId);
+  const { chores, loading: choresLoading, toggleChore, refetch: refetchChores } = useChores(householdId);
+  const { addPointsToChild, getChildPoints } = useChorePoints(householdId);
   const { children } = useChildren(householdId);
   const { userProfile } = useAuth();
   const { toast } = useToast();
@@ -45,68 +45,56 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
 
   const childPoints = childId ? getChildPoints(childId) : null;
 
-  const handleSubmitChore = async (choreId: string) => {
-    if (!childId) return;
-    
-    const success = await submitChoreForApproval(choreId, childId);
+  const handleToggleChore = async (choreId: string) => {
+    const success = await toggleChore(choreId);
     if (success) {
-      toast({
-        title: "Success!",
-        description: "Your chore has been submitted for approval! 🎉",
-      });
-      refetchChores(); // Refresh chores to show updated status
+      const chore = chores.find(c => c.id === choreId);
+      if (chore && !chore.completed) {
+        toast({
+          title: "Chore Completed!",
+          description: `Great job completing "${chore.title}"! 🎉`,
+        });
+      }
+      refetchChores();
     }
   };
 
-  const handleApproveChore = async (choreId: string) => {
+  const handleAwardPoints = async (choreId: string) => {
     if (!isParentView) return;
     
-    // Find the submission for this chore
-    const submission = choreSubmissions.find(s => s.chore_id === choreId && s.status === 'pending');
-    if (!submission) return;
-
     const chore = chores.find(c => c.id === choreId);
     if (!chore) return;
 
-    const success = await approveChoreSubmission(submission.id, chore.points);
+    // Find the child ID from the assigned_to field
+    const assignedChild = children.find(child => 
+      child.first_name.toLowerCase() === chore.assigned_to.toLowerCase() ||
+      `${child.first_name} ${child.last_name || ''}`.trim().toLowerCase() === chore.assigned_to.toLowerCase() ||
+      child.id === chore.assigned_to
+    );
+
+    if (!assignedChild) {
+      toast({
+        title: "Error",
+        description: "Could not find the assigned child",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const success = await addPointsToChild(
+      assignedChild.id, 
+      chore.points, 
+      'chore_completion', 
+      `Completed chore: ${chore.title}`,
+      choreId
+    );
+
     if (success) {
       toast({
-        title: "Chore Approved!",
-        description: `${chore.points} points awarded! 🌟`,
+        title: "Points Awarded!",
+        description: `${chore.points} points awarded to ${assignedChild.first_name}! 🌟`,
       });
-      refetchChores();
     }
-  };
-
-  const handleRejectChore = async (choreId: string, reason?: string) => {
-    if (!isParentView) return;
-    
-    // Find the submission for this chore
-    const submission = choreSubmissions.find(s => s.chore_id === choreId && s.status === 'pending');
-    if (!submission) return;
-
-    const success = await rejectChoreSubmission(submission.id, reason);
-    if (success) {
-      toast({
-        title: "Chore Needs Revision",
-        description: "Child has been notified.",
-      });
-      refetchChores();
-    }
-  };
-
-  const getChoreStatusColor = (chore: any) => {
-    if (chore.approval_status === 'approved') return 'bg-green-100 dark:bg-green-950/30 border-green-300 dark:border-green-700';
-    if (chore.approval_status === 'pending') return 'bg-yellow-100 dark:bg-yellow-950/30 border-yellow-300 dark:border-yellow-700';
-    if (chore.approval_status === 'rejected') return 'bg-red-100 dark:bg-red-950/30 border-red-300 dark:border-red-700';
-    return 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700';
-  };
-
-  const getStatusIcon = (chore: any) => {
-    if (chore.approval_status === 'approved') return <CheckCircle className="h-5 w-5 text-green-600" />;
-    if (chore.approval_status === 'pending') return <Clock className="h-5 w-5 text-yellow-600" />;
-    if (chore.approval_status === 'rejected') return <AlertCircle className="h-5 w-5 text-red-600" />;
-    return null;
   };
 
   const getChildName = (assignedTo: string) => {
@@ -136,75 +124,42 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
 
   const getActionButton = (chore: any) => {
     if (isParentView) {
-      // Parent view - show approval/rejection options for pending chores
-      if (chore.approval_status === 'pending') {
+      // Parent view - show award points button for completed chores
+      if (chore.completed) {
         return (
-          <div className="space-y-2">
-            <Button 
-              onClick={() => handleApproveChore(chore.id)}
-              className="w-full bg-green-600 hover:bg-green-700"
-              size="sm"
-            >
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Approve & Award Points
-            </Button>
-            <Button 
-              onClick={() => handleRejectChore(chore.id, "Please try again")}
-              variant="outline"
-              className="w-full text-red-600 hover:text-red-700"
-              size="sm"
-            >
-              <AlertCircle className="h-4 w-4 mr-1" />
-              Needs Revision
-            </Button>
-          </div>
-        );
-      }
-      return null; // Parents don't interact with other statuses
-    }
-
-    // Child view workflow
-    if (chore.approval_status === 'approved') {
-      return (
-        <Badge variant="default" className="w-full justify-center bg-green-600 text-white">
-          ✅ Completed & Points Earned!
-        </Badge>
-      );
-    }
-
-    if (chore.approval_status === 'pending') {
-      return (
-        <Badge variant="secondary" className="w-full justify-center bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">
-          ⏳ Waiting for Approval
-        </Badge>
-      );
-    }
-
-    if (chore.approval_status === 'rejected') {
-      return (
-        <div className="space-y-2">
-          <Badge variant="destructive" className="w-full justify-center">
-            ❌ Needs Revision
-          </Badge>
           <Button 
-            onClick={() => handleSubmitChore(chore.id)}
-            className="w-full"
+            onClick={() => handleAwardPoints(chore.id)}
+            className="w-full bg-green-600 hover:bg-green-700"
             size="sm"
           >
-            Mark as Complete
+            <Star className="h-4 w-4 mr-1" />
+            Award {chore.points} Points
           </Button>
-        </div>
+        );
+      }
+      return (
+        <Badge variant="secondary" className="w-full justify-center">
+          Waiting for completion
+        </Badge>
       );
     }
 
-    // Default state - not submitted yet
+    // Child view - simple toggle
     return (
       <Button 
-        onClick={() => handleSubmitChore(chore.id)}
+        onClick={() => handleToggleChore(chore.id)}
+        variant={chore.completed ? "outline" : "default"}
         className="w-full"
         size="sm"
       >
-        Mark as Complete
+        {chore.completed ? (
+          <>
+            <CheckCircle className="h-4 w-4 mr-1" />
+            Completed!
+          </>
+        ) : (
+          "Mark as Complete"
+        )}
       </Button>
     );
   };
@@ -253,11 +208,15 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
       {/* Chores Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredChores.map((chore) => (
-          <Card key={chore.id} className={`${getChoreStatusColor(chore)} transition-all hover:shadow-md border`}>
+          <Card key={chore.id} className={`transition-all hover:shadow-md border ${
+            chore.completed 
+              ? 'bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-700'
+              : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700'
+          }`}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <CardTitle className="text-lg text-foreground">{chore.title}</CardTitle>
-                {getStatusIcon(chore)}
+                {chore.completed && <CheckCircle className="h-5 w-5 text-green-600" />}
               </div>
               <CardDescription className="text-muted-foreground">{chore.description}</CardDescription>
             </CardHeader>

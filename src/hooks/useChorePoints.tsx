@@ -15,20 +15,6 @@ export interface ChildPoints {
   updated_at: string;
 }
 
-export interface ChoreSubmission {
-  id: string;
-  chore_id: string;
-  child_id: string;
-  household_id: string;
-  submission_note: string | null;
-  status: 'pending' | 'approved' | 'rejected';
-  submitted_at: string;
-  approved_by: string | null;
-  approved_at: string | null;
-  rejection_reason: string | null;
-  points_awarded: number;
-}
-
 export interface PointTransaction {
   id: string;
   child_id: string;
@@ -44,7 +30,6 @@ export interface PointTransaction {
 
 export const useChorePoints = (householdId: string | null) => {
   const [childPoints, setChildPoints] = useState<ChildPoints[]>([]);
-  const [choreSubmissions, setChoreSubmissions] = useState<ChoreSubmission[]>([]);
   const [pointTransactions, setPointTransactions] = useState<PointTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -107,26 +92,6 @@ export const useChorePoints = (householdId: string | null) => {
     }
   };
 
-  const fetchChoreSubmissions = async () => {
-    if (!householdId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('chore_submissions')
-        .select('*')
-        .eq('household_id', householdId)
-        .order('submitted_at', { ascending: false });
-
-      if (error) throw error;
-      setChoreSubmissions((data || []).map(item => ({
-        ...item,
-        status: item.status as 'pending' | 'approved' | 'rejected'
-      })));
-    } catch (error: any) {
-      console.error('Error fetching chore submissions:', error);
-    }
-  };
-
   const fetchPointTransactions = async () => {
     if (!householdId) return;
 
@@ -142,161 +107,6 @@ export const useChorePoints = (householdId: string | null) => {
       setPointTransactions(data || []);
     } catch (error: any) {
       console.error('Error fetching point transactions:', error);
-    }
-  };
-
-  const submitChoreForApproval = async (choreId: string, childId: string, submissionNote?: string) => {
-    if (!householdId) return false;
-
-    try {
-      // Check if submission already exists for this chore
-      const { data: existingSubmission } = await supabase
-        .from('chore_submissions')
-        .select('id, status')
-        .eq('chore_id', choreId)
-        .eq('child_id', childId)
-        .maybeSingle();
-
-      if (existingSubmission && existingSubmission.status === 'pending') {
-        toast({
-          title: "Already Submitted",
-          description: "This chore is already waiting for approval!",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      // If there's a rejected submission, we can resubmit
-      if (existingSubmission && existingSubmission.status === 'rejected') {
-        // Update the existing submission
-        const { error } = await supabase
-          .from('chore_submissions')
-          .update({
-            status: 'pending',
-            submission_note: submissionNote || null,
-            submitted_at: new Date().toISOString(),
-            rejection_reason: null
-          })
-          .eq('id', existingSubmission.id);
-
-        if (error) throw error;
-      } else {
-        // Create new submission
-        const { error } = await supabase
-          .from('chore_submissions')
-          .insert([{
-            chore_id: choreId,
-            child_id: childId,
-            household_id: householdId,
-            submission_note: submissionNote || null,
-            status: 'pending'
-          }]);
-
-        if (error) throw error;
-      }
-
-      // Update chore status to pending
-      await supabase
-        .from('chores')
-        .update({ 
-          approval_status: 'pending'
-        })
-        .eq('id', choreId);
-
-      fetchChoreSubmissions();
-      return true;
-    } catch (error: any) {
-      console.error('Error submitting chore:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit chore for approval",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  const approveChoreSubmission = async (submissionId: string, pointsToAward: number) => {
-    try {
-      const submission = choreSubmissions.find(s => s.id === submissionId);
-      if (!submission) return false;
-
-      // Update submission status
-      const { error: submissionError } = await supabase
-        .from('chore_submissions')
-        .update({
-          status: 'approved',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          approved_at: new Date().toISOString(),
-          points_awarded: pointsToAward
-        })
-        .eq('id', submissionId);
-
-      if (submissionError) throw submissionError;
-
-      // Update chore status
-      await supabase
-        .from('chores')
-        .update({ 
-          approval_status: 'approved',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          approved_at: new Date().toISOString()
-        })
-        .eq('id', submission.chore_id);
-
-      // Add points to child - this is where points are actually awarded
-      await addPointsToChild(submission.child_id, pointsToAward, 'chore_completion', `Completed chore`, submission.chore_id);
-
-      fetchChoreSubmissions();
-      fetchChildPoints();
-      return true;
-    } catch (error: any) {
-      console.error('Error approving chore:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve chore",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
-  const rejectChoreSubmission = async (submissionId: string, rejectionReason?: string) => {
-    try {
-      const submission = choreSubmissions.find(s => s.id === submissionId);
-      if (!submission) return false;
-
-      // Update submission status
-      const { error: submissionError } = await supabase
-        .from('chore_submissions')
-        .update({
-          status: 'rejected',
-          approved_by: (await supabase.auth.getUser()).data.user?.id,
-          approved_at: new Date().toISOString(),
-          rejection_reason: rejectionReason || null
-        })
-        .eq('id', submissionId);
-
-      if (submissionError) throw submissionError;
-
-      // Update chore status
-      await supabase
-        .from('chores')
-        .update({ 
-          approval_status: 'rejected'
-        })
-        .eq('id', submission.chore_id);
-
-      fetchChoreSubmissions();
-      return true;
-    } catch (error: any) {
-      console.error('Error rejecting chore:', error);
-      toast({
-        title: "Error", 
-        description: "Failed to reject chore",
-        variant: "destructive"
-      });
-      return false;
     }
   };
 
@@ -343,9 +153,16 @@ export const useChorePoints = (householdId: string | null) => {
           created_by: (await supabase.auth.getUser()).data.user?.id
         }]);
 
+      fetchChildPoints(); // Refresh points
+      fetchPointTransactions(); // Refresh transactions
       return true;
     } catch (error: any) {
       console.error('Error adding points:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add points",
+        variant: "destructive"
+      });
       return false;
     }
   };
@@ -354,16 +171,11 @@ export const useChorePoints = (householdId: string | null) => {
     return childPoints.find(cp => cp.child_id === childId) || null;
   };
 
-  const getPendingSubmissions = (): ChoreSubmission[] => {
-    return choreSubmissions.filter(s => s.status === 'pending');
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       await Promise.all([
         fetchChildPoints(),
-        fetchChoreSubmissions(),
         fetchPointTransactions()
       ]);
       setLoading(false);
@@ -374,19 +186,13 @@ export const useChorePoints = (householdId: string | null) => {
 
   return {
     childPoints,
-    choreSubmissions,
     pointTransactions,
     loading,
-    submitChoreForApproval,
-    approveChoreSubmission,
-    rejectChoreSubmission,
     addPointsToChild,
     initializeChildPoints,
     getChildPoints,
-    getPendingSubmissions,
     refetch: () => {
       fetchChildPoints();
-      fetchChoreSubmissions();
       fetchPointTransactions();
     }
   };
