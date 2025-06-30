@@ -13,7 +13,7 @@ interface MiniCoachCardProps {
 
 const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
   const { moments, loading, generating, markAsRead, generateNewMoments } = useMiniCoach(householdId);
-  const { hasActiveSubscription } = useHouseholdSubscription(householdId);
+  const { hasProAccess } = useHouseholdSubscription();
 
   const getCoachingIcon = (type: string) => {
     switch (type) {
@@ -33,7 +33,7 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
     }
   };
 
-  if (!hasActiveSubscription) {
+  if (!hasProAccess) {
     return (
       <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
         <CardHeader className="pb-3">
