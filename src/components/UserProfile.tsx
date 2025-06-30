@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Sheet,
@@ -46,10 +45,22 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const { children } = useChildren(selectedHousehold?.id);
 
   const handleSignOut = async () => {
-    if (isChildMode) {
-      clearChildSession();
-    } else {
-      await safeSignOut();
+    console.log('🚪 UserProfile: Starting sign out process');
+    try {
+      if (isChildMode) {
+        console.log('👶 UserProfile: Clearing child session');
+        clearChildSession();
+      } else {
+        console.log('🔐 UserProfile: Performing parent sign out');
+        await safeSignOut();
+        onSignOut();
+      }
+    } catch (error) {
+      console.error('❌ UserProfile: Error during sign out:', error);
+      // Fallback - always clear child session and call onSignOut
+      if (isChildMode) {
+        clearChildSession();
+      }
       onSignOut();
     }
   };

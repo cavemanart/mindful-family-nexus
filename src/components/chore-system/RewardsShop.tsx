@@ -18,7 +18,7 @@ interface RewardsShopProps {
 export default function RewardsShop({ householdId, childId }: RewardsShopProps) {
   const { userProfile } = useAuth();
   const { rewards, redemptions, redeemReward, loading } = useRewards(householdId);
-  const { getChildPoints } = useChorePoints(householdId);
+  const { getChildPoints, refetch: refetchPoints } = useChorePoints(householdId);
   
   const isChild = userProfile?.is_child_account;
   const childPoints = childId ? getChildPoints(childId) : null;
@@ -35,6 +35,9 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
     const success = await redeemReward(rewardId, targetChildId, pointCost);
     
     if (success) {
+      // Refresh points to reflect the reduction
+      refetchPoints();
+      
       // Send push notification to parents
       try {
         await pushNotificationService.sendRewardRedemptionNotification(
@@ -124,7 +127,7 @@ export default function RewardsShop({ householdId, childId }: RewardsShopProps) 
                       {isRedeemed ? (
                         <>
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Redeemed - Awaiting Parent
+                          Redeemed
                         </>
                       ) : canAfford ? (
                         <>
