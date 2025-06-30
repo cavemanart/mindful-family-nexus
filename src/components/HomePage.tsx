@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -44,20 +45,20 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20">
         <p className="text-lg font-semibold">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 dark:from-background dark:to-muted/20">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <HomeHeader />
 
       <main className="container mx-auto px-6 py-16">
         <section className="text-center space-y-8">
           <div className="space-y-4">
-            <h1 className="text-5xl font-bold tracking-tight">
+            <h1 className="text-5xl font-bold tracking-tight text-foreground">
               Organize Your Family Life, Effortlessly
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
