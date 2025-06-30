@@ -115,7 +115,7 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4 space-y-4">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4 space-y-4 bg-white dark:bg-gray-900">
             {/* Mobile Household Selector */}
             <div className="px-2">
               <div className="flex items-center gap-2 mb-2">
@@ -148,20 +148,60 @@ const CleanTopBar: React.FC<CleanTopBarProps> = ({
               )}
             </div>
 
-            {/* Mobile User Profile */}
-            <div className="px-2">
+            {/* Mobile Profile Actions */}
+            <div className="px-2 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <User className="h-4 w-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Profile
                 </span>
               </div>
-              <div onClick={closeMobileMenu}>
-                <CleanUserProfile 
-                  user={user}
-                  selectedHousehold={selectedHousehold}
-                  onSignOut={onSignOut}
-                />
+              
+              {/* User Info Display */}
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+                    {userProfile?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                      {userProfile?.first_name && userProfile?.last_name 
+                        ? `${userProfile.first_name} ${userProfile.last_name}`
+                        : user?.email
+                      }
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {selectedHousehold?.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    closeMobileMenu();
+                    window.location.href = '/profile';
+                  }}
+                  className="w-full justify-start"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Profile Settings
+                </Button>
+                
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    closeMobileMenu();
+                    onSignOut();
+                  }}
+                  className="w-full justify-start"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  {isChildMode ? 'Switch User' : 'Sign Out'}
+                </Button>
               </div>
             </div>
           </div>
