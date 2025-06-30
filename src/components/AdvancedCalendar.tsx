@@ -99,6 +99,35 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
     setShowEventDetails(true);
   };
 
+  const handleEditEvent = (event: AdvancedCalendarEvent) => {
+    setSelectedEvent(event);
+    setShowDayModal(false);
+    setShowEventDetails(true);
+  };
+
+  const handleDuplicateEvent = (event: AdvancedCalendarEvent) => {
+    // Create a new event with the same data but different date
+    const duplicatedEvent = {
+      ...event,
+      title: `${event.title} (Copy)`,
+      start_datetime: selectedDate ? new Date(selectedDate.setHours(new Date(event.start_datetime).getHours(), new Date(event.start_datetime).getMinutes())).toISOString() : event.start_datetime,
+      end_datetime: event.end_datetime ? (selectedDate ? new Date(selectedDate.setHours(new Date(event.end_datetime).getHours(), new Date(event.end_datetime).getMinutes())).toISOString() : event.end_datetime) : null,
+    };
+    
+    // Remove the id and other auto-generated fields
+    const { id, creator_id, created_at, ...eventData } = duplicatedEvent;
+    
+    createEvent(eventData);
+    setShowDayModal(false);
+  };
+
+  const handleAssignEvent = (event: AdvancedCalendarEvent) => {
+    // For now, just open the event details modal where assignment can be handled
+    setSelectedEvent(event);
+    setShowDayModal(false);
+    setShowEventDetails(true);
+  };
+
   if (!selectedHousehold) {
     return (
       <div className="text-center py-8">
@@ -246,7 +275,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         householdId={selectedHousehold.id}
       />
 
-      {/* Day Events Modal - Now receives ALL events for the date */}
+      {/* Day Events Modal - Now with quick action handlers */}
       <DayEventsModal
         isOpen={showDayModal}
         onClose={() => setShowDayModal(false)}
@@ -257,6 +286,9 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         onCreateEvent={canCreateEvents ? handleCreateEventForDate : undefined}
         onNavigateDate={handleDayNavigation}
         canCreateEvents={canCreateEvents}
+        onEditEvent={canCreateEvents ? handleEditEvent : undefined}
+        onDuplicateEvent={canCreateEvents ? handleDuplicateEvent : undefined}
+        onAssignEvent={canCreateEvents ? handleAssignEvent : undefined}
       />
 
       {/* Event Creation Form */}
