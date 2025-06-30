@@ -917,9 +917,11 @@ export type Database = {
           content: string
           created_at: string
           expires_at: string
+          generated_for_date: string | null
           generated_for_week: string
           household_id: string
           id: string
+          is_daily_auto: boolean | null
           is_read: boolean
         }
         Insert: {
@@ -927,9 +929,11 @@ export type Database = {
           content: string
           created_at?: string
           expires_at?: string
+          generated_for_date?: string | null
           generated_for_week: string
           household_id: string
           id?: string
+          is_daily_auto?: boolean | null
           is_read?: boolean
         }
         Update: {
@@ -937,9 +941,11 @@ export type Database = {
           content?: string
           created_at?: string
           expires_at?: string
+          generated_for_date?: string | null
           generated_for_week?: string
           household_id?: string
           id?: string
+          is_daily_auto?: boolean | null
           is_read?: boolean
         }
         Relationships: []
@@ -1624,6 +1630,10 @@ export type Database = {
       generate_child_pin: {
         Args: { _household_id: string }
         Returns: string
+      }
+      generate_daily_coaching_moment: {
+        Args: { p_household_id: string }
+        Returns: undefined
       }
       generate_household_join_code: {
         Args: { _household_id: string }

@@ -8,16 +8,16 @@ export interface MiniCoachMoment {
   household_id: string;
   content: string;
   coaching_type: string;
-  generated_for_week: string;
+  generated_for_date: string;
   is_read: boolean;
   created_at: string;
   expires_at: string;
+  is_daily_auto: boolean;
 }
 
 export const useMiniCoach = (householdId: string | null) => {
   const [moments, setMoments] = useState<MiniCoachMoment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
 
   const fetchMoments = async () => {
     if (!householdId) {
@@ -26,10 +26,13 @@ export const useMiniCoach = (householdId: string | null) => {
     }
 
     try {
+      // Fetch daily coaching moments (only show current day's moment)
       const { data, error } = await supabase
         .from('mini_coach_moments')
         .select('*')
         .eq('household_id', householdId)
+        .eq('generated_for_date', new Date().toISOString().split('T')[0])
+        .eq('is_daily_auto', true)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
@@ -64,43 +67,40 @@ export const useMiniCoach = (householdId: string | null) => {
     }
   };
 
-  const generateNewMoments = async () => {
-    if (!householdId || generating) return;
+  const generateDailyMoment = async () => {
+    if (!householdId) return;
 
-    setGenerating(true);
     try {
-      console.log('Generating new coaching moments for household:', householdId);
+      console.log('Generating daily coaching moment for household:', householdId);
       
-      const { data, error } = await supabase.functions.invoke('generate-mini-coach', {
+      const { data, error } = await supabase.functions.invoke('generate-daily-coach', {
         body: { householdId }
       });
 
       if (error) {
         console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to generate coaching insights');
+        throw new Error(error.message || 'Failed to generate daily coaching insight');
       }
       
-      console.log('Coaching moments generated successfully:', data);
-      toast.success('New coaching insights generated!');
+      console.log('Daily coaching moment generated successfully:', data);
       await fetchMoments();
     } catch (error: any) {
-      console.error('Error generating moments:', error);
-      toast.error('Failed to generate coaching insights: ' + error.message);
-    } finally {
-      setGenerating(false);
+      console.error('Error generating daily moment:', error);
     }
   };
 
   useEffect(() => {
     fetchMoments();
+    // Auto-generate daily moment when component loads
+    if (householdId) {
+      generateDailyMoment();
+    }
   }, [householdId]);
 
   return {
     moments,
     loading,
-    generating,
     markAsRead,
-    generateNewMoments,
     refetch: fetchMoments
   };
 };
