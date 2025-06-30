@@ -123,6 +123,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
 
       console.log('🔄 Starting event duplication for:', event.title);
       console.log('🔄 Original event data:', JSON.stringify(event, null, 2));
+      console.log('🔄 Selected date for duplication:', selectedDate);
+      console.log('🔄 Selected household:', selectedHousehold.id);
 
       // Create proper event data structure for duplication
       const duplicatedEventData = {
@@ -148,6 +150,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         is_recurring: false, // Don't copy recurring settings
         recurrence_pattern: null,
         recurrence_end: null,
+        household_id: selectedHousehold.id, // Add the missing household_id
       };
       
       console.log('📋 Duplicating event with cleaned data:', JSON.stringify(duplicatedEventData, null, 2));
