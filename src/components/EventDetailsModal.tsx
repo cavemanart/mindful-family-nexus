@@ -4,10 +4,8 @@ import { AdvancedCalendarEvent, EventCategory } from '@/types/calendar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, Calendar, User, Tag, Edit, Save, X } from 'lucide-react';
+import { Clock, Calendar, User, Tag, Edit, X } from 'lucide-react';
 
 // NEW: Import AdvancedEventForm
 import AdvancedEventForm from "@/components/AdvancedEventForm";
@@ -54,11 +52,40 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     });
   };
 
-  // NEW: Handler for updating the event from AdvancedEventForm
+  // FIXED: Handler for updating the event from AdvancedEventForm
   const handleUpdateEvent = async (formEventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
-    await onEventUpdate(event.id, formEventData);
-    setIsEditing(false);
-    onClose();
+    console.log('📝 EventDetailsModal - Received form data for update:', JSON.stringify(formEventData, null, 2));
+    
+    // Clean the data to only include updatable fields and ensure proper data types
+    const updateData: Partial<AdvancedCalendarEvent> = {
+      title: formEventData.title?.trim() || null,
+      description: formEventData.description?.trim() || null,
+      start_datetime: formEventData.start_datetime,
+      end_datetime: formEventData.end_datetime || null,
+      category: formEventData.category || null,
+      color: formEventData.color || null,
+      assigned_to: Array.isArray(formEventData.assigned_to) ? formEventData.assigned_to : [],
+      is_recurring: formEventData.is_recurring || false,
+      recurrence_pattern: formEventData.is_recurring ? (formEventData.recurrence_pattern || null) : null,
+      recurrence_end: formEventData.recurrence_end || null,
+    };
+
+    // Remove undefined values and ensure proper null handling
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key as keyof typeof updateData] === undefined) {
+        updateData[key as keyof typeof updateData] = null as any;
+      }
+    });
+
+    console.log('📝 EventDetailsModal - Cleaned update data:', JSON.stringify(updateData, null, 2));
+    
+    try {
+      await onEventUpdate(event.id, updateData);
+      setIsEditing(false);
+      onClose();
+    } catch (error) {
+      console.error('❌ EventDetailsModal - Update failed:', error);
+    }
   };
 
   const handleDelete = async () => {
@@ -85,6 +112,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               categories={categories}
               householdId={householdId}
               initialEvent={event}
+              buttonLabel="Update Event"
             />
           ) : (
             <Card className="border-l-4" style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}>

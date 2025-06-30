@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -135,31 +136,77 @@ export const useAdvancedCalendar = (householdId: string | null) => {
   };
 
   const updateEvent = async (eventId: string, updates: Partial<AdvancedCalendarEvent>) => {
-    if (!user) return null;
+    if (!user) {
+      console.error('❌ No user for event update');
+      toast.error('Authentication required to update event');
+      return null;
+    }
 
     try {
       console.log('📝 Updating calendar event:', eventId);
+      console.log('📝 Update data received:', JSON.stringify(updates, null, 2));
+
+      // Clean the update data to ensure proper types and remove undefined values
+      const cleanUpdates: any = {};
+      
+      // Only include fields that should be updated
+      const allowedFields = [
+        'title', 'description', 'start_datetime', 'end_datetime', 
+        'category', 'color', 'assigned_to', 'is_recurring', 
+        'recurrence_pattern', 'recurrence_end'
+      ];
+
+      allowedFields.forEach(field => {
+        if (field in updates) {
+          const value = updates[field as keyof AdvancedCalendarEvent];
+          
+          // Handle specific field types
+          if (field === 'assigned_to') {
+            cleanUpdates[field] = Array.isArray(value) ? value : [];
+          } else if (field === 'is_recurring') {
+            cleanUpdates[field] = Boolean(value);
+          } else if (value === undefined || value === '') {
+            cleanUpdates[field] = null;
+          } else {
+            cleanUpdates[field] = value;
+          }
+        }
+      });
+
+      // Ensure recurrence_pattern is null if not recurring
+      if (cleanUpdates.is_recurring === false) {
+        cleanUpdates.recurrence_pattern = null;
+        cleanUpdates.recurrence_end = null;
+      }
+
+      console.log('📝 Cleaned update data:', JSON.stringify(cleanUpdates, null, 2));
 
       const { data, error } = await supabase
         .from('calendar_events')
-        .update(updates)
+        .update(cleanUpdates)
         .eq('id', eventId)
         .select()
         .single();
 
       if (error) {
-        console.error('❌ Error updating calendar event:', error);
-        toast.error('Failed to update event');
+        console.error('❌ Supabase error updating calendar event:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        toast.error(`Failed to update event: ${error.message}`);
         return null;
       }
 
-      console.log('✅ Calendar event updated:', data.id);
+      console.log('✅ Calendar event updated successfully:', data.id);
       toast.success('Event updated successfully');
       await fetchEvents();
       return data;
     } catch (error) {
-      console.error('🚨 Error updating calendar event:', error);
-      toast.error('Failed to update event');
+      console.error('🚨 Unexpected error updating calendar event:', error);
+      toast.error('Failed to update event due to unexpected error');
       return null;
     }
   };
