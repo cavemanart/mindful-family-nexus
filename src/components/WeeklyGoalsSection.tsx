@@ -112,9 +112,9 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
       </div>
 
       {isAddingGoal && isParent && (
-        <Card className="border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+        <Card className="border-2 border-dashed border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
           <CardHeader>
-            <CardTitle className="text-blue-800">Assign a Family Goal</CardTitle>
+            <CardTitle className="text-blue-800 dark:text-blue-200">Assign a Family Goal</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
@@ -155,10 +155,10 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
         {goals.map((goal) => (
           <Card key={goal.id} className={`${
             goal.completed 
-              ? 'bg-green-50 border-green-200' 
+              ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-700' 
               : goal.is_assigned_by_parent 
-                ? 'bg-blue-50 border-blue-200' 
-                : 'bg-purple-50 border-purple-200'
+                ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-700' 
+                : 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-700'
           }`}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
@@ -168,7 +168,7 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
                     size="sm"
                     onClick={() => toggleGoal(goal.id)}
                     className={`mt-1 ${
-                      goal.completed ? 'text-green-600' : 'text-muted-foreground'
+                      goal.completed ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
                     }`}
                   >
                     <Check size={20} />
@@ -221,22 +221,22 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
                       <>
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className={`font-semibold ${
-                            goal.completed ? 'text-green-800 line-through' : 'text-foreground'
+                            goal.completed ? 'text-green-800 dark:text-green-200 line-through' : 'text-foreground dark:text-gray-100'
                           }`}>
                             {goal.title}
                           </h4>
                           {goal.is_assigned_by_parent && (
-                            <UserCheck className="w-4 h-4 text-blue-500" />
+                            <UserCheck className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-sm text-muted-foreground dark:text-gray-300 mb-2">
                           Assigned to {goal.assigned_to}
                           {goal.created_by_name && (
                             <span className="text-xs"> • by {goal.created_by_name}</span>
                           )}
                         </p>
                         <p className={`text-sm ${
-                          goal.completed ? 'text-green-700' : 'text-foreground'
+                          goal.completed ? 'text-green-700 dark:text-green-300' : 'text-foreground dark:text-gray-200'
                         }`}>
                           {goal.description}
                         </p>
@@ -251,10 +251,10 @@ const WeeklyGoalsSection: React.FC<WeeklyGoalsSectionProps> = ({
                   {editingId !== goal.id && isParent && (
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => onEditClick(goal)}>
-                        <Edit className="w-4 h-4 text-blue-600" />
+                        <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => handleDelete(goal.id)}>
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </Button>
                     </div>
                   )}

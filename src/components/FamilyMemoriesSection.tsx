@@ -131,9 +131,9 @@ const FamilyMemoriesSection: React.FC<FamilyMemoriesSectionProps> = ({
       </div>
 
       {isAddingMemory && (
-        <Card className="border-2 border-dashed border-pink-300 bg-gradient-to-r from-pink-50 to-purple-50">
+        <Card className="border-2 border-dashed border-pink-300 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30">
           <CardHeader>
-            <CardTitle className="text-pink-800">Capture a Family Memory</CardTitle>
+            <CardTitle className="text-pink-800 dark:text-pink-200">Capture a Family Memory</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
@@ -224,16 +224,16 @@ const FamilyMemoriesSection: React.FC<FamilyMemoriesSectionProps> = ({
         {memories.map((memory) => {
           const memoryType = getMemoryTypeInfo(memory.memory_type);
           return (
-            <Card key={memory.id} className="bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
+            <Card key={memory.id} className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 border-pink-200 dark:border-pink-700">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-pink-100 dark:bg-pink-800 rounded-full flex items-center justify-center">
                       <span className="text-lg">{memoryType.emoji}</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-foreground">{memory.title}</h4>
-                      <p className="text-sm text-muted-foreground">by {memory.added_by}</p>
+                      <h4 className="font-semibold text-foreground dark:text-gray-100">{memory.title}</h4>
+                      <p className="text-sm text-muted-foreground dark:text-gray-300">by {memory.added_by}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -247,17 +247,17 @@ const FamilyMemoriesSection: React.FC<FamilyMemoriesSectionProps> = ({
                   </div>
                 </div>
                 
-                <p className="text-foreground mb-3">{memory.content}</p>
+                <p className="text-foreground dark:text-gray-200 mb-3">{memory.content}</p>
                 
                 <div className="flex flex-wrap gap-2 mb-3">
                   {memory.emotion_tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs bg-pink-100 text-pink-800">
+                    <Badge key={tag} variant="secondary" className="text-xs bg-pink-100 dark:bg-pink-800 text-pink-800 dark:text-pink-200">
                       <Tag className="w-3 h-3 mr-1" />
                       {tag}
                     </Badge>
                   ))}
                   {memory.family_members.map((member) => (
-                    <Badge key={member} variant="secondary" className="text-xs bg-purple-100 text-purple-800">
+                    <Badge key={member} variant="secondary" className="text-xs bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200">
                       <Users className="w-3 h-3 mr-1" />
                       {member}
                     </Badge>
@@ -269,11 +269,11 @@ const FamilyMemoriesSection: React.FC<FamilyMemoriesSectionProps> = ({
         })}
         
         {memories.length === 0 && !loading && (
-          <Card className="text-center py-8 bg-gradient-to-r from-pink-50 to-purple-50 border-pink-200">
+          <Card className="text-center py-8 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 border-pink-200 dark:border-pink-700">
             <CardContent>
               <Heart className="h-12 w-12 mx-auto text-pink-400 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No Memories Yet</h3>
-              <p className="text-muted-foreground mb-4">
+              <h3 className="text-lg font-semibold text-foreground dark:text-gray-100 mb-2">No Memories Yet</h3>
+              <p className="text-muted-foreground dark:text-gray-300 mb-4">
                 Start capturing your family's special moments and create lasting memories together.
               </p>
               <Button onClick={() => setIsAddingMemory(true)} className="bg-pink-600 hover:bg-pink-700">
