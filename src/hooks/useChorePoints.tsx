@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -148,35 +149,51 @@ export const useChorePoints = (householdId: string | null) => {
     if (!householdId) return false;
 
     try {
-      // Check if submission already exists
+      // Check if submission already exists for this chore
       const { data: existingSubmission } = await supabase
         .from('chore_submissions')
-        .select('id')
+        .select('id, status')
         .eq('chore_id', choreId)
         .eq('child_id', childId)
-        .single();
+        .maybeSingle();
 
-      if (existingSubmission) {
+      if (existingSubmission && existingSubmission.status === 'pending') {
         toast({
           title: "Already Submitted",
-          description: "This chore has already been submitted for approval!",
+          description: "This chore is already waiting for approval!",
           variant: "destructive"
         });
         return false;
       }
 
-      // Create new submission
-      const { error } = await supabase
-        .from('chore_submissions')
-        .insert([{
-          chore_id: choreId,
-          child_id: childId,
-          household_id: householdId,
-          submission_note: submissionNote || null,
-          status: 'pending'
-        }]);
+      // If there's a rejected submission, we can resubmit
+      if (existingSubmission && existingSubmission.status === 'rejected') {
+        // Update the existing submission
+        const { error } = await supabase
+          .from('chore_submissions')
+          .update({
+            status: 'pending',
+            submission_note: submissionNote || null,
+            submitted_at: new Date().toISOString(),
+            rejection_reason: null
+          })
+          .eq('id', existingSubmission.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new submission
+        const { error } = await supabase
+          .from('chore_submissions')
+          .insert([{
+            chore_id: choreId,
+            child_id: childId,
+            household_id: householdId,
+            submission_note: submissionNote || null,
+            status: 'pending'
+          }]);
+
+        if (error) throw error;
+      }
 
       // Update chore status to pending
       await supabase
@@ -185,11 +202,6 @@ export const useChorePoints = (householdId: string | null) => {
           approval_status: 'pending'
         })
         .eq('id', choreId);
-
-      toast({
-        title: "Success",
-        description: "Chore submitted for approval!",
-      });
 
       fetchChoreSubmissions();
       return true;
@@ -235,11 +247,6 @@ export const useChorePoints = (householdId: string | null) => {
       // Add points to child - this is where points are actually awarded
       await addPointsToChild(submission.child_id, pointsToAward, 'chore_completion', `Completed chore`, submission.chore_id);
 
-      toast({
-        title: "Success",
-        description: "Chore approved and points awarded!",
-      });
-
       fetchChoreSubmissions();
       fetchChildPoints();
       return true;
@@ -280,11 +287,6 @@ export const useChorePoints = (householdId: string | null) => {
         })
         .eq('id', submission.chore_id);
 
-      toast({
-        title: "Chore Rejected",
-        description: "Chore submission has been rejected.",
-      });
-
       fetchChoreSubmissions();
       return true;
     } catch (error: any) {
@@ -305,45 +307,28 @@ export const useChorePoints = (householdId: string | null) => {
       // Initialize child points if they don't exist
       await initializeChildPoints(childId);
 
-      // Get or create child points record
-      let { data: existingPoints, error: fetchError } = await supabase
+      // Get current child points
+      const { data: existingPoints, error: fetchError } = await supabase
         .from('child_points')
         .select('*')
         .eq('child_id', childId)
         .eq('household_id', householdId)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
+      if (fetchError) throw fetchError;
 
-      if (!existingPoints) {
-        // This shouldn't happen after initialization, but just in case
-        const { error: insertError } = await supabase
-          .from('child_points')
-          .insert([{
-            child_id: childId,
-            household_id: householdId,
-            total_points: points,
-            level: Math.floor(points / 100) + 1,
-            last_activity_date: new Date().toISOString().split('T')[0]
-          }]);
+      // Update points
+      const newTotal = existingPoints.total_points + points;
+      const { error: updateError } = await supabase
+        .from('child_points')
+        .update({
+          total_points: newTotal,
+          level: Math.floor(newTotal / 100) + 1,
+          last_activity_date: new Date().toISOString().split('T')[0]
+        })
+        .eq('id', existingPoints.id);
 
-        if (insertError) throw insertError;
-      } else {
-        // Update existing points
-        const newTotal = existingPoints.total_points + points;
-        const { error: updateError } = await supabase
-          .from('child_points')
-          .update({
-            total_points: newTotal,
-            level: Math.floor(newTotal / 100) + 1,
-            last_activity_date: new Date().toISOString().split('T')[0]
-          })
-          .eq('id', existingPoints.id);
-
-        if (updateError) throw updateError;
-      }
+      if (updateError) throw updateError;
 
       // Log transaction
       await supabase
