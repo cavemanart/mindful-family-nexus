@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal, X } from 'lucide-react';
+import { Home, Trophy, DollarSign, StickyNote, Brain, Baby, Users, Calendar, MoreHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -99,16 +100,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, setActiv
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-auto">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <h3 className="text-lg font-semibold">More Options</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsMoreMenuOpen(false)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X size={16} />
-                </Button>
               </div>
               <div className="grid grid-cols-2 gap-3 pb-4">
                 {secondaryItems.map((item) => {
