@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,9 +107,18 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   };
 
   const handleDuplicateEvent = async (event: AdvancedCalendarEvent) => {
-    if (!selectedDate) return;
+    if (!selectedDate || !selectedHousehold) {
+      console.error('❌ Missing selectedDate or selectedHousehold for duplication');
+      return;
+    }
     
     try {
+      // Validate required fields
+      if (!event.title) {
+        console.error('❌ Event title is required for duplication');
+        return;
+      }
+
       // Create proper event data structure for duplication
       const duplicatedEventData = {
         title: `${event.title} (Copy)`,
@@ -126,21 +136,24 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
           selectedDate.getDate(),
           new Date(event.end_datetime).getHours(),
           new Date(event.end_datetime).getMinutes()
-        ).toISOString() : undefined,
-        category: event.category,
-        color: event.color,
-        assigned_to: event.assigned_to || [],
+        ).toISOString() : null,
+        category: event.category || null,
+        color: event.color || null,
+        assigned_to: Array.isArray(event.assigned_to) ? event.assigned_to : [],
         is_recurring: false, // Don't copy recurring settings
-        recurrence_pattern: undefined,
-        recurrence_end: undefined,
-        household_id: selectedHousehold!.id
+        recurrence_pattern: null,
+        recurrence_end: null,
+        household_id: selectedHousehold.id
       };
       
       console.log('📋 Duplicating event with data:', duplicatedEventData);
       
       const result = await createEvent(duplicatedEventData);
       if (result) {
+        console.log('✅ Event duplicated successfully:', result.id);
         setShowDayModal(false);
+      } else {
+        console.error('❌ Failed to create duplicated event - no result returned');
       }
     } catch (error) {
       console.error('❌ Error duplicating event:', error);
