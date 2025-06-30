@@ -10,7 +10,7 @@ const corsHeaders = {
 interface PushNotificationRequest {
   userId?: string;
   householdId?: string;
-  type: 'chore_reminder' | 'bill_reminder' | 'family_message' | 'calendar_event' | 'mvp_announcement' | 'test';
+  type: 'chore_reminder' | 'bill_reminder' | 'family_message' | 'calendar_event' | 'mvp_announcement' | 'reward_redemption' | 'test';
   title: string;
   message: string;
   url?: string;
@@ -42,15 +42,30 @@ serve(async (req) => {
     if (userId) {
       subscriptionsQuery = subscriptionsQuery.eq('user_id', userId);
     } else if (householdId) {
-      // Get all users in the household
-      const { data: householdMembers } = await supabase
-        .from('household_members')
-        .select('user_id')
-        .eq('household_id', householdId);
-      
-      if (householdMembers && householdMembers.length > 0) {
-        const userIds = householdMembers.map(member => member.user_id);
-        subscriptionsQuery = subscriptionsQuery.in('user_id', userIds);
+      // For reward redemptions, only notify parents/admins
+      if (type === 'reward_redemption') {
+        // Get parent/admin users in the household
+        const { data: householdMembers } = await supabase
+          .from('household_members')
+          .select('user_id')
+          .eq('household_id', householdId)
+          .in('role', ['owner', 'admin']);
+        
+        if (householdMembers && householdMembers.length > 0) {
+          const userIds = householdMembers.map(member => member.user_id);
+          subscriptionsQuery = subscriptionsQuery.in('user_id', userIds);
+        }
+      } else {
+        // Get all users in the household
+        const { data: householdMembers } = await supabase
+          .from('household_members')
+          .select('user_id')
+          .eq('household_id', householdId);
+        
+        if (householdMembers && householdMembers.length > 0) {
+          const userIds = householdMembers.map(member => member.user_id);
+          subscriptionsQuery = subscriptionsQuery.in('user_id', userIds);
+        }
       }
     }
 

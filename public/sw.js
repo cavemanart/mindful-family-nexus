@@ -182,6 +182,18 @@ self.addEventListener('push', (event) => {
         { action: 'dismiss', title: 'Dismiss' }
       ]
     },
+    'reward_redemption': {
+      title: '🎁 Reward Redeemed!',
+      body: notificationData.message || 'A child has redeemed a reward!',
+      icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+      badge: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png',
+      tag: 'reward-redemption',
+      requireInteraction: true,
+      actions: [
+        { action: 'view', title: 'View Rewards', icon: '/lovable-uploads/674563d8-00ea-49e9-927c-e98b96abd606.png' },
+        { action: 'dismiss', title: 'Dismiss' }
+      ]
+    },
     'test': {
       title: '🧪 Test Notification - Hublie',
       body: notificationData.message || 'Test notification is working! 🎉',
@@ -263,6 +275,9 @@ self.addEventListener('notificationclick', (event) => {
           break;
         case 'mvp_announcement':
           targetUrl = '/dashboard#mvp';
+          break;
+        case 'reward_redemption':
+          targetUrl = '/dashboard#rewards-admin';
           break;
         case 'test':
           targetUrl = '/dashboard';

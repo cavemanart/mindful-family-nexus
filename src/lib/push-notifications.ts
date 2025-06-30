@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface PushNotificationData {
-  type: 'chore_reminder' | 'bill_reminder' | 'family_message' | 'calendar_event' | 'mvp_announcement' | 'test' | 'default';
+  type: 'chore_reminder' | 'bill_reminder' | 'family_message' | 'calendar_event' | 'mvp_announcement' | 'test' | 'reward_redemption' | 'default';
   message: string;
   url?: string;
   id?: string;
@@ -357,6 +357,40 @@ export class PushNotificationService {
   }
 
   /**
+   * Send reward redemption notification to parents
+   */
+  async sendRewardRedemptionNotification(householdId: string, rewardName: string, childName: string): Promise<void> {
+    try {
+      // Call the edge function to send push notifications to household parents
+      const { error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          householdId,
+          type: 'reward_redemption',
+          title: '🎁 Reward Redeemed!',
+          message: `${childName} has redeemed: ${rewardName}`,
+          url: '/dashboard#rewards-admin'
+        }
+      });
+
+      if (error) {
+        console.error('Error sending reward redemption notification:', error);
+        throw error;
+      }
+
+      // Also send local notification if supported
+      await this.sendLocalNotification({
+        type: 'reward_redemption',
+        message: `${childName} has redeemed: ${rewardName}`,
+        url: '/dashboard#rewards-admin'
+      });
+
+    } catch (error) {
+      console.error('Failed to send reward redemption notification:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Send a local notification (optimized version)
    */
   private async sendLocalNotification(data: Omit<PushNotificationData, 'householdId' | 'userId'>): Promise<void> {
@@ -505,6 +539,7 @@ export class PushNotificationService {
       'family_message': '💬 New Family Message',
       'calendar_event': '📅 Upcoming Event',
       'mvp_announcement': '⭐ MVP of the Day!',
+      'reward_redemption': '🎁 Reward Redeemed!',
       'test': '🧪 Test Notification - Hublie',
       'default': '🏠 Hublie'
     };
