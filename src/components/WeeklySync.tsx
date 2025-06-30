@@ -5,8 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WeeklyWinsSection from './WeeklyWinsSection';
 import WeeklyGoalsSection from './WeeklyGoalsSection';
 import PersonalGoalsSection from './PersonalGoalsSection';
+import FamilyMemoriesSection from './FamilyMemoriesSection';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import { usePersonalGoals } from '@/hooks/usePersonalGoals';
+import { useFamilyMemories } from '@/hooks/useFamilyMemories';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildren } from '@/hooks/useChildren';
 
@@ -24,6 +26,14 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
     updatePersonalGoal, 
     deletePersonalGoal 
   } = usePersonalGoals(selectedHousehold?.id || null, user?.id || null);
+  
+  const {
+    memories,
+    loading: memoriesLoading,
+    addMemory,
+    updateMemory,
+    deleteMemory
+  } = useFamilyMemories(selectedHousehold?.id || null);
 
   // Get actual household members from children data
   const { children } = useChildren(selectedHousehold?.id || '');
@@ -33,7 +43,7 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
   const currentUserName = user?.user_metadata?.first_name || 'User';
   const isParent = user?.user_metadata?.role !== 'child';
 
-  if (loading || personalLoading) {
+  if (loading || personalLoading || memoriesLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="animate-spin" size={24} />
@@ -49,16 +59,17 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
           <Calendar className="text-blue-500" size={32} />
           Weekly Family Sync
         </h2>
-        <p className="text-muted-foreground">Celebrate wins and set goals together</p>
+        <p className="text-muted-foreground">Celebrate wins, set goals, and capture memories together</p>
       </div>
 
       <Tabs defaultValue="wins" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="wins">Family Wins</TabsTrigger>
           <TabsTrigger value="assigned">
             {isParent ? "Assigned Goals" : "My Assignments"}
           </TabsTrigger>
           <TabsTrigger value="personal">Personal Goals</TabsTrigger>
+          <TabsTrigger value="memories">Family Memories</TabsTrigger>
         </TabsList>
 
         <TabsContent value="wins" className="space-y-6">
@@ -91,6 +102,19 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
             addPersonalGoal={addPersonalGoal}
             updatePersonalGoal={updatePersonalGoal}
             deletePersonalGoal={deletePersonalGoal}
+            currentUserName={currentUserName}
+            currentUserId={user?.id || ''}
+          />
+        </TabsContent>
+
+        <TabsContent value="memories" className="space-y-6">
+          <FamilyMemoriesSection
+            memories={memories}
+            loading={memoriesLoading}
+            addMemory={addMemory}
+            updateMemory={updateMemory}
+            deleteMemory={deleteMemory}
+            householdId={selectedHousehold?.id || ''}
             currentUserName={currentUserName}
             currentUserId={user?.id || ''}
           />

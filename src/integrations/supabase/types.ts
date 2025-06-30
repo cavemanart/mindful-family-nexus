@@ -520,6 +520,51 @@ export type Database = {
         }
         Relationships: []
       }
+      family_memories: {
+        Row: {
+          added_by: string
+          added_by_user_id: string | null
+          content: string
+          created_at: string
+          emotion_tags: string[] | null
+          family_members: string[] | null
+          household_id: string
+          id: string
+          memory_date: string
+          memory_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          added_by: string
+          added_by_user_id?: string | null
+          content: string
+          created_at?: string
+          emotion_tags?: string[] | null
+          family_members?: string[] | null
+          household_id: string
+          id?: string
+          memory_date?: string
+          memory_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          added_by?: string
+          added_by_user_id?: string | null
+          content?: string
+          created_at?: string
+          emotion_tags?: string[] | null
+          family_members?: string[] | null
+          household_id?: string
+          id?: string
+          memory_date?: string
+          memory_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_messages: {
         Row: {
           created_at: string
