@@ -291,6 +291,8 @@ export type Database = {
           is_assigned_by_parent: boolean | null
           is_shared_with_family: boolean | null
           points: number
+          recurrence_interval: number | null
+          recurrence_type: string | null
           requires_approval: boolean | null
           submission_id: string | null
           title: string
@@ -312,6 +314,8 @@ export type Database = {
           is_assigned_by_parent?: boolean | null
           is_shared_with_family?: boolean | null
           points?: number
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           requires_approval?: boolean | null
           submission_id?: string | null
           title: string
@@ -333,6 +337,8 @@ export type Database = {
           is_assigned_by_parent?: boolean | null
           is_shared_with_family?: boolean | null
           points?: number
+          recurrence_interval?: number | null
+          recurrence_type?: string | null
           requires_approval?: boolean | null
           submission_id?: string | null
           title?: string
