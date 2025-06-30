@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -169,14 +170,14 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   const currentMonth = view.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Advanced Family Calendar</h2>
-          <p className="text-gray-600 dark:text-gray-400">{selectedHousehold.name}</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Advanced Family Calendar</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">{selectedHousehold.name}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!subscriptionLoading && (
             <SubscriptionBadge 
               planType={subscriptionStatus.planType}
@@ -188,23 +189,29 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
             variant="outline"
             size="sm"
             onClick={() => setIsGridView(!isGridView)}
+            className="text-xs sm:text-sm"
           >
-            {isGridView ? <List className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
-            {isGridView ? 'List View' : 'Grid View'}
+            {isGridView ? <List className="h-3 w-3 sm:h-4 sm:w-4" /> : <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />}
+            <span className="hidden sm:inline ml-1">{isGridView ? 'List View' : 'Grid View'}</span>
           </Button>
           {canCreateEvents && (
             <>
               <Button 
                 onClick={() => setShowQuickAdd(true)} 
                 variant="outline"
-                className="flex items-center gap-2"
+                size="sm"
+                className="text-xs sm:text-sm"
               >
-                <Sparkles className="h-4 w-4" />
-                Quick Add
+                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline ml-1">Quick Add</span>
               </Button>
-              <Button onClick={() => setShowEventForm(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add Event
+              <Button 
+                onClick={() => setShowEventForm(true)} 
+                size="sm"
+                className="text-xs sm:text-sm"
+              >
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline ml-1">Add Event</span>
               </Button>
             </>
           )}
@@ -225,18 +232,22 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
       )}
 
       {/* Navigation and Filters */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      <div className="space-y-4">
+        {/* Month Navigation */}
+        <div className="flex items-center justify-center gap-4">
           <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h3 className="text-lg font-semibold min-w-48 text-center text-gray-900 dark:text-gray-100">{currentMonth}</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-center text-gray-900 dark:text-gray-100 min-w-0 flex-1 sm:min-w-48 sm:flex-none">
+            {currentMonth}
+          </h3>
           <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+        {/* Filters */}
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-center sm:space-y-0 gap-3">
           <div className="w-full sm:w-64">
             <KeywordSearch
               searchKeyword={searchKeyword}
@@ -284,25 +295,29 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
       )}
 
       {/* Calendar Content */}
-      {isGridView ? (
-        <CalendarGrid
-          events={filteredEvents}
-          categories={categories}
-          view={view}
-          onEventClick={handleEventClick}
-          onDateClick={handleDateClick}
-        />
-      ) : (
-        <EventsList
-          events={filteredEvents}
-          categories={categories}
-          onEventEdit={updateEvent}
-          onEventDelete={deleteEvent}
-          onEventClick={handleEventClick}
-          loading={loading}
-          canEdit={canCreateEvents}
-        />
-      )}
+      <div className="min-w-0 overflow-hidden">
+        {isGridView ? (
+          <div className="overflow-x-auto">
+            <CalendarGrid
+              events={filteredEvents}
+              categories={categories}
+              view={view}
+              onEventClick={handleEventClick}
+              onDateClick={handleDateClick}
+            />
+          </div>
+        ) : (
+          <EventsList
+            events={filteredEvents}
+            categories={categories}
+            onEventEdit={updateEvent}
+            onEventDelete={deleteEvent}
+            onEventClick={handleEventClick}
+            loading={loading}
+            canEdit={canCreateEvents}
+          />
+        )}
+      </div>
 
       {/* Event Details Modal */}
       <EventDetailsModal
@@ -316,7 +331,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         householdId={selectedHousehold.id}
       />
 
-      {/* Day Events Modal - Now without duplicate functionality */}
+      {/* Day Events Modal */}
       <DayEventsModal
         isOpen={showDayModal}
         onClose={() => setShowDayModal(false)}

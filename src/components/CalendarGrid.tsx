@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AdvancedCalendarEvent, EventCategory, CalendarView } from '@/types/calendar';
 import { Card } from "@/components/ui/card";
@@ -102,26 +103,28 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const days = getDaysInMonth(view.date);
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const shortWeekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
     <Card className="overflow-hidden shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
       {/* Header with days of week */}
       <div className="grid grid-cols-7 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-b border-gray-200 dark:border-gray-700">
-        {weekDays.map(day => (
-          <div key={day} className="p-4 text-center font-semibold text-gray-700 dark:text-gray-300 text-sm uppercase tracking-wide">
-            {day}
+        {weekDays.map((day, index) => (
+          <div key={day} className="p-2 sm:p-4 text-center font-semibold text-gray-700 dark:text-gray-300 text-xs sm:text-sm uppercase tracking-wide">
+            <span className="hidden sm:inline">{day}</span>
+            <span className="sm:hidden">{shortWeekDays[index]}</span>
           </div>
         ))}
       </div>
       
       {/* Calendar grid */}
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-7 min-h-0">
         {days.map((date, index) => {
           if (!date) {
             return (
               <div 
                 key={index} 
-                className="h-32 md:h-36 lg:h-40 border-r border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50"
+                className="h-20 sm:h-28 md:h-32 lg:h-40 border-r border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50"
               />
             );
           }
@@ -133,15 +136,15 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           return (
             <div
               key={date.toISOString()}
-              className={`h-32 md:h-36 lg:h-40 border-r border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-950/30 group relative ${
+              className={`h-20 sm:h-28 md:h-32 lg:h-40 border-r border-b border-gray-100 dark:border-gray-800 cursor-pointer transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-950/30 group relative ${
                 today ? 'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/50 dark:to-purple-900/50' : 
                 isWeekend ? 'bg-gray-50/70 dark:bg-gray-900/30' : 'bg-white dark:bg-gray-900'
               }`}
               onClick={() => onDateClick(date)}
             >
               {/* Date number */}
-              <div className="p-2 flex justify-between items-start">
-                <span className={`text-sm font-semibold transition-colors ${
+              <div className="p-1 sm:p-2 flex justify-between items-start">
+                <span className={`text-xs sm:text-sm font-semibold transition-colors ${
                   today ? 'text-blue-700 dark:text-blue-300' : 
                   isWeekend ? 'text-gray-500 dark:text-gray-400' : 
                   'text-gray-900 dark:text-gray-100'
@@ -149,19 +152,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   {date.getDate()}
                 </span>
                 {dayEvents.length > 0 && (
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                  <Badge variant="secondary" className="text-xs px-1 py-0 sm:px-1.5 sm:py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                     {dayEvents.length}
                   </Badge>
                 )}
               </div>
 
               {/* Events */}
-              <div className="px-2 pb-2 space-y-1 overflow-hidden">
+              <div className="px-1 sm:px-2 pb-1 sm:pb-2 space-y-0.5 sm:space-y-1 overflow-hidden">
                 {dayEvents
                   .sort((a, b) => 
                     new Date(a.start_datetime).getTime() - new Date(b.start_datetime).getTime()
                   )
-                  .slice(0, 3)
+                  .slice(0, window.innerWidth < 640 ? 1 : 3) // Show fewer events on mobile
                   .map(event => {
                     const segment = getEventSegmentType(event, date);
                     const isMultiDay = !!event.end_datetime && (
@@ -169,25 +172,25 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       new Date(event.end_datetime!).toDateString()
                     );
                     const color = getCategoryColor(event.category || 'general');
-                    // Set style based on segment
+                    
                     let style = {};
-                    let classes =
-                      'text-xs p-1.5 shadow-sm border-l-2 border-r-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-all hover:bg-white dark:hover:bg-gray-800 flex items-center gap-2';
+                    let classes = 'text-xs p-1 sm:p-1.5 shadow-sm border-l-2 border-r-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-md transition-all hover:bg-white dark:hover:bg-gray-800 flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2';
+                    
                     if (isMultiDay) {
                       if (segment === 'start') {
-                        classes += ' rounded-l-md rounded-r-none pr-2';
+                        classes += ' rounded-l-md rounded-r-none pr-1 sm:pr-2';
                         style = { borderLeftColor: color, borderRightWidth: 0 };
                       } else if (segment === 'middle') {
-                        classes += ' rounded-none border-l-0 border-r-0 pl-2 pr-2';
+                        classes += ' rounded-none border-l-0 border-r-0 pl-1 sm:pl-2 pr-1 sm:pr-2';
                         style = { borderLeftWidth: 0, borderRightWidth: 0, backgroundColor: color + '20' };
                       } else if (segment === 'end') {
-                        classes += ' rounded-r-md rounded-l-none pl-2';
+                        classes += ' rounded-r-md rounded-l-none pl-1 sm:pl-2';
                         style = { borderLeftWidth: 0, backgroundColor: color + '20' };
                       }
                     } else {
-                      // single-day
                       style = { borderLeftColor: color };
                     }
+                    
                     return (
                       <div
                         key={event.id}
@@ -201,19 +204,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           className={classes}
                           style={style}
                         >
-                          <div className="flex items-center gap-1 mb-0.5">
+                          <div className="hidden sm:flex items-center gap-1 mb-0.5">
                             <Clock className="h-2.5 w-2.5 text-gray-500" />
                             <span className="text-gray-600 dark:text-gray-400 text-xs">
                               {formatEventTime(event.start_datetime)}
                               {isMultiDay && segment === 'end' && event.end_datetime ? <> - {formatEventTime(event.end_datetime)}</> : null}
                             </span>
                           </div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400">
+                          <div className="font-medium text-gray-900 dark:text-gray-100 truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 text-xs sm:text-sm">
                             {event.title}
                           </div>
                           {event.category && (
                             <div 
-                              className="inline-block mt-1 px-1 py-0.5 rounded text-xs text-white text-center"
+                              className="hidden sm:inline-block mt-1 px-1 py-0.5 rounded text-xs text-white text-center"
                               style={{ backgroundColor: color }}
                             >
                               {event.category}
@@ -222,31 +225,31 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         </div>
                         {/* indicator bar for multi-day */}
                         {isMultiDay && segment === 'start' && (
-                          <span className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-1 rounded-r-full bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                          <span className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 sm:w-2 h-1 rounded-r-full" style={{ backgroundColor: color }} />
                         )}
                         {isMultiDay && segment === 'end' && (
-                          <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-1 rounded-l-full bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                          <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 sm:w-2 h-1 rounded-l-full" style={{ backgroundColor: color }} />
                         )}
                         {isMultiDay && segment === 'middle' && (
                           <>
-                            <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-2 h-1 bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
-                            <span className="absolute right-0 top-1/2 transform -translate-y-1/2 w-2 h-1 bg-[var(--event-color,theme(colors.blue.500))]" style={{ backgroundColor: color }} />
+                            <span className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 sm:w-2 h-1" style={{ backgroundColor: color }} />
+                            <span className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1 sm:w-2 h-1" style={{ backgroundColor: color }} />
                           </>
                         )}
                       </div>
                     );
                   })}
                 
-                {dayEvents.length > 3 && (
+                {dayEvents.length > (window.innerWidth < 640 ? 1 : 3) && (
                   <div 
-                    className="text-xs text-gray-500 dark:text-gray-400 px-1.5 py-1 bg-gray-100 dark:bg-gray-800 rounded flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                    className="text-xs text-gray-500 dark:text-gray-400 px-1 sm:px-1.5 py-0.5 sm:py-1 bg-gray-100 dark:bg-gray-800 rounded flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDateClick(date);
                     }}
                   >
-                    <MoreHorizontal className="h-3 w-3" />
-                    <span>+{dayEvents.length - 3} more</span>
+                    <MoreHorizontal className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    <span>+{dayEvents.length - (window.innerWidth < 640 ? 1 : 3)} more</span>
                   </div>
                 )}
               </div>
