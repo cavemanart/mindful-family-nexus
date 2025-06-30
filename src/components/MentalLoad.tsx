@@ -115,7 +115,6 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
     ));
   };
 
-  // ... keep existing code (getPriorityColor, getCategoryColor functions)
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700';
