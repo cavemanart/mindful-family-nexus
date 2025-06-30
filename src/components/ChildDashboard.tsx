@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
@@ -27,7 +26,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
     addPersonalGoal, 
     updatePersonalGoal, 
     deletePersonalGoal 
-  } = usePersonalGoals(selectedHousehold?.id || null);
+  } = usePersonalGoals(selectedHousehold?.id || null, userProfile?.id || null);
   
   const [activeSection, setActiveSection] = useState<'overview' | 'goals' | 'mvp'>('overview');
 
