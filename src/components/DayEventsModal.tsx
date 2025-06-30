@@ -73,8 +73,8 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[95vh] w-[95vw] sm:w-full flex flex-col p-0">
-        <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-4 border-b bg-gray-50 dark:bg-gray-900">
+      <DialogContent className="max-w-4xl h-[90vh] w-[95vw] sm:w-full flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 px-4 sm:px-6 py-4 border-b bg-gray-50 dark:bg-gray-900 pr-12">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <Button
@@ -111,7 +111,7 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
             </div>
             
             {canCreateEvents && onCreateEvent && (
-              <Button onClick={onCreateEvent} size="sm" className="flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-4">
+              <Button onClick={onCreateEvent} size="sm" className="flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-4 mr-6">
                 <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="hidden sm:inline">Add Event</span>
                 <span className="sm:hidden">Add</span>
@@ -120,9 +120,9 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(95vh-140px)]">
-            <div className="px-4 sm:px-6 py-4">
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="px-4 sm:px-6 py-4 min-h-[400px]">
               <div className="space-y-3 sm:space-y-4 pb-4">
                 {sortedEvents.length === 0 ? (
                   <div className="text-center py-8 sm:py-12">

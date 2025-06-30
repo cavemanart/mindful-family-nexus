@@ -35,7 +35,7 @@ const QuickAddFloatingButton: React.FC<QuickAddFloatingButtonProps> = ({
   return (
     <Button
       onClick={() => setShowQuickAdd(true)}
-      className={`fixed right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-40 bottom-24 sm:bottom-6 ${className}`}
+      className={`fixed right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-[60] bottom-24 sm:bottom-6 ${className}`}
       size="sm"
     >
       <div className="flex items-center justify-center">
