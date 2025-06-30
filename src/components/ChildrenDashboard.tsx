@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -162,22 +161,33 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   // Get the selected child's data for detailed view
   const selectedChildData = children.find(child => child.first_name === selectedChild);
-  const childFullName = selectedChildData ? `${selectedChildData.first_name} ${selectedChildData.last_name || ''}`.trim() : selectedChild;
+  
+  console.log('🔍 ChildrenDashboard: Selected child data:', selectedChildData);
+  console.log('🔍 ChildrenDashboard: All chores:', chores.map(c => ({ title: c.title, assigned_to: c.assigned_to })));
 
-  // Filter data for the selected child - include all possible name variations
-  const childChores = chores.filter(chore => 
-    chore.assigned_to === selectedChild || 
-    chore.assigned_to === childFullName ||
-    chore.assigned_to.toLowerCase() === selectedChild.toLowerCase() ||
-    chore.assigned_to.toLowerCase() === childFullName.toLowerCase()
-  );
+  // Filter data for the selected child using first name only (to match how chores are assigned)
+  const childChores = chores.filter(chore => {
+    const assignedTo = chore.assigned_to?.toLowerCase().trim() || '';
+    const childFirstName = selectedChild.toLowerCase().trim();
+    const isMatch = assignedTo === childFirstName;
+    
+    console.log('🔍 Chore filtering:', {
+      chore: chore.title,
+      assigned_to: assignedTo,
+      child_name: childFirstName,
+      match: isMatch
+    });
+    
+    return isMatch;
+  });
 
-  const childGoals = goals.filter(goal =>
-    goal.assigned_to === selectedChild ||
-    goal.assigned_to === childFullName ||
-    goal.assigned_to.toLowerCase() === selectedChild.toLowerCase() ||
-    goal.assigned_to.toLowerCase() === childFullName.toLowerCase()
-  );
+  const childGoals = goals.filter(goal => {
+    const assignedTo = goal.assigned_to?.toLowerCase().trim() || '';
+    const childFirstName = selectedChild.toLowerCase().trim();
+    return assignedTo === childFirstName;
+  });
+
+  console.log('🔍 ChildrenDashboard: Filtered chores for', selectedChild, ':', childChores.length);
 
   // Calculate child's progress
   const completedChores = childChores.filter(chore => chore.completed);

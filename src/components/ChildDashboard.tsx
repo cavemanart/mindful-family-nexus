@@ -61,6 +61,14 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   const currentUserName = childFullName || childName || 'Me';
   const currentUserId = userProfile?.id || '';
 
+  console.log('🔍 ChildDashboard: Child info:', {
+    childName,
+    childFullName, 
+    currentUserName,
+    currentUserId,
+    userProfile: userProfile
+  });
+
   // Filter goals specifically for this child only
   const myGoals = goals.filter(goal => {
     const assignedTo = goal.assigned_to.toLowerCase();
@@ -145,6 +153,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                 <ChoreBoard 
                   householdId={selectedHousehold.id} 
                   childId={userProfile?.id}
+                  childName={childName}
                   isParentView={false}
                 />
               </CardContent>

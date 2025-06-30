@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,7 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
       title: formData.title,
       description: formData.description,
       points: formData.points,
-      assigned_to: formData.assigned_to,
+      assigned_to: formData.assigned_to, // This will now be just the first name
       due_date: formData.due_date,
       completed: false,
       recurrence_type: formData.recurrence_type,

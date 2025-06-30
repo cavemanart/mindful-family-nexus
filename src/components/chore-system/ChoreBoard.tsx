@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,10 +10,11 @@ import ChoreCompletionDialog from './ChoreCompletionDialog';
 interface ChoreBoardProps {
   householdId: string;
   childId?: string;
+  childName?: string;
   isParentView?: boolean;
 }
 
-export default function ChoreBoard({ householdId, childId, isParentView = false }: ChoreBoardProps) {
+export default function ChoreBoard({ householdId, childId, childName, isParentView = false }: ChoreBoardProps) {
   const { chores, toggleChore, loading } = useChores(householdId);
   const { addPointsToChild } = useChorePoints(householdId);
   const [completionDialog, setCompletionDialog] = useState<{
@@ -22,11 +22,35 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     chore: any;
   }>({ isOpen: false, chore: null });
 
-  // Filter chores for specific child if childId is provided
-  const filteredChores = childId 
-    ? chores.filter(chore => chore.assigned_to.toLowerCase().includes(childId.toLowerCase()) || 
-                             chore.assigned_to === childId)
-    : chores;
+  // Filter chores for specific child
+  const filteredChores = React.useMemo(() => {
+    console.log('ChoreBoard filtering - childId:', childId, 'childName:', childName);
+    console.log('All chores:', chores.map(c => ({ id: c.id, title: c.title, assigned_to: c.assigned_to })));
+    
+    if (!childId && !childName) {
+      console.log('No child filter - showing all chores');
+      return chores;
+    }
+
+    const filtered = chores.filter(chore => {
+      const assignedTo = chore.assigned_to?.toLowerCase().trim() || '';
+      
+      // If we have childName (from parent dashboard), match against it
+      if (childName) {
+        const nameToMatch = childName.toLowerCase().trim();
+        const isMatch = assignedTo === nameToMatch;
+        console.log('Checking chore:', chore.title, 'assigned_to:', assignedTo, 'matching against:', nameToMatch, 'match:', isMatch);
+        return isMatch;
+      }
+      
+      // If we have childId (from child dashboard), this is more complex since chores store names not IDs
+      // For now, return all chores when filtering by ID - this needs to be handled by the parent component
+      return true;
+    });
+    
+    console.log('Filtered chores count:', filtered.length);
+    return filtered;
+  }, [chores, childId, childName]);
 
   const handleChoreComplete = async (chore: any, comment?: string) => {
     const success = await toggleChore(chore.id);
@@ -65,6 +89,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     );
   }
 
+  // ... keep existing code (getRecurrenceIcon and getRecurrenceText functions)
   const getRecurrenceIcon = (recurrenceType: string) => {
     switch (recurrenceType) {
       case 'daily':
@@ -94,7 +119,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
           <CardContent className="text-center py-8">
             <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <div className="text-muted-foreground">
-              {childId ? 'No chores assigned yet!' : 'No chores created yet!'}
+              {childName ? `No chores assigned to ${childName} yet!` : 'No chores created yet!'}
             </div>
           </CardContent>
         </Card>
