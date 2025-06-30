@@ -19,7 +19,7 @@ interface ChildDashboardProps {
 
 const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
-  const { wins, goals, toggleGoal } = useWeeklyData(selectedHousehold?.id || null);
+  const { wins, goals, toggleGoal } = useWeeklyData(selectedHousehold?.id || null, userProfile?.id || null);
   const { initializeChildPoints, getChildPoints } = useChorePoints(selectedHousehold?.id || null);
   const { 
     personalGoals, 
