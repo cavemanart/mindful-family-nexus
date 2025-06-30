@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckSquare, Gift, Trophy, Users, Settings } from 'lucide-react';
+import { CheckSquare, Gift, Trophy, Users } from 'lucide-react';
 import ChoreBoard from './ChoreBoard';
 import RewardsShop from './RewardsShop';
 import RewardsAdmin from './RewardsAdmin';
@@ -98,7 +98,7 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
           </TabsTrigger>
           {isParent && (
             <TabsTrigger value="rewards-admin" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
+              <Gift className="h-4 w-4" />
               Rewards Admin
             </TabsTrigger>
           )}

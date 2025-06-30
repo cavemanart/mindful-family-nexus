@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Plus, Calendar, Star } from 'lucide-react';
 import { useChores } from '@/hooks/useChores';
 import { useChildren } from '@/hooks/useChildren';
@@ -24,7 +23,6 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
     points: 10,
     assigned_to: '',
     due_date: new Date().toISOString().split('T')[0],
-    requires_approval: true,
   });
 
   const { addChore } = useChores(householdId);
@@ -50,7 +48,6 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
       assigned_to: formData.assigned_to,
       due_date: formData.due_date,
       completed: false,
-      requires_approval: formData.requires_approval,
     });
 
     if (success) {
@@ -61,7 +58,6 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
         points: 10,
         assigned_to: '',
         due_date: new Date().toISOString().split('T')[0],
-        requires_approval: true,
       });
     }
   };
@@ -154,15 +150,6 @@ export default function AddChoreDialog({ householdId }: AddChoreDialogProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="requires_approval"
-              checked={formData.requires_approval}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requires_approval: checked }))}
-            />
-            <Label htmlFor="requires_approval">Requires parent approval</Label>
           </div>
 
           <DialogFooter>
