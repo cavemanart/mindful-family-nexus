@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,7 +43,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
   // Allow all authenticated users (including children) to create events
   const canCreateEvents = !!userProfile;
 
-  // Filter events by categories and keywords
+  // Filter events by categories and keywords for calendar display
   const filteredEvents = events.filter(event => {
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(event.category || 'general');
     const matchesKeyword = searchKeyword === '' || 
@@ -54,8 +53,8 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
     return matchesCategory && matchesKeyword;
   });
 
-  // Get events for selected date in day modal
-  const selectedDateEvents = selectedDate ? filteredEvents.filter(event => {
+  // Get ALL events for selected date in day modal (unfiltered)
+  const selectedDateAllEvents = selectedDate ? events.filter(event => {
     const eventDate = new Date(event.start_datetime).toISOString().split('T')[0];
     const selectedDateStr = selectedDate.toISOString().split('T')[0];
     return eventDate === selectedDateStr;
@@ -247,12 +246,12 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         householdId={selectedHousehold.id}
       />
 
-      {/* Day Events Modal */}
+      {/* Day Events Modal - Now receives ALL events for the date */}
       <DayEventsModal
         isOpen={showDayModal}
         onClose={() => setShowDayModal(false)}
         selectedDate={selectedDate}
-        events={selectedDateEvents}
+        events={selectedDateAllEvents}
         categories={categories}
         onEventClick={handleEventClick}
         onCreateEvent={canCreateEvents ? handleCreateEventForDate : undefined}

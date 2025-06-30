@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Clock, Calendar, User, Tag, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DayEventsModalProps {
@@ -101,103 +102,105 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-          {sortedEvents.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No events scheduled
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                {isToday ? "You have no events today" : "No events scheduled for this day"}
-              </p>
-              {canCreateEvents && onCreateEvent && (
-                <Button onClick={onCreateEvent} variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Event
-                </Button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {sortedEvents.length} {sortedEvents.length === 1 ? 'Event' : 'Events'}
+        <ScrollArea className="flex-1 pr-2">
+          <div className="space-y-4">
+            {sortedEvents.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  No events scheduled
                 </h3>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                  {formatDate(selectedDate).split(',')[0]}
-                </Badge>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  {isToday ? "You have no events today" : "No events scheduled for this day"}
+                </p>
+                {canCreateEvents && onCreateEvent && (
+                  <Button onClick={onCreateEvent} variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Event
+                  </Button>
+                )}
               </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {sortedEvents.length} {sortedEvents.length === 1 ? 'Event' : 'Events'}
+                  </h3>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    {formatDate(selectedDate).split(',')[0]}
+                  </Badge>
+                </div>
 
-              {sortedEvents.map((event) => (
-                <Card 
-                  key={event.id} 
-                  className="cursor-pointer hover:shadow-md transition-all duration-200 border-l-4 hover:scale-[1.02]"
-                  style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}
-                  onClick={() => onEventClick(event)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {formatTime(event.start_datetime)}
-                            {event.end_datetime && (
-                              <> - {formatTime(event.end_datetime)}</>
-                            )}
-                          </span>
-                        </div>
-                        
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 truncate">
-                          {event.title}
-                        </h4>
-                        
-                        {event.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-                            {event.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex flex-wrap items-center gap-2">
-                          {event.category && (
-                            <div className="flex items-center gap-1">
-                              <Tag className="h-3 w-3 text-gray-500" />
-                              <Badge 
-                                variant="outline" 
-                                className="text-xs"
-                                style={{ 
-                                  borderColor: getCategoryColor(event.category),
-                                  color: getCategoryColor(event.category)
-                                }}
-                              >
-                                {event.category}
-                              </Badge>
-                            </div>
+                {sortedEvents.map((event) => (
+                  <Card 
+                    key={event.id} 
+                    className="cursor-pointer hover:shadow-md transition-all duration-200 border-l-4 hover:scale-[1.02]"
+                    style={{ borderLeftColor: getCategoryColor(event.category || 'general') }}
+                    onClick={() => onEventClick(event)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Clock className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {formatTime(event.start_datetime)}
+                              {event.end_datetime && (
+                                <> - {formatTime(event.end_datetime)}</>
+                              )}
+                            </span>
+                          </div>
+                          
+                          <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 truncate">
+                            {event.title}
+                          </h4>
+                          
+                          {event.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
+                              {event.description}
+                            </p>
                           )}
                           
-                          {event.assigned_to && event.assigned_to.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <User className="h-3 w-3 text-gray-500" />
-                              <span className="text-xs text-gray-500">
-                                {event.assigned_to.length} assigned
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {event.category && (
+                              <div className="flex items-center gap-1">
+                                <Tag className="h-3 w-3 text-gray-500" />
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs"
+                                  style={{ 
+                                    borderColor: getCategoryColor(event.category),
+                                    color: getCategoryColor(event.category)
+                                  }}
+                                >
+                                  {event.category}
+                                </Badge>
+                              </div>
+                            )}
+                            
+                            {event.assigned_to && event.assigned_to.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <User className="h-3 w-3 text-gray-500" />
+                                <span className="text-xs text-gray-500">
+                                  {event.assigned_to.length} assigned
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        
+                        <div 
+                          className="w-4 h-4 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: getCategoryColor(event.category || 'general') }}
+                        />
                       </div>
-                      
-                      <div 
-                        className="w-4 h-4 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: getCategoryColor(event.category || 'general') }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          )}
-        </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            )}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
