@@ -96,6 +96,16 @@ const ChoresOverviewCard: React.FC<ChoresOverviewCardProps> = ({
     return acc;
   }, {} as Record<string, typeof chores>);
 
+  // Group ALL chores by child for parent view (including completed ones)
+  const allChoresByChild = chores.reduce((acc, chore) => {
+    const childName = getChildName(chore.assigned_to);
+    if (!acc[childName]) {
+      acc[childName] = [];
+    }
+    acc[childName].push(chore);
+    return acc;
+  }, {} as Record<string, typeof chores>);
+
   const handleDeleteChore = async (choreId: string) => {
     await deleteChore(choreId);
   };
@@ -162,52 +172,76 @@ const ChoresOverviewCard: React.FC<ChoresOverviewCardProps> = ({
           </div>
         )}
 
-        {/* Editable Chore Cards - Only for parents */}
-        {!isChildAccount && Object.entries(choresByChild).map(([childName, childChores]) => (
+        {/* Detailed Chore Cards - Show ALL chores for parents, only pending for children */}
+        {!isChildAccount && Object.entries(allChoresByChild).map(([childName, childChores]) => (
           <div key={childName} className="space-y-2">
-            <h4 className="text-sm font-medium">
-              {childName}'s Chores:
+            <h4 className="text-sm font-medium flex items-center justify-between">
+              <span>{childName}'s Chores:</span>
+              <span className="text-xs text-muted-foreground">
+                {childChores.filter(c => c.completed).length}/{childChores.length} completed
+              </span>
             </h4>
-            {childChores.map((chore) => (
-              <div
-                key={chore.id}
-                className="flex items-center justify-between border rounded p-2 bg-white dark:bg-gray-900"
-              >
-                <div>
-                  <p className="font-medium">{chore.title}</p>
-                  <p className="text-sm text-muted-foreground">{chore.description}</p>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {childChores.map((chore) => (
+                <div
+                  key={chore.id}
+                  className={`flex items-center justify-between border rounded p-2 ${
+                    chore.completed 
+                      ? 'bg-green-50 dark:bg-green-950/30 border-green-200' 
+                      : 'bg-white dark:bg-gray-900'
+                  }`}
+                >
+                  <div className="flex-1">
+                    <p className={`font-medium text-sm ${
+                      chore.completed ? 'text-green-800 dark:text-green-400 line-through' : ''
+                    }`}>
+                      {chore.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{chore.description}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                      <span>Due: {new Date(chore.due_date).toLocaleDateString()}</span>
+                      <span>•</span>
+                      <span>{chore.points} pts</span>
+                      {chore.completed && (
+                        <>
+                          <span>•</span>
+                          <span className="text-green-600">✓ Done</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <EditableChoreDialog
+                      householdId={householdId}
+                      initialData={chore}
+                      onSubmit={() => window.location.reload()}
+                      trigger={<Button size="sm" variant="outline" className="h-8 px-2">Edit</Button>}
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="destructive" className="h-8 px-2">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Chore</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{chore.title}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteChore(chore.id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <EditableChoreDialog
-                    householdId={householdId}
-                    initialData={chore}
-                    onSubmit={() => window.location.reload()}
-                    trigger={<Button size="sm" variant="outline">Edit</Button>}
-                  />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Chore</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete "{chore.title}"? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteChore(chore.id)}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ))}
 

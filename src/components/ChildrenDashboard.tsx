@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Star, CheckCircle, Clock, Loader2, RefreshCw, AlertCircle, Wifi, WifiOff, Trophy, Target, Users, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -167,6 +168,8 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
 
   // Filter data for the selected child using first name only (to match how chores are assigned)
   const childChores = chores.filter(chore => {
+    if (!selectedChild) return false;
+    
     const assignedTo = chore.assigned_to?.toLowerCase().trim() || '';
     const childFirstName = selectedChild.toLowerCase().trim();
     const isMatch = assignedTo === childFirstName;
@@ -175,6 +178,7 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
       chore: chore.title,
       assigned_to: assignedTo,
       child_name: childFirstName,
+      selected_child: selectedChild,
       match: isMatch
     });
     
@@ -182,12 +186,25 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
   });
 
   const childGoals = goals.filter(goal => {
+    if (!selectedChild) return false;
+    
     const assignedTo = goal.assigned_to?.toLowerCase().trim() || '';
     const childFirstName = selectedChild.toLowerCase().trim();
-    return assignedTo === childFirstName;
+    const isMatch = assignedTo === childFirstName;
+    
+    console.log('🔍 Goal filtering:', {
+      goal: goal.title,
+      assigned_to: assignedTo,
+      child_name: childFirstName,
+      selected_child: selectedChild,
+      match: isMatch
+    });
+    
+    return isMatch;
   });
 
   console.log('🔍 ChildrenDashboard: Filtered chores for', selectedChild, ':', childChores.length);
+  console.log('🔍 ChildrenDashboard: Filtered goals for', selectedChild, ':', childGoals.length);
 
   // Calculate child's progress
   const completedChores = childChores.filter(chore => chore.completed);
@@ -215,7 +232,10 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
             <Button
               key={child.id}
               variant={selectedChild === child.first_name ? "default" : "outline"}
-              onClick={() => setSelectedChild(child.first_name)}
+              onClick={() => {
+                console.log('🔍 Setting selected child to:', child.first_name);
+                setSelectedChild(child.first_name);
+              }}
               className={selectedChild === child.first_name ? "bg-purple-600 hover:bg-purple-700" : ""}
             >
               {child.first_name}
@@ -248,6 +268,15 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
           </div>
         )}
       </div>
+
+      {/* Show selected child info */}
+      {selectedChild && (
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-semibold text-foreground">
+            Viewing: {selectedChild}'s Progress
+          </h3>
+        </div>
+      )}
 
       {/* Child Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -290,14 +319,16 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="text-blue-500" size={20} />
-            {selectedChild}'s Tasks
+            {selectedChild ? `${selectedChild}'s Tasks` : 'Tasks'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {childChores.length === 0 ? (
             <div className="text-center py-6">
               <CheckCircle className="text-gray-300 mx-auto mb-2" size={32} />
-              <p className="text-muted-foreground">No tasks assigned to {selectedChild}</p>
+              <p className="text-muted-foreground">
+                {selectedChild ? `No tasks assigned to ${selectedChild}` : 'No tasks assigned'}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -375,14 +406,16 @@ const ChildrenDashboard = ({ selectedHousehold }: ChildrenDashboardProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="text-green-500" size={20} />
-            {selectedChild}'s Goals
+            {selectedChild ? `${selectedChild}'s Goals` : 'Goals'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {childGoals.length === 0 ? (
             <div className="text-center py-6">
               <Target className="text-gray-300 mx-auto mb-2" size={32} />
-              <p className="text-muted-foreground">No goals assigned to {selectedChild}</p>
+              <p className="text-muted-foreground">
+                {selectedChild ? `No goals assigned to ${selectedChild}` : 'No goals assigned'}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
