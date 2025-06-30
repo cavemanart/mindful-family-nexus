@@ -52,12 +52,16 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     });
   };
 
-  // FIXED: Handler for updating the event from AdvancedEventForm
+  // FIXED: Handler for updating the event from AdvancedEventForm with proper typing
   const handleUpdateEvent = async (formEventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
     console.log('📝 EventDetailsModal - Received form data for update:', JSON.stringify(formEventData, null, 2));
     
-    // Clean the data to only include updatable fields and ensure proper data types
-    const updateData: Partial<AdvancedCalendarEvent> = {
+    // Create properly typed update data with only the fields that can be updated
+    const updateData: Partial<Pick<AdvancedCalendarEvent, 
+      'title' | 'description' | 'start_datetime' | 'end_datetime' | 
+      'category' | 'color' | 'assigned_to' | 'is_recurring' | 
+      'recurrence_pattern' | 'recurrence_end'
+    >> = {
       title: formEventData.title?.trim() || null,
       description: formEventData.description?.trim() || null,
       start_datetime: formEventData.start_datetime,
@@ -70,10 +74,10 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       recurrence_end: formEventData.recurrence_end || null,
     };
 
-    // Remove undefined values and ensure proper null handling
-    Object.keys(updateData).forEach(key => {
-      if (updateData[key as keyof typeof updateData] === undefined) {
-        updateData[key as keyof typeof updateData] = null as any;
+    // Clean undefined values - convert to null for database compatibility
+    Object.entries(updateData).forEach(([key, value]) => {
+      if (value === undefined) {
+        (updateData as any)[key] = null;
       }
     });
 
