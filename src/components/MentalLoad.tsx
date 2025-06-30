@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Brain, Plus, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useChildren } from '@/hooks/useChildren';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MentalLoadItem {
   id: string;
@@ -28,6 +30,7 @@ interface MentalLoadProps {
 
 const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
   const { children } = useChildren(householdId);
+  const { user } = useAuth();
   
   const [items, setItems] = useState<MentalLoadItem[]>([
     {
@@ -77,20 +80,25 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
     dueDate: '',
   });
 
-  // Get actual family members from children data
-  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim());
+  // Get current user name
+  const currentUserName = user?.user_metadata?.first_name || 'You';
+  
+  // Create assignable members list including current user and children
+  const familyMembers = children.map(child => `${child.first_name} ${child.last_name || ''}`.trim()).filter(Boolean);
+  const assignableMembers = [currentUserName, ...familyMembers].filter(Boolean);
   const categories = ['Healthcare', 'Education', 'Events', 'Household', 'Finance', 'Social', 'Other'];
 
   const addItem = () => {
-    if (newItem.title.trim() && newItem.description.trim() && newItem.category && newItem.assignedTo) {
+    // Only require title, description and category - assignedTo is optional
+    if (newItem.title.trim() && newItem.description.trim() && newItem.category) {
       const item: MentalLoadItem = {
         id: Date.now().toString(),
         title: newItem.title,
         description: newItem.description,
         category: newItem.category,
         priority: newItem.priority,
-        assignedTo: newItem.assignedTo,
-        sharedBy: 'You',
+        assignedTo: newItem.assignedTo || 'Unassigned',
+        sharedBy: currentUserName,
         isCompleted: false,
         dueDate: newItem.dueDate ? new Date(newItem.dueDate) : undefined,
         createdAt: new Date(),
@@ -159,7 +167,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
 
       {/* Statistics - Mobile optimized grid */}
       <div className="grid grid-cols-2 gap-3">
-        {familyMembers.slice(0, 2).map((member) => {
+        {assignableMembers.slice(0, 4).map((member) => {
           const memberItems = getItemsByAssignee(member);
           const highPriorityCount = memberItems.filter(item => item.priority === 'high').length;
           
@@ -235,23 +243,18 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Assign To</label>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Assign To (Optional)</label>
                   <Select value={newItem.assignedTo} onValueChange={(value) => 
                     setNewItem({ ...newItem, assignedTo: value })
                   }>
                     <SelectTrigger>
-                      <SelectValue placeholder="Who?" />
+                      <SelectValue placeholder="Leave unassigned" />
                     </SelectTrigger>
                     <SelectContent>
-                      {familyMembers.length === 0 ? (
-                        <SelectItem value="no-members" disabled>
-                          No family members found
-                        </SelectItem>
-                      ) : (
-                        familyMembers.map((member) => (
-                          <SelectItem key={member} value={member}>{member}</SelectItem>
-                        ))
-                      )}
+                      <SelectItem value="">Leave unassigned</SelectItem>
+                      {assignableMembers.map((member) => (
+                        <SelectItem key={member} value={member}>{member}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -381,7 +384,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         </TabsContent>
 
         <TabsContent value="by-person" className="space-y-4">
-          {familyMembers.slice(0, 2).map((member) => {
+          {assignableMembers.map((member) => {
             const memberItems = getItemsByAssignee(member);
             return (
               <Card key={member}>
