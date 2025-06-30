@@ -14,6 +14,11 @@ export interface Chore {
   created_at: string;
   updated_at: string;
   household_id: string;
+  approval_status?: string;
+  approved_by?: string;
+  approved_at?: string;
+  requires_approval?: boolean;
+  submission_id?: string;
 }
 
 export const useChores = (householdId: string | null) => {
