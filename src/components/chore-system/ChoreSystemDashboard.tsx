@@ -88,24 +88,26 @@ export default function ChoreSystemDashboard({ householdId }: ChoreSystemDashboa
 
       {/* Main Content */}
       <Tabs defaultValue={isChild ? "my-chores" : "chores"} className="w-full">
-        <TabsList className={`grid w-full ${isParent ? 'grid-cols-4' : 'grid-cols-2'}`}>
-          <TabsTrigger value="chores" className="flex items-center gap-2">
-            <CheckSquare className="h-4 w-4" />
-            {isChild ? "My Chores" : "Chores"}
+        <TabsList className={`grid w-full ${isParent ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'} h-auto`}>
+          <TabsTrigger value="chores" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm">
+            <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="truncate">{isChild ? "My Chores" : "Chores"}</span>
           </TabsTrigger>
-          <TabsTrigger value="rewards" className="flex items-center gap-2">
-            <Gift className="h-4 w-4" />
-            Rewards
+          <TabsTrigger value="rewards" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm">
+            <Gift className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="truncate">Rewards</span>
           </TabsTrigger>
           {isParent && (
             <>
-              <TabsTrigger value="points-tracker" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Points Tracker
+              <TabsTrigger value="points-tracker" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm">
+                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate hidden xs:inline">Points Tracker</span>
+                <span className="truncate xs:hidden">Points</span>
               </TabsTrigger>
-              <TabsTrigger value="rewards-admin" className="flex items-center gap-2">
-                <Gift className="h-4 w-4" />
-                Rewards Admin
+              <TabsTrigger value="rewards-admin" className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm">
+                <Gift className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate hidden xs:inline">Rewards Admin</span>
+                <span className="truncate xs:hidden">Admin</span>
               </TabsTrigger>
             </>
           )}
