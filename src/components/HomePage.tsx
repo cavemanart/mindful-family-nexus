@@ -45,14 +45,14 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20">
-        <p className="text-lg font-semibold">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-lg font-semibold text-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <HomeHeader />
 
       <main className="container mx-auto px-6 py-16">

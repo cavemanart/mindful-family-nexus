@@ -25,20 +25,20 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
 
   const getCoachingColor = (type: string) => {
     switch (type) {
-      case 'celebration': return 'bg-yellow-50 border-yellow-200';
-      case 'motivation': return 'bg-blue-50 border-blue-200';
-      case 'improvement': return 'bg-green-50 border-green-200';
-      default: return 'bg-purple-50 border-purple-200';
+      case 'celebration': return 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800';
+      case 'motivation': return 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800';
+      case 'improvement': return 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800';
+      default: return 'bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800';
     }
   };
 
   if (loading) {
     return (
-      <Card className="border-purple-200">
+      <Card className="bg-card text-card-foreground border-border">
         <CardContent className="p-6">
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            <span className="ml-2 text-sm text-gray-600">Loading coaching insights...</span>
+            <span className="ml-2 text-sm text-muted-foreground">Loading coaching insights...</span>
           </div>
         </CardContent>
       </Card>
@@ -48,7 +48,7 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
   const unreadMoments = moments.filter(m => !m.is_read);
 
   return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+    <Card className="bg-card text-card-foreground border-border">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -84,10 +84,10 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
         {moments.length === 0 ? (
           <div className="text-center py-6">
             <Brain className="h-12 w-12 mx-auto text-purple-400 mb-3" />
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-muted-foreground mb-2">
               No coaching insights yet this week
             </p>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-muted-foreground mb-3">
               Get personalized insights based on your family's activities
             </p>
             <Button
@@ -111,14 +111,14 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
                 key={moment.id}
                 className={`p-3 rounded-lg border-2 transition-all ${
                   moment.is_read 
-                    ? 'bg-gray-50 border-gray-200 opacity-70' 
+                    ? 'bg-muted/50 border-border opacity-70' 
                     : getCoachingColor(moment.coaching_type)
                 }`}
               >
                 <div className="flex items-start gap-3">
                   {getCoachingIcon(moment.coaching_type)}
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 mb-1">
+                    <p className="text-sm font-medium text-foreground mb-1">
                       {moment.content}
                     </p>
                     <div className="flex items-center justify-between">
@@ -143,15 +143,15 @@ const MiniCoachCard: React.FC<MiniCoachCardProps> = ({ householdId }) => {
             ))}
             
             {moments.length > 3 && (
-              <p className="text-xs text-center text-gray-500 mt-2">
+              <p className="text-xs text-center text-muted-foreground mt-2">
                 +{moments.length - 3} more insights available
               </p>
             )}
           </div>
         )}
         
-        <div className="mt-4 p-2 bg-green-50 rounded-lg border border-green-200">
-          <p className="text-xs text-green-700 text-center">
+        <div className="mt-4 p-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+          <p className="text-xs text-green-700 dark:text-green-400 text-center">
             ✨ Powered by free AI - no API keys required!
           </p>
         </div>
