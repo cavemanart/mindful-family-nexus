@@ -105,20 +105,46 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
     setShowEventDetails(true);
   };
 
-  const handleDuplicateEvent = (event: AdvancedCalendarEvent) => {
-    // Create a new event with the same data but different date
-    const duplicatedEvent = {
-      ...event,
-      title: `${event.title} (Copy)`,
-      start_datetime: selectedDate ? new Date(selectedDate.setHours(new Date(event.start_datetime).getHours(), new Date(event.start_datetime).getMinutes())).toISOString() : event.start_datetime,
-      end_datetime: event.end_datetime ? (selectedDate ? new Date(selectedDate.setHours(new Date(event.end_datetime).getHours(), new Date(event.end_datetime).getMinutes())).toISOString() : event.end_datetime) : null,
-    };
+  const handleDuplicateEvent = async (event: AdvancedCalendarEvent) => {
+    if (!selectedDate) return;
     
-    // Remove the id and other auto-generated fields
-    const { id, creator_id, created_at, ...eventData } = duplicatedEvent;
-    
-    createEvent(eventData);
-    setShowDayModal(false);
+    try {
+      // Create proper event data structure for duplication
+      const duplicatedEventData = {
+        title: `${event.title} (Copy)`,
+        description: event.description || '',
+        start_datetime: new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          new Date(event.start_datetime).getHours(),
+          new Date(event.start_datetime).getMinutes()
+        ).toISOString(),
+        end_datetime: event.end_datetime ? new Date(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate(),
+          new Date(event.end_datetime).getHours(),
+          new Date(event.end_datetime).getMinutes()
+        ).toISOString() : undefined,
+        category: event.category,
+        color: event.color,
+        assigned_to: event.assigned_to || [],
+        is_recurring: false, // Don't copy recurring settings
+        recurrence_pattern: undefined,
+        recurrence_end: undefined,
+        household_id: selectedHousehold!.id
+      };
+      
+      console.log('📋 Duplicating event with data:', duplicatedEventData);
+      
+      const result = await createEvent(duplicatedEventData);
+      if (result) {
+        setShowDayModal(false);
+      }
+    } catch (error) {
+      console.error('❌ Error duplicating event:', error);
+    }
   };
 
   const handleAssignEvent = (event: AdvancedCalendarEvent) => {
