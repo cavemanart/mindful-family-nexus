@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DollarSign, StickyNote, Users, Calendar, Baby, Trophy, CheckCircle } from 'lucide-react';
@@ -19,8 +20,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
   const actions = [
     {
       key: 'mvp',
-      title: 'Nominate MVP',
-      description: 'Celebrate family heroes',
+      title: isChild ? 'Nominate MVP' : 'Nominate MVP',
+      description: isChild ? 'Celebrate family heroes' : 'Celebrate family heroes',
       icon: Trophy,
       action: () => setActiveSection('mvp'),
       color: 'from-yellow-500 to-orange-500',
@@ -39,7 +40,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
     {
       key: 'notes',
       title: 'Family Notes',
-      description: 'Share important reminders',
+      description: isChild ? 'Read family notes' : 'Share important reminders',
       icon: StickyNote,
       action: () => setActiveSection('notes'),
       color: 'from-yellow-500 to-amber-500',
@@ -87,7 +88,10 @@ const QuickActions: React.FC<QuickActionsProps> = ({ setActiveSection }) => {
       <div className="text-center py-8">
         <p className="text-muted-foreground mb-2">No quick actions available</p>
         <p className="text-sm text-muted-foreground">
-          Enable pages in your profile settings to see quick actions here
+          {isChild 
+            ? 'Your dashboard is ready! Use the navigation to explore.' 
+            : 'Enable pages in your profile settings to see quick actions here'
+          }
         </p>
       </div>
     );

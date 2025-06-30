@@ -31,21 +31,25 @@ export default function CleanMobileNavigation({ activeTab, setActiveTab }: Clean
     { id: 'children', icon: Users, label: isChild ? 'My Goals' : 'Kids', visible: isVisible('children') },
   ];
 
-  // Secondary navigation items (shown in "More" menu) - filter out parent-only pages for children
+  // Secondary navigation items (shown in "More" menu) - completely filter out parent-only pages for children
   const secondaryItems = [
-    { id: 'bills', icon: DollarSign, label: 'Bills', visible: isVisible('bills') && !isChild },
+    { id: 'bills', icon: DollarSign, label: 'Bills', visible: isVisible('bills') && !isChild, parentOnly: true },
     { id: 'notes', icon: StickyNote, label: 'Notes', visible: isVisible('notes') },
     { id: 'mvp', icon: Trophy, label: 'MVP', visible: isVisible('mvp') },
-    { id: 'weekly-sync', icon: Target, label: 'Weekly Sync', visible: isVisible('weekly-sync') && !isChild },
-    { id: 'mental-load', icon: Brain, label: 'Mental Load', visible: isVisible('mental-load') && !isChild },
-    { id: 'nanny-mode', icon: Baby, label: 'Nanny Mode', visible: isVisible('nanny-mode') && !isChild },
-    { id: 'subscription', icon: Star, label: 'Subscription', visible: !isChild },
+    { id: 'weekly-sync', icon: Target, label: 'Weekly Sync', visible: isVisible('weekly-sync') && !isChild, parentOnly: true },
+    { id: 'mental-load', icon: Brain, label: 'Mental Load', visible: isVisible('mental-load') && !isChild, parentOnly: true },
+    { id: 'nanny-mode', icon: Baby, label: 'Nanny Mode', visible: isVisible('nanny-mode') && !isChild, parentOnly: true },
+    { id: 'subscription', icon: Star, label: 'Subscription', visible: !isChild, parentOnly: true },
   ];
 
+  // For children, completely filter out parent-only items
   const visiblePrimaryItems = primaryItems.filter(item => item.visible);
-  const visibleSecondaryItems = secondaryItems.filter(item => item.visible);
+  const visibleSecondaryItems = isChild 
+    ? secondaryItems.filter(item => item.visible && !item.parentOnly)
+    : secondaryItems.filter(item => item.visible);
 
   const handleTabChange = (tab: string) => {
+    console.log('📱 Mobile Navigation: Tab change from', activeTab, 'to', tab);
     setActiveTab(tab);
     setIsMoreMenuOpen(false);
   };
@@ -69,7 +73,7 @@ export default function CleanMobileNavigation({ activeTab, setActiveTab }: Clean
           </button>
         ))}
 
-        {/* More Menu */}
+        {/* More Menu - only show if there are secondary items */}
         {visibleSecondaryItems.length > 0 && (
           <Sheet open={isMoreMenuOpen} onOpenChange={setIsMoreMenuOpen}>
             <SheetTrigger asChild>

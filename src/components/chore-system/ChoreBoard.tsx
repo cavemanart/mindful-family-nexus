@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,8 +85,12 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     );
     if (childByName) return childByName.first_name;
 
-    // If it's the current user, return "Me"
-    if (userProfile && (assignedTo === userProfile.id || assignedTo.toLowerCase() === userProfile.first_name?.toLowerCase())) {
+    // For child view, if it's assigned to current user, return "Me"
+    if (!isParentView && userProfile && (
+      assignedTo === userProfile.id || 
+      assignedTo.toLowerCase() === userProfile.first_name?.toLowerCase() ||
+      assignedTo.toLowerCase() === `${userProfile.first_name} ${userProfile.last_name || ''}`.trim().toLowerCase()
+    )) {
       return 'Me';
     }
 
@@ -210,7 +215,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                  Assigned to: {isParentView ? getChildName(chore.assigned_to) : 'Me'}
+                  Assigned to: {getChildName(chore.assigned_to)}
                 </div>
 
                 {/* Action Buttons */}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +29,8 @@ const Index = () => {
   const { preferences, loading: preferencesLoading } = usePagePreferences();
   const [redirectTimer, setRedirectTimer] = useState<NodeJS.Timeout | null>(null);
 
+  const isChild = userProfile?.is_child_account;
+
   console.log('📊 Index page state:', { 
     user: !!user, 
     userProfile: !!userProfile, 
@@ -35,7 +38,7 @@ const Index = () => {
     currentPage,
     loading,
     householdsLoading,
-    isChildAccount: userProfile?.is_child_account
+    isChildAccount: isChild
   });
 
   useEffect(() => {
@@ -139,20 +142,23 @@ const Index = () => {
       return pref?.is_visible !== false; // Default to visible if no preference
     };
 
-    console.log('📊 Index: Rendering page:', currentPage, 'isChildAccount:', userProfile?.is_child_account);
+    console.log('📊 Index: Rendering page:', currentPage, 'isChildAccount:', isChild);
 
     // If user is a child account, render child-specific pages
-    if (userProfile?.is_child_account) {
+    if (isChild) {
       switch (currentPage) {
         case 'overview':
+          return <ChildDashboard selectedHousehold={selectedHousehold} />;
         case 'children':
           return <ChildDashboard selectedHousehold={selectedHousehold} />;
         case 'chores':
           return <ChoreSystemDashboard householdId={selectedHousehold.id} />;
         case 'calendar':
-          return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : null;
+          return isVisible('calendar') ? <FamilyCalendar selectedHousehold={selectedHousehold} /> : <ChildDashboard selectedHousehold={selectedHousehold} />;
         case 'notes':
-          return isVisible('notes') ? <FamilyNotes householdId={selectedHousehold.id} canEdit={true} /> : null;
+          return isVisible('notes') ? <FamilyNotes householdId={selectedHousehold.id} canEdit={true} /> : <ChildDashboard selectedHousehold={selectedHousehold} />;
+        case 'mvp':
+          return isVisible('mvp') ? <MVPOfTheDay selectedHousehold={selectedHousehold} /> : <ChildDashboard selectedHousehold={selectedHousehold} />;
         default:
           return <ChildDashboard selectedHousehold={selectedHousehold} />;
       }
