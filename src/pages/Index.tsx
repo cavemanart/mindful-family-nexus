@@ -26,6 +26,7 @@ const Index = () => {
   const { households, selectedHousehold, selectHousehold, loading: householdsLoading } = useHouseholds();
   const [currentPage, setCurrentPage] = useState('overview');
   const { preferences, loading: preferencesLoading } = usePagePreferences();
+  const [redirectTimer, setRedirectTimer] = useState<NodeJS.Timeout | null>(null);
 
   console.log('📊 Index page state:', { 
     user: !!user, 
@@ -49,6 +50,16 @@ const Index = () => {
     console.log('📊 Index: Current page changed to:', currentPage);
   }, [currentPage]);
 
+  // Clear any existing redirect timer when component unmounts or auth state changes
+  useEffect(() => {
+    return () => {
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
+    };
+  }, [redirectTimer]);
+
+  // Show loading state while auth is initializing
   if (loading || householdsLoading || preferencesLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -57,13 +68,32 @@ const Index = () => {
     );
   }
 
+  // Handle authentication redirect with delay to prevent loops
   if (!user) {
-    console.log('📊 No user, redirecting to auth');
+    console.log('📊 No user detected, preparing redirect to auth');
+    
+    // Add a small delay to prevent immediate redirect loops
+    if (!redirectTimer) {
+      const timer = setTimeout(() => {
+        console.log('📊 Redirecting to auth after delay');
+      }, 100);
+      setRedirectTimer(timer);
+    }
+    
     return <Navigate to="/auth" replace />;
   }
 
   if (!userProfile) {
-    console.log('📊 No user profile, redirecting to auth');
+    console.log('📊 No user profile, preparing redirect to auth');
+    
+    // Add a small delay to prevent immediate redirect loops
+    if (!redirectTimer) {
+      const timer = setTimeout(() => {
+        console.log('📊 Redirecting to auth after delay (no profile)');
+      }, 100);
+      setRedirectTimer(timer);
+    }
+    
     return <Navigate to="/auth" replace />;
   }
 

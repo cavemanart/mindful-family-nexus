@@ -25,7 +25,7 @@ export const useSafeAuth = (): SafeAuthReturn => {
   const loading = auth?.loading || false;
   const error = auth?.error || null;
   const retry = auth?.retry || (() => {});
-  const signOut = auth?.signOut || (async () => {});
+  const authSignOut = auth?.signOut || (async () => {});
 
   const isAuthenticated = !!user;
   const isChildMode = childSession.isChildMode;
@@ -40,6 +40,31 @@ export const useSafeAuth = (): SafeAuthReturn => {
   // Check if user can manage household (only authenticated parents, not children)
   const canManageHousehold = isAuthenticated && !isChildMode;
 
+  const signOut = async () => {
+    console.log('🚪 SafeAuth: Starting enhanced sign out process');
+    
+    try {
+      // Clear child session first if in child mode
+      if (isChildMode) {
+        console.log('👶 SafeAuth: Clearing child session');
+        childSession.clearChildSession();
+      }
+
+      // Then perform the main sign out
+      console.log('🔐 SafeAuth: Performing main auth sign out');
+      await authSignOut();
+      
+      console.log('✅ SafeAuth: Sign out completed successfully');
+    } catch (error) {
+      console.error('❌ SafeAuth: Error during sign out:', error);
+      // Clear child session even if main signOut fails
+      if (isChildMode) {
+        childSession.clearChildSession();
+      }
+      throw error;
+    }
+  };
+
   return {
     user,
     userProfile,
@@ -50,9 +75,6 @@ export const useSafeAuth = (): SafeAuthReturn => {
     activeUserName,
     canManageHousehold,
     retry,
-    signOut: async () => {
-      childSession.clearChildSession();
-      await signOut();
-    },
+    signOut,
   };
 };

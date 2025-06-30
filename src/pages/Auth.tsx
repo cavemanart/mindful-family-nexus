@@ -18,16 +18,37 @@ const Auth = () => {
   const [role, setRole] = useState<'parent' | 'nanny' | 'child' | 'grandparent'>('parent');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [navigationTimer, setNavigationTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const { signUp, signIn, signOut, user } = useAuth();
+  const { signUp, signIn, signOut, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Handle navigation with delay to prevent loops
   useEffect(() => {
-    if (user && !loading) {
-      navigate('/dashboard');
+    if (user && !loading && !authLoading) {
+      console.log('🔐 Auth: User detected, preparing navigation to dashboard');
+      
+      // Clear any existing timer
+      if (navigationTimer) {
+        clearTimeout(navigationTimer);
+      }
+      
+      // Add delay to prevent navigation loops
+      const timer = setTimeout(() => {
+        console.log('🔐 Auth: Navigating to dashboard');
+        navigate('/dashboard');
+      }, 100);
+      
+      setNavigationTimer(timer);
     }
-  }, [user, navigate, loading]);
+    
+    return () => {
+      if (navigationTimer) {
+        clearTimeout(navigationTimer);
+      }
+    };
+  }, [user, navigate, loading, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +87,7 @@ const Auth = () => {
 
   const handleSignOut = async () => {
     try {
+      console.log('🚪 Auth: Starting sign out process');
       await signOut();
       toast({
         title: 'Success',
@@ -73,6 +95,7 @@ const Auth = () => {
       });
       navigate('/');
     } catch (error) {
+      console.error('❌ Auth: Sign out error:', error);
       toast({
         title: 'Error',
         description: 'Failed to sign out',
@@ -80,6 +103,15 @@ const Auth = () => {
       });
     }
   };
+
+  // Show loading state during auth transitions
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // If user is logged in, show logout option
   if (user) {
