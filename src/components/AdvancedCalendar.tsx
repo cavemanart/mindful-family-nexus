@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Plus, Filter, Grid3X3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,70 +105,6 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
     setSelectedEvent(event);
     setShowDayModal(false);
     setShowEventDetails(true);
-  };
-
-  const handleDuplicateEvent = async (event: AdvancedCalendarEvent) => {
-    if (!selectedDate || !selectedHousehold) {
-      console.error('❌ Missing selectedDate or selectedHousehold for duplication');
-      toast.error('Cannot duplicate event: missing required data');
-      return;
-    }
-    
-    try {
-      // Validate required fields
-      if (!event.title) {
-        console.error('❌ Event title is required for duplication');
-        toast.error('Cannot duplicate event: title is required');
-        return;
-      }
-
-      console.log('🔄 Starting event duplication for:', event.title);
-      console.log('🔄 Original event data:', JSON.stringify(event, null, 2));
-      console.log('🔄 Selected date for duplication:', selectedDate);
-      console.log('🔄 Selected household:', selectedHousehold.id);
-
-      // Create proper event data structure for duplication
-      const duplicatedEventData = {
-        title: `${event.title} (Copy)`,
-        description: event.description || null,
-        start_datetime: new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth(),
-          selectedDate.getDate(),
-          new Date(event.start_datetime).getHours(),
-          new Date(event.start_datetime).getMinutes()
-        ).toISOString(),
-        end_datetime: event.end_datetime ? new Date(
-          selectedDate.getFullYear(),
-          selectedDate.getMonth(),
-          selectedDate.getDate(),
-          new Date(event.end_datetime).getHours(),
-          new Date(event.end_datetime).getMinutes()
-        ).toISOString() : null,
-        category: event.category || null,
-        color: event.color || null,
-        assigned_to: Array.isArray(event.assigned_to) ? event.assigned_to : [],
-        is_recurring: false, // Don't copy recurring settings
-        recurrence_pattern: null,
-        recurrence_end: null,
-        household_id: selectedHousehold.id, // Add the missing household_id
-      };
-      
-      console.log('📋 Duplicating event with cleaned data:', JSON.stringify(duplicatedEventData, null, 2));
-      
-      const result = await createEvent(duplicatedEventData);
-      if (result) {
-        console.log('✅ Event duplicated successfully:', result.id);
-        toast.success('Event duplicated successfully');
-        setShowDayModal(false);
-      } else {
-        console.error('❌ Failed to create duplicated event - no result returned');
-        toast.error('Failed to duplicate event');
-      }
-    } catch (error) {
-      console.error('❌ Error duplicating event:', error);
-      toast.error('Failed to duplicate event');
-    }
   };
 
   const handleAssignEvent = (event: AdvancedCalendarEvent) => {
@@ -324,7 +261,7 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         householdId={selectedHousehold.id}
       />
 
-      {/* Day Events Modal - Now with quick action handlers */}
+      {/* Day Events Modal - Now without duplicate functionality */}
       <DayEventsModal
         isOpen={showDayModal}
         onClose={() => setShowDayModal(false)}
@@ -336,7 +273,6 @@ const AdvancedCalendar: React.FC<AdvancedCalendarProps> = ({ selectedHousehold }
         onNavigateDate={handleDayNavigation}
         canCreateEvents={canCreateEvents}
         onEditEvent={canCreateEvents ? handleEditEvent : undefined}
-        onDuplicateEvent={canCreateEvents ? handleDuplicateEvent : undefined}
         onAssignEvent={canCreateEvents ? handleAssignEvent : undefined}
       />
 

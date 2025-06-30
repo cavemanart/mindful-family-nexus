@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Calendar, User, Tag, Plus, ChevronLeft, ChevronRight, Edit, Copy, UserPlus } from 'lucide-react';
+import { Clock, Calendar, User, Tag, Plus, ChevronLeft, ChevronRight, Edit, UserPlus } from 'lucide-react';
 
 interface DayEventsModalProps {
   isOpen: boolean;
@@ -19,7 +19,6 @@ interface DayEventsModalProps {
   onNavigateDate: (direction: 'prev' | 'next') => void;
   canCreateEvents: boolean;
   onEditEvent?: (event: AdvancedCalendarEvent) => void;
-  onDuplicateEvent?: (event: AdvancedCalendarEvent) => void;
   onAssignEvent?: (event: AdvancedCalendarEvent) => void;
 }
 
@@ -34,7 +33,6 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
   onNavigateDate,
   canCreateEvents,
   onEditEvent,
-  onDuplicateEvent,
   onAssignEvent
 }) => {
   if (!selectedDate) return null;
@@ -222,16 +220,6 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                                     <Edit className="h-3 w-3" />
                                   </Button>
                                 )}
-                                {onDuplicateEvent && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2 text-xs"
-                                    onClick={(e) => handleQuickAction(e, () => onDuplicateEvent(event))}
-                                  >
-                                    <Copy className="h-3 w-3" />
-                                  </Button>
-                                )}
                                 {onAssignEvent && (
                                   <Button
                                     variant="outline"
@@ -258,16 +246,6 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                                     onClick={(e) => handleQuickAction(e, () => onEditEvent(event))}
                                   >
                                     <Edit className="h-3 w-3" />
-                                  </Button>
-                                )}
-                                {onDuplicateEvent && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 px-2"
-                                    onClick={(e) => handleQuickAction(e, () => onDuplicateEvent(event))}
-                                  >
-                                    <Copy className="h-3 w-3" />
                                   </Button>
                                 )}
                                 {onAssignEvent && (

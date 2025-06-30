@@ -51,18 +51,23 @@ const AdvancedEventForm: React.FC<AdvancedEventFormProps> = ({
 
     const selectedCategory = categories.find(c => c.name === formData.category);
     
-    onEventCreated({
+    // Properly handle null vs undefined for database compatibility
+    const eventData = {
       household_id: householdId,
       title: formData.title.trim(),
-      description: formData.description.trim() || undefined,
+      description: formData.description.trim() || null, // Use null instead of undefined
       start_datetime: formData.start_datetime,
-      end_datetime: formData.end_datetime || undefined,
-      category: formData.category,
+      end_datetime: formData.end_datetime || null, // Use null instead of undefined
+      category: formData.category || null, // Use null instead of undefined
       color: selectedCategory?.color || formData.color,
       assigned_to: formData.assigned_to,
       is_recurring: formData.is_recurring,
-      recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : undefined,
-    });
+      recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null, // Use null instead of undefined
+      recurrence_end: null, // Always null for now
+    };
+
+    console.log('📝 Form submitting event data:', JSON.stringify(eventData, null, 2));
+    onEventCreated(eventData);
   };
 
   const updateField = (field: string, value: any) => {
