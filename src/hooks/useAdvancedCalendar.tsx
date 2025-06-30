@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -78,24 +77,49 @@ export const useAdvancedCalendar = (householdId: string | null) => {
   }, [householdId, user]);
 
   const createEvent = async (eventData: Omit<AdvancedCalendarEvent, 'id' | 'creator_id' | 'created_at'>) => {
-    if (!user || !householdId) return null;
+    if (!user || !householdId) {
+      console.error('❌ Missing user or householdId for event creation');
+      toast.error('Authentication required to create event');
+      return null;
+    }
 
     try {
       console.log('📝 Creating new advanced calendar event:', eventData.title);
+      console.log('📝 Event data being sent:', JSON.stringify(eventData, null, 2));
+
+      // Clean the data to ensure it matches the database schema
+      const cleanEventData = {
+        title: eventData.title,
+        description: eventData.description || null,
+        start_datetime: eventData.start_datetime,
+        end_datetime: eventData.end_datetime || null,
+        category: eventData.category || null,
+        color: eventData.color || null,
+        assigned_to: Array.isArray(eventData.assigned_to) ? eventData.assigned_to : [],
+        is_recurring: eventData.is_recurring || false,
+        recurrence_pattern: eventData.recurrence_pattern || null,
+        recurrence_end: eventData.recurrence_end || null,
+        household_id: householdId,
+        creator_id: user.id,
+      };
+
+      console.log('📝 Cleaned event data:', JSON.stringify(cleanEventData, null, 2));
 
       const { data, error } = await supabase
         .from('calendar_events')
-        .insert({
-          ...eventData,
-          household_id: householdId,
-          creator_id: user.id,
-        })
+        .insert(cleanEventData)
         .select()
         .single();
 
       if (error) {
-        console.error('❌ Error creating calendar event:', error);
-        toast.error('Failed to create event');
+        console.error('❌ Supabase error creating calendar event:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        toast.error(`Failed to create event: ${error.message}`);
         return null;
       }
 
@@ -104,8 +128,8 @@ export const useAdvancedCalendar = (householdId: string | null) => {
       await fetchEvents();
       return data;
     } catch (error) {
-      console.error('🚨 Error creating calendar event:', error);
-      toast.error('Failed to create event');
+      console.error('🚨 Unexpected error creating calendar event:', error);
+      toast.error('Failed to create event due to unexpected error');
       return null;
     }
   };
