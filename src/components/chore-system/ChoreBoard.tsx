@@ -29,7 +29,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
     
     // Match by full name, first name, or child ID
     const childName = selectedChild.first_name;
-    const fullName = `${selectedChild.first_name} ${selectedChild.last_name}`.trim();
+    const fullName = `${selectedChild.first_name} ${selectedChild.last_name || ''}`.trim();
     
     return chores.filter(chore => {
       const assignedTo = chore.assigned_to.toLowerCase();
@@ -47,20 +47,64 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   };
 
   const getChoreStatusColor = (chore: any) => {
-    const approvalStatus = chore.approval_status || (chore.completed ? 'completed' : 'pending');
-    
-    if (approvalStatus === 'approved') return 'bg-green-100 border-green-300';
-    if (approvalStatus === 'pending' && chore.completed) return 'bg-yellow-100 border-yellow-300';
-    if (chore.completed) return 'bg-blue-100 border-blue-300';
+    if (chore.approval_status === 'approved') return 'bg-green-100 border-green-300';
+    if (chore.approval_status === 'pending') return 'bg-yellow-100 border-yellow-300';
+    if (chore.approval_status === 'rejected') return 'bg-red-100 border-red-300';
     return 'bg-white border-gray-200';
   };
 
   const getStatusIcon = (chore: any) => {
-    const approvalStatus = chore.approval_status || (chore.completed ? 'completed' : 'pending');
-    
-    if (approvalStatus === 'approved') return <CheckCircle className="h-5 w-5 text-green-600" />;
-    if (approvalStatus === 'pending' && chore.completed) return <Clock className="h-5 w-5 text-yellow-600" />;
+    if (chore.approval_status === 'approved') return <CheckCircle className="h-5 w-5 text-green-600" />;
+    if (chore.approval_status === 'pending') return <Clock className="h-5 w-5 text-yellow-600" />;
     return null;
+  };
+
+  const getActionButton = (chore: any) => {
+    if (isParentView) {
+      // Parents don't interact with chores directly from this view
+      return null;
+    }
+
+    // Child view - they can submit chores for approval
+    if (chore.approval_status === 'approved') {
+      return (
+        <Badge variant="default" className="w-full justify-center bg-green-600">
+          ✅ Completed & Approved
+        </Badge>
+      );
+    }
+
+    if (chore.approval_status === 'pending') {
+      return (
+        <Badge variant="secondary" className="w-full justify-center bg-yellow-100 text-yellow-800">
+          ⏳ Waiting for Approval
+        </Badge>
+      );
+    }
+
+    if (chore.approval_status === 'rejected') {
+      return (
+        <Button 
+          onClick={() => handleSubmitChore(chore.id)}
+          className="w-full"
+          size="sm"
+          variant="outline"
+        >
+          Resubmit for Approval
+        </Button>
+      );
+    }
+
+    // Not submitted yet
+    return (
+      <Button 
+        onClick={() => handleSubmitChore(chore.id)}
+        className="w-full"
+        size="sm"
+      >
+        Submit for Approval
+      </Button>
+    );
   };
 
   if (choresLoading) {
@@ -74,7 +118,7 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
   return (
     <div className="space-y-6">
       {/* Points Display for Child View */}
-      {childId && childPoints && (
+      {childId && childPoints && !isParentView && (
         <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -132,31 +176,9 @@ export default function ChoreBoard({ householdId, childId, isParentView = false 
                 </div>
 
                 {/* Action Buttons */}
-                {!isParentView && childId && (
-                  <div className="pt-2">
-                    {chore.approval_status === 'approved' ? (
-                      <Badge variant="default" className="w-full justify-center bg-green-600">
-                        ✅ Completed & Approved
-                      </Badge>
-                    ) : chore.approval_status === 'pending' ? (
-                      <Badge variant="secondary" className="w-full justify-center bg-yellow-100 text-yellow-800">
-                        ⏳ Waiting for Approval
-                      </Badge>
-                    ) : chore.completed ? (
-                      <Badge variant="outline" className="w-full justify-center">
-                        Submitted
-                      </Badge>
-                    ) : (
-                      <Button 
-                        onClick={() => handleSubmitChore(chore.id)}
-                        className="w-full"
-                        size="sm"
-                      >
-                        Mark as Done
-                      </Button>
-                    )}
-                  </div>
-                )}
+                <div className="pt-2">
+                  {getActionButton(chore)}
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -1,25 +1,13 @@
+
 import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Household } from '@/hooks/useHouseholds';
-import { useChores } from '@/hooks/useChores';
 import { useChorePoints } from '@/hooks/useChorePoints';
 import { useWeeklyData } from '@/hooks/useWeeklyData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CheckCircle, Star, Trophy, Calendar, Target, Edit, Trash2 } from 'lucide-react';
+import { CheckCircle, Star, Trophy, Calendar, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import EditableChoreDialog from './EditableChoreDialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import ChoreBoard from '@/components/chore-system/ChoreBoard';
 
 interface ChildDashboardProps {
   selectedHousehold?: Household | null;
@@ -27,8 +15,7 @@ interface ChildDashboardProps {
 
 const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) => {
   const { userProfile } = useAuth();
-  const { chores, toggleChore, deleteChore } = useChores(selectedHousehold?.id);
-  const { wins, goals, toggleGoal, deleteGoal } = useWeeklyData(selectedHousehold?.id || null);
+  const { wins, goals, toggleGoal } = useWeeklyData(selectedHousehold?.id || null);
   const { initializeChildPoints, getChildPoints } = useChorePoints(selectedHousehold?.id || null);
 
   // Initialize child points when component mounts
@@ -49,29 +36,22 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
     );
   }
 
-  // Filter content specifically for this child
+  // Only show data for the current child user
   const childName = userProfile?.first_name || '';
   const childFullName = `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim();
 
-  // Improved chore filtering to match the ChoreBoard logic
-  const myChores = chores.filter(chore => {
-    const assignedTo = chore.assigned_to.toLowerCase();
+  // Filter goals specifically for this child only
+  const myGoals = goals.filter(goal => {
+    const assignedTo = goal.assigned_to.toLowerCase();
     return assignedTo === childName.toLowerCase() || 
-           assignedTo === childFullName.toLowerCase() ||
-           assignedTo === userProfile?.id;
+           assignedTo === childFullName.toLowerCase();
   });
 
-  const myGoals = goals.filter(goal =>
-    goal.assigned_to.toLowerCase() === childName.toLowerCase() ||
-    goal.assigned_to.toLowerCase() === childFullName.toLowerCase()
-  );
-
-  const completedChores = myChores.filter(chore => chore.completed || chore.approval_status === 'approved');
   const completedGoals = myGoals.filter(goal => goal.completed);
   
   // Get points from the chore system
   const childPoints = userProfile?.id ? getChildPoints(userProfile.id) : null;
-  const totalPoints = childPoints?.total_points || completedChores.reduce((sum, chore) => sum + chore.points, 0);
+  const totalPoints = childPoints?.total_points || 0;
 
   const getRewardLevel = (points: number) => {
     if (points >= 50) return { level: 'Super Star', color: 'text-purple-600', icon: '🌟' };
@@ -81,14 +61,6 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
   };
 
   const reward = getRewardLevel(totalPoints);
-
-  const handleDeleteChore = async (choreId: string) => {
-    await deleteChore(choreId);
-  };
-
-  const handleDeleteGoal = async (goalId: string) => {
-    await deleteGoal(goalId);
-  };
 
   return (
     <div className="space-y-6 p-6 max-w-4xl mx-auto">
@@ -103,7 +75,7 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
       </div>
 
       {/* Progress Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -122,16 +94,6 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <CheckCircle className="h-6 w-6 text-blue-500" />
-              <span className="font-bold text-lg">{completedChores.length}/{myChores.length}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Tasks Completed</p>
-          </CardContent>
-        </Card>
-
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -143,126 +105,20 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
         </Card>
       </div>
 
-      {/* My Tasks */}
+      {/* My Chores Section - Using ChoreBoard Component */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
-            My Tasks
+            <CheckCircle className="h-5 w-5 text-blue-500" />
+            My Chores
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {myChores.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="text-gray-300 mx-auto mb-4" size={48} />
-                <p className="text-muted-foreground text-lg">No tasks assigned yet!</p>
-                <p className="text-muted-foreground">Check back later for new tasks.</p>
-              </div>
-            ) : (
-              myChores.map((chore) => (
-                <div key={chore.id} className={`border rounded-lg p-4 ${
-                  chore.approval_status === 'approved' 
-                    ? 'bg-green-50 border-green-200' 
-                    : chore.completed || chore.approval_status === 'pending'
-                    ? 'bg-yellow-50 border-yellow-200'
-                    : 'bg-white hover:shadow-md transition-shadow'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className={`font-semibold text-lg ${
-                        chore.approval_status === 'approved' 
-                          ? 'text-green-800 line-through' 
-                          : chore.completed
-                          ? 'text-yellow-800'
-                          : 'text-gray-800'
-                      }`}>
-                        {chore.title}
-                      </h3>
-                      <p className={`text-sm ${
-                        chore.approval_status === 'approved' 
-                          ? 'text-green-600' 
-                          : chore.completed
-                          ? 'text-yellow-600'
-                          : 'text-gray-600'
-                      }`}>
-                        {chore.description}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="flex items-center gap-1 text-sm text-yellow-600">
-                          <Star className="h-4 w-4" />
-                          {chore.points} points
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          Due: {new Date(chore.due_date).toLocaleDateString()}
-                        </span>
-                        {chore.approval_status && (
-                          <Badge variant={
-                            chore.approval_status === 'approved' ? 'default' : 
-                            chore.approval_status === 'pending' ? 'secondary' : 'outline'
-                          }>
-                            {chore.approval_status === 'approved' ? '✅ Approved' : 
-                             chore.approval_status === 'pending' ? '⏳ Pending' : chore.approval_status}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant={chore.approval_status === 'approved' ? "secondary" : chore.completed ? "outline" : "default"}
-                        size="sm"
-                        onClick={() => toggleChore(chore.id)}
-                        className={chore.approval_status === 'approved' ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
-                        disabled={chore.approval_status === 'approved'}
-                      >
-                        {chore.approval_status === 'approved' ? (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Completed!
-                          </>
-                        ) : chore.completed ? (
-                          "Submitted"
-                        ) : (
-                          "Mark Done"
-                        )}
-                      </Button>
-                      <EditableChoreDialog
-                        householdId={selectedHousehold.id}
-                        initialData={chore}
-                        onSubmit={() => window.location.reload()}
-                        trigger={
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        }
-                      />
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{chore.title}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteChore(chore.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          <ChoreBoard 
+            householdId={selectedHousehold.id} 
+            childId={userProfile?.id}
+            isParentView={false}
+          />
         </CardContent>
       </Card>
 
@@ -288,14 +144,12 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                 }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-2 flex-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
                         onClick={() => toggleGoal(goal.id)}
-                        className={`p-1 ${goal.completed ? 'text-green-500' : 'text-gray-300'}`}
+                        className={`p-1 rounded ${goal.completed ? 'text-green-500' : 'text-gray-300'}`}
                       >
                         <CheckCircle className="h-4 w-4" />
-                      </Button>
+                      </button>
                       <div>
                         <h4 className={`font-medium text-sm ${
                           goal.completed ? 'text-green-800 line-through' : 'text-gray-800'
@@ -305,32 +159,9 @@ const ChildDashboard: React.FC<ChildDashboardProps> = ({ selectedHousehold }) =>
                         <p className="text-xs text-muted-foreground">{goal.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs">
-                        {goal.completed ? 'Done!' : 'In Progress'}
-                      </Badge>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="ghost">
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Goal</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{goal.title}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteGoal(goal.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                    <Badge variant={goal.completed ? "default" : "secondary"} className="text-xs">
+                      {goal.completed ? 'Done!' : 'In Progress'}
+                    </Badge>
                   </div>
                 </div>
               ))

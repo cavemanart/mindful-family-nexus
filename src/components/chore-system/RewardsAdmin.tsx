@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,15 +6,27 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Gift, Edit, Trash2 } from 'lucide-react';
+import { Plus, Gift, Trash2 } from 'lucide-react';
 import { useRewards } from '@/hooks/useRewards';
+import RewardEditDialog from './RewardEditDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface RewardsAdminProps {
   householdId: string;
 }
 
 export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
-  const { rewards, createReward, loading } = useRewards(householdId);
+  const { rewards, createReward, updateReward, deleteReward, loading } = useRewards(householdId);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -47,6 +60,10 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
         is_active: true
       });
     }
+  };
+
+  const handleDelete = async (rewardId: string) => {
+    await deleteReward(rewardId);
   };
 
   const createDefaultRewards = async () => {
@@ -204,13 +221,31 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="h-3 w-3 mr-1" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  <RewardEditDialog 
+                    reward={reward} 
+                    onUpdate={(data) => updateReward(reward.id, data)}
+                  />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Reward</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{reward.name}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(reward.id)}>
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>

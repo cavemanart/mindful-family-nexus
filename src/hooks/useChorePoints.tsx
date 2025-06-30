@@ -148,6 +148,24 @@ export const useChorePoints = (householdId: string | null) => {
     if (!householdId) return false;
 
     try {
+      // Check if submission already exists
+      const { data: existingSubmission } = await supabase
+        .from('chore_submissions')
+        .select('id')
+        .eq('chore_id', choreId)
+        .eq('child_id', childId)
+        .single();
+
+      if (existingSubmission) {
+        toast({
+          title: "Already Submitted",
+          description: "This chore has already been submitted for approval!",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // Create new submission
       const { error } = await supabase
         .from('chore_submissions')
         .insert([{
@@ -160,11 +178,10 @@ export const useChorePoints = (householdId: string | null) => {
 
       if (error) throw error;
 
-      // Update chore status
+      // Update chore status to pending
       await supabase
         .from('chores')
         .update({ 
-          completed: true,
           approval_status: 'pending'
         })
         .eq('id', choreId);
@@ -215,7 +232,7 @@ export const useChorePoints = (householdId: string | null) => {
         })
         .eq('id', submission.chore_id);
 
-      // Add points to child
+      // Add points to child - this is where points are actually awarded
       await addPointsToChild(submission.child_id, pointsToAward, 'chore_completion', `Completed chore`, submission.chore_id);
 
       toast({
@@ -231,6 +248,50 @@ export const useChorePoints = (householdId: string | null) => {
       toast({
         title: "Error",
         description: "Failed to approve chore",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const rejectChoreSubmission = async (submissionId: string, rejectionReason?: string) => {
+    try {
+      const submission = choreSubmissions.find(s => s.id === submissionId);
+      if (!submission) return false;
+
+      // Update submission status
+      const { error: submissionError } = await supabase
+        .from('chore_submissions')
+        .update({
+          status: 'rejected',
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
+          approved_at: new Date().toISOString(),
+          rejection_reason: rejectionReason || null
+        })
+        .eq('id', submissionId);
+
+      if (submissionError) throw submissionError;
+
+      // Update chore status
+      await supabase
+        .from('chores')
+        .update({ 
+          approval_status: 'rejected'
+        })
+        .eq('id', submission.chore_id);
+
+      toast({
+        title: "Chore Rejected",
+        description: "Chore submission has been rejected.",
+      });
+
+      fetchChoreSubmissions();
+      return true;
+    } catch (error: any) {
+      console.error('Error rejecting chore:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to reject chore",
         variant: "destructive"
       });
       return false;
@@ -333,6 +394,7 @@ export const useChorePoints = (householdId: string | null) => {
     loading,
     submitChoreForApproval,
     approveChoreSubmission,
+    rejectChoreSubmission,
     addPointsToChild,
     initializeChildPoints,
     getChildPoints,

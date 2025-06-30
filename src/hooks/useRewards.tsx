@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -211,6 +210,63 @@ export const useRewards = (householdId: string | null) => {
     }
   };
 
+  const updateReward = async (rewardId: string, rewardData: Partial<Omit<Reward, 'id' | 'household_id' | 'created_at' | 'updated_at' | 'created_by'>>) => {
+    try {
+      const { error } = await supabase
+        .from('rewards_catalog')
+        .update({
+          ...rewardData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', rewardId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Reward updated successfully!",
+      });
+
+      fetchRewards();
+      return true;
+    } catch (error: any) {
+      console.error('Error updating reward:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update reward",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const deleteReward = async (rewardId: string) => {
+    try {
+      const { error } = await supabase
+        .from('rewards_catalog')
+        .update({ is_active: false })
+        .eq('id', rewardId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Reward deleted successfully!",
+      });
+
+      fetchRewards();
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting reward:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete reward",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -226,6 +282,8 @@ export const useRewards = (householdId: string | null) => {
     redemptions,
     loading,
     createReward,
+    updateReward,
+    deleteReward,
     redeemReward,
     fulfillRedemption,
     refetch: () => {
