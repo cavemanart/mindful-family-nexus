@@ -135,7 +135,7 @@ const Index = () => {
       case 'nanny-mode':
         return isVisible('nanny-mode') ? <NannyMode selectedHousehold={selectedHousehold} /> : null;
       case 'mental-load':
-        return isVisible('mental-load') ? <MentalLoad /> : null;
+        return isVisible('mental-load') ? <MentalLoad householdId={selectedHousehold.id} /> : null;
       default:
         console.log('📊 Index: Unknown page, rendering dashboard:', currentPage);
         return <Dashboard onNavigate={handlePageChange} />;

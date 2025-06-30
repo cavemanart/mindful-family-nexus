@@ -3,18 +3,20 @@ import React, { useState } from 'react';
 import { Brain } from 'lucide-react';
 import { useChildren } from '@/hooks/useChildren';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import MentalLoadForm from './mental-load/MentalLoadForm';
 import MentalLoadStats from './mental-load/MentalLoadStats';
 import MentalLoadTabs from './mental-load/MentalLoadTabs';
 import { MentalLoadItemType } from './mental-load/MentalLoadItem';
 
 interface MentalLoadProps {
-  householdId?: string;
+  householdId: string;
 }
 
 const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
   const { children } = useChildren(householdId);
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const [items, setItems] = useState<MentalLoadItemType[]>([
     {
@@ -55,6 +57,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
   ]);
 
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newItem, setNewItem] = useState({
     title: '',
     description: '',
@@ -76,12 +79,33 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
     setNewItem(prev => ({ ...prev, [field]: value }));
   };
 
-  const addItem = () => {
-    if (newItem.title.trim() && newItem.description.trim() && newItem.category) {
+  const addItem = async () => {
+    // Validate required fields
+    const errors: string[] = [];
+    
+    if (!newItem.title.trim()) {
+      errors.push('Title is required');
+    }
+    if (!newItem.category) {
+      errors.push('Category is required');
+    }
+
+    if (errors.length > 0) {
+      toast({
+        title: "Please fill in required fields",
+        description: errors.join(', '),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
       const item: MentalLoadItemType = {
         id: Date.now().toString(),
-        title: newItem.title,
-        description: newItem.description,
+        title: newItem.title.trim(),
+        description: newItem.description.trim() || 'No additional details provided',
         category: newItem.category,
         priority: newItem.priority,
         assignedTo: newItem.assignedTo || 'Unassigned',
@@ -90,9 +114,36 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
         dueDate: newItem.dueDate ? new Date(newItem.dueDate) : undefined,
         createdAt: new Date(),
       };
-      setItems([item, ...items]);
-      setNewItem({ title: '', description: '', category: '', priority: 'medium', assignedTo: '', dueDate: '' });
+
+      setItems(prevItems => [item, ...prevItems]);
+      
+      // Reset form
+      setNewItem({ 
+        title: '', 
+        description: '', 
+        category: '', 
+        priority: 'medium', 
+        assignedTo: '', 
+        dueDate: '' 
+      });
       setIsAddingItem(false);
+
+      toast({
+        title: "Mental load item shared!",
+        description: `"${item.title}" has been added to your family's mental load tracker.`,
+      });
+
+      console.log('✅ Mental load item added successfully:', item);
+
+    } catch (error) {
+      console.error('❌ Error adding mental load item:', error);
+      toast({
+        title: "Something went wrong",
+        description: "Failed to add mental load item. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,6 +200,7 @@ const MentalLoad: React.FC<MentalLoadProps> = ({ householdId }) => {
           onSubmit={addItem}
           assignableMembers={assignableMembers}
           categories={categories}
+          isSubmitting={isSubmitting}
         />
       </div>
 
