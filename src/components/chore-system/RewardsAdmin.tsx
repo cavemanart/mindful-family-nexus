@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Gift, Trash2 } from 'lucide-react';
 import { useRewards } from '@/hooks/useRewards';
+import { useIsMobile } from '@/hooks/use-mobile';
 import RewardEditDialog from './RewardEditDialog';
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ interface RewardsAdminProps {
 
 export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
   const { rewards, createReward, updateReward, deleteReward, loading } = useRewards(householdId);
+  const isMobile = useIsMobile();
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -97,18 +99,30 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Rewards Management</h2>
-          <p className="text-muted-foreground">Create and manage rewards for your family</p>
+      {/* Mobile-first responsive header */}
+      <div className={`${isMobile ? 'space-y-4' : 'flex items-center justify-between'}`}>
+        <div className={isMobile ? 'text-center' : ''}>
+          <h2 className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>Rewards Management</h2>
+          <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
+            Create and manage rewards for your family
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className={`${isMobile ? 'flex flex-col space-y-2' : 'flex gap-2'}`}>
           {rewards.length === 0 && (
-            <Button onClick={createDefaultRewards} variant="outline">
-              Add Default Rewards
+            <Button 
+              onClick={createDefaultRewards} 
+              variant="outline"
+              size={isMobile ? "sm" : "default"}
+              className={isMobile ? 'w-full' : ''}
+            >
+              {isMobile ? 'Add Defaults' : 'Add Default Rewards'}
             </Button>
           )}
-          <Button onClick={() => setIsCreating(true)}>
+          <Button 
+            onClick={() => setIsCreating(true)}
+            size={isMobile ? "sm" : "default"}
+            className={isMobile ? 'w-full' : ''}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Reward
           </Button>
@@ -119,12 +133,14 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
       {isCreating && (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Reward</CardTitle>
-            <CardDescription>Add a new reward to your family's catalog</CardDescription>
+            <CardTitle className={isMobile ? 'text-lg' : ''}>Create New Reward</CardTitle>
+            <CardDescription className={isMobile ? 'text-sm' : ''}>
+              Add a new reward to your family's catalog
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 gap-4'}`}>
                 <div>
                   <label className="block text-sm font-medium mb-2">Reward Name</label>
                   <Input
@@ -156,7 +172,7 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'md:grid-cols-2 gap-4'}`}>
                 <div>
                   <label className="block text-sm font-medium mb-2">Category</label>
                   <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
@@ -181,9 +197,19 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button type="submit">Create Reward</Button>
-                <Button type="button" variant="outline" onClick={() => setIsCreating(false)}>
+              <div className={`${isMobile ? 'flex flex-col space-y-2' : 'flex gap-2'}`}>
+                <Button 
+                  type="submit"
+                  className={isMobile ? 'w-full' : ''}
+                >
+                  Create Reward
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsCreating(false)}
+                  className={isMobile ? 'w-full' : ''}
+                >
                   Cancel
                 </Button>
               </div>
@@ -192,25 +218,25 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
         </Card>
       )}
 
-      {/* Rewards List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Rewards List - Mobile optimized grid */}
+      <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
         {rewards.map((reward) => (
           <Card key={reward.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-lg">{reward.name}</CardTitle>
-                <Badge className={getCategoryColor(reward.category)}>
+            <CardHeader className={`${isMobile ? 'pb-2' : 'pb-3'}`}>
+              <div className={`${isMobile ? 'space-y-2' : 'flex items-start justify-between'}`}>
+                <CardTitle className={`${isMobile ? 'text-base' : 'text-lg'}`}>{reward.name}</CardTitle>
+                <Badge className={`${getCategoryColor(reward.category)} ${isMobile ? 'w-fit' : ''}`}>
                   {reward.category}
                 </Badge>
               </div>
               {reward.description && (
-                <CardDescription>{reward.description}</CardDescription>
+                <CardDescription className={isMobile ? 'text-sm' : ''}>{reward.description}</CardDescription>
               )}
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="flex items-center gap-1">
+                <div className={`${isMobile ? 'space-y-2' : 'flex items-center justify-between'}`}>
+                  <Badge variant="outline" className="flex items-center gap-1 w-fit">
                     <Gift className="h-3 w-3" />
                     {reward.point_cost} points
                   </Badge>
@@ -220,15 +246,20 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
+                <div className={`${isMobile ? 'flex flex-col space-y-2' : 'flex gap-2'}`}>
                   <RewardEditDialog 
                     reward={reward} 
                     onUpdate={(data) => updateReward(reward.id, data)}
                   />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-                        <Trash2 className="h-3 w-3" />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={`text-red-600 hover:text-red-700 ${isMobile ? 'w-full' : ''}`}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        {isMobile ? 'Delete' : ''}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -255,13 +286,16 @@ export default function RewardsAdmin({ householdId }: RewardsAdminProps) {
 
       {rewards.length === 0 && (
         <Card>
-          <CardContent className="text-center py-8">
-            <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Rewards Yet</h3>
-            <p className="text-muted-foreground mb-4">
+          <CardContent className={`text-center ${isMobile ? 'py-6' : 'py-8'}`}>
+            <Gift className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} text-gray-400 mx-auto mb-4`} />
+            <h3 className={`font-semibold mb-2 ${isMobile ? 'text-base' : 'text-lg'}`}>No Rewards Yet</h3>
+            <p className={`text-muted-foreground mb-4 ${isMobile ? 'text-sm' : ''}`}>
               Create rewards for your children to redeem with their earned points.
             </p>
-            <Button onClick={createDefaultRewards}>
+            <Button 
+              onClick={createDefaultRewards}
+              className={isMobile ? 'w-full' : ''}
+            >
               Add Default Rewards
             </Button>
           </CardContent>
