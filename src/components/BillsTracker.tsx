@@ -12,6 +12,7 @@ import { useBills } from '@/hooks/useBills';
 import { Household } from '@/hooks/useHouseholds';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildren } from '@/hooks/useChildren';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { getUserSubscription, isTrialActive, getFeatureLimits } from '@/lib/subscription-utils';
 import BillUsageIndicator from './BillUsageIndicator';
 import BillDeleteDialog from './BillDeleteDialog';
@@ -35,6 +36,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [subscription, setSubscription] = useState<any>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const isMobile = useIsMobile();
   const [newBill, setNewBill] = useState({
     name: '',
     amount: '',
@@ -51,7 +53,8 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
     billsCount: bills.length, 
     loading, 
     error,
-    userProfile: !!userProfile 
+    userProfile: !!userProfile,
+    isMobile
   });
 
   useEffect(() => {
@@ -225,19 +228,20 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
+      {/* Header Section - Mobile Optimized */}
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-4 items-start ${isMobile ? '' : 'sm:items-center'} justify-between`}>
+        <div className={isMobile ? 'w-full' : ''}>
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Receipt className="text-green-500" size={28} />
+            <Receipt className="text-green-500" size={isMobile ? 24 : 28} />
             Family Bills Tracker
           </h2>
           <p className="text-muted-foreground mt-1">Keep track of your household expenses and never miss a payment</p>
         </div>
-        <div className="flex gap-2">
+        <div className={`flex ${isMobile ? 'flex-col w-full' : 'flex-row'} gap-2`}>
           <Button 
             onClick={() => setShowRecurringHelp(!showRecurringHelp)}
             variant="outline"
+            size={isMobile ? "sm" : "default"}
             className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
           >
             <HelpCircle size={16} className="mr-2" />
@@ -245,6 +249,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           </Button>
           <Button 
             onClick={() => setIsAddingBill(true)} 
+            size={isMobile ? "sm" : "default"}
             className="bg-green-600 hover:bg-green-700"
             disabled={!canCreateMoreBills}
           >
@@ -307,19 +312,19 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </Card>
       )}
 
-      {/* Add Bill Form - Moved to top */}
+      {/* Add Bill Form - Mobile Optimized */}
       {isAddingBill && canCreateMoreBills && (
         <Card className="border-2 border-dashed border-green-300 bg-gradient-to-r from-green-50 to-blue-50 dark:border-green-700 dark:from-green-950 dark:to-blue-950">
-          <CardHeader>
+          <CardHeader className={isMobile ? 'p-4' : 'p-6'}>
             <CardTitle className="text-green-800 dark:text-green-200">Add New Bill</CardTitle>
             <p className="text-sm text-muted-foreground">Enter your bill details below. For bills that repeat monthly (like rent or utilities), enable the recurring option.</p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className={`space-y-4 ${isMobile ? 'p-4 pt-0' : 'p-6 pt-0'}`}>
+            <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-4`}>
               <div>
                 <label className="text-sm font-medium text-foreground mb-2 block">Bill Name *</label>
                 <Input
-                  placeholder="e.g., Electric Bill, Rent, Netflix"
+                  placeholder={isMobile ? "Electric Bill" : "e.g., Electric Bill, Rent, Netflix"}
                   value={newBill.name}
                   onChange={(e) => setNewBill({ ...newBill, name: e.target.value })}
                 />
@@ -363,7 +368,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                   setNewBill({ ...newBill, assigned_to: value })
                 }>
                   <SelectTrigger>
-                    <SelectValue placeholder="Who pays this bill? (optional)" />
+                    <SelectValue placeholder={isMobile ? "Who pays?" : "Who pays this bill? (optional)"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unassigned">No assignment</SelectItem>
@@ -398,7 +403,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                     min="1"
                     value={newBill.recurrence_interval}
                     onChange={(e) => setNewBill({ ...newBill, recurrence_interval: parseInt(e.target.value) || 1 })}
-                    placeholder="e.g., 1 for every month, 2 for every 2 months"
+                    placeholder={isMobile ? "1" : "e.g., 1 for every month, 2 for every 2 months"}
                   />
                 </div>
               )}
@@ -418,12 +423,12 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                 </p>
               </div>
             )}
-            <div className="flex gap-2">
-              <Button onClick={handleAddBill} className="bg-green-600 hover:bg-green-700">
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2`}>
+              <Button onClick={handleAddBill} className="bg-green-600 hover:bg-green-700" size={isMobile ? "sm" : "default"}>
                 <Receipt size={16} className="mr-2" />
                 Add Bill
               </Button>
-              <Button variant="outline" onClick={() => setIsAddingBill(false)}>
+              <Button variant="outline" onClick={() => setIsAddingBill(false)} size={isMobile ? "sm" : "default"}>
                 Cancel
               </Button>
             </div>
@@ -431,53 +436,53 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </Card>
       )}
 
-      {/* Summary Cards - Now appear after Add Bill form */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Summary Cards - Mobile Optimized */}
+      <div className={`grid grid-cols-1 ${isMobile ? 'gap-3' : 'md:grid-cols-4 gap-6'}`}>
         <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total This Month</p>
-                <p className="text-2xl font-bold text-foreground">${totalAmount.toFixed(2)}</p>
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>${totalAmount.toFixed(2)}</p>
               </div>
-              <DollarSign className="text-muted-foreground" size={24} />
+              <DollarSign className="text-muted-foreground" size={isMobile ? 20 : 24} />
             </div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Paid So Far</p>
-                <p className="text-2xl font-bold text-green-600">${paidAmount.toFixed(2)}</p>
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-green-600`}>${paidAmount.toFixed(2)}</p>
               </div>
-              <CheckCircle className="text-green-400" size={24} />
+              <CheckCircle className="text-green-400" size={isMobile ? 20 : 24} />
             </div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Still to Pay</p>
-                <p className="text-2xl font-bold text-red-600">${(totalAmount - paidAmount).toFixed(2)}</p>
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-red-600`}>${(totalAmount - paidAmount).toFixed(2)}</p>
               </div>
-              <AlertCircle className="text-red-400" size={24} />
+              <AlertCircle className="text-red-400" size={isMobile ? 20 : 24} />
             </div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
+          <CardContent className={isMobile ? 'p-4' : 'p-6'}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Recurring Bills</p>
-                <p className="text-2xl font-bold text-blue-600">{recurringBills.length}</p>
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-blue-600`}>{recurringBills.length}</p>
                 <p className="text-xs text-muted-foreground mt-1">Auto-repeating</p>
               </div>
-              <Repeat className="text-blue-400" size={24} />
+              <Repeat className="text-blue-400" size={isMobile ? 20 : 24} />
             </div>
           </CardContent>
         </Card>
@@ -485,7 +490,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
 
       {/* Progress Bar */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className={isMobile ? 'p-4' : 'p-6'}>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="font-medium text-foreground">Monthly Payment Progress</span>
@@ -500,35 +505,36 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
       {/* Recurring Bills Management */}
       {recurringBills.length > 0 && (
         <Card className="border-blue-200 dark:border-blue-800">
-          <CardHeader>
+          <CardHeader className={isMobile ? 'p-4' : 'p-6'}>
             <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
               <Repeat size={20} />
               Recurring Bills Management
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
+          <CardContent className={isMobile ? 'p-4 pt-0' : 'p-6 pt-0'}>
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-start ${isMobile ? 'gap-3' : 'items-center'} justify-between mb-4`}>
               <p className="text-sm text-foreground">
                 You have {recurringBills.length} recurring bills set up. Generate next month's bills automatically.
               </p>
               <Button 
                 onClick={handleProcessRecurring} 
                 className="bg-blue-600 hover:bg-blue-700"
+                size={isMobile ? "sm" : "default"}
               >
                 <Clock size={16} className="mr-2" />
                 Generate Next Bills
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className={`grid grid-cols-1 ${isMobile ? 'gap-3' : 'md:grid-cols-2 gap-3'}`}>
               {recurringBills.slice(0, 4).map((bill) => (
-                <div key={bill.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <div>
-                    <p className="font-medium text-blue-800 dark:text-blue-200">{bill.name}</p>
+                <div key={bill.id} className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-3'} bg-blue-50 dark:bg-blue-950 rounded-lg`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-blue-800 dark:text-blue-200 truncate">{bill.name}</p>
                     <p className="text-sm text-blue-600 dark:text-blue-400">
                       Every {bill.recurrence_interval} {bill.recurrence_type}(s) • ${bill.amount}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600">
+                  <Badge variant="outline" className="text-blue-600 border-blue-300 dark:text-blue-400 dark:border-blue-600 ml-2 flex-shrink-0">
                     <Repeat size={12} className="mr-1" />
                     Auto
                   </Badge>
@@ -539,7 +545,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </Card>
       )}
 
-      {/* Upcoming Bills */}
+      {/* Upcoming Bills - Mobile Optimized */}
       {upcomingBills.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -555,37 +561,37 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
               return (
                 <Card 
                   key={bill.id} 
-                  className={`hover:shadow-md transition-shadow ${
+                  className={`hover:shadow-md transition-shadow overflow-hidden ${
                     isOverdue ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950' : 
                     isDueSoon ? 'border-yellow-300 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-950' : 
                     'border-border'
                   }`}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <h4 className="font-semibold text-foreground flex items-center gap-2">
-                            {bill.name}
+                  <CardContent className={isMobile ? 'p-4' : 'p-4'}>
+                    <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'gap-3' : 'items-center justify-between'}`}>
+                      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'gap-2' : 'items-center space-x-4'} flex-1 min-w-0`}>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-foreground flex items-center gap-2 truncate">
+                            <span className="truncate">{bill.name}</span>
                             {bill.recurrence_type !== 'none' && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs flex-shrink-0">
                                 <Repeat size={12} className="mr-1" />
                                 Recurring
                               </Badge>
                             )}
                           </h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className={getCategoryColor(bill.category)} variant="secondary">
+                          <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'gap-1' : 'items-center gap-2'} mt-1`}>
+                            <Badge className={`${getCategoryColor(bill.category)} flex-shrink-0`} variant="secondary">
                               {bill.category}
                             </Badge>
                             {bill.assigned_to && (
-                              <span className="text-sm text-muted-foreground">{bill.assigned_to} pays this</span>
+                              <span className="text-sm text-muted-foreground truncate">{bill.assigned_to} pays this</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-foreground">${bill.amount.toFixed(2)}</p>
+                      <div className={`${isMobile ? 'flex flex-col' : 'text-right'}`}>
+                        <p className={`${isMobile ? 'text-lg' : 'text-lg'} font-bold text-foreground`}>${bill.amount.toFixed(2)}</p>
                         <p className={`text-sm ${
                           isOverdue ? 'text-red-600 font-semibold' :
                           isDueSoon ? 'text-yellow-600 font-semibold' :
@@ -595,13 +601,13 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                            daysUntilDue === 0 ? '📅 Due today' :
                            `📅 Due in ${daysUntilDue} days`}
                         </p>
-                        <div className="flex gap-2 mt-2">
+                        <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 mt-2`}>
                           <Button
                             onClick={() => handleTogglePaid(bill.id)}
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            ✓ Mark Paid
+                            ✓ {isMobile ? 'Paid' : 'Mark Paid'}
                           </Button>
                           {bill.recurrence_type !== 'none' && (
                             <Button
@@ -611,7 +617,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
                               className="border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
                             >
                               <Clock size={14} className="mr-1" />
-                              Next Bill
+                              {isMobile ? 'Next' : 'Next Bill'}
                             </Button>
                           )}
                           <Button
@@ -633,7 +639,7 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
         </div>
       )}
 
-      {/* Paid Bills */}
+      {/* Paid Bills - Mobile Optimized */}
       {paidBills.length > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -642,42 +648,42 @@ const BillsTracker: React.FC<BillsTrackerProps> = ({ selectedHousehold }) => {
           </h3>
           <div className="space-y-3">
             {paidBills.map((bill) => (
-              <Card key={bill.id} className="bg-green-50 border-green-200 hover:shadow-md transition-shadow dark:bg-green-950 dark:border-green-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <CheckCircle className="text-green-600" size={20} />
-                      <div>
-                        <h4 className="font-semibold text-foreground flex items-center gap-2">
-                          {bill.name}
+              <Card key={bill.id} className="bg-green-50 border-green-200 hover:shadow-md transition-shadow dark:bg-green-950 dark:border-green-800 overflow-hidden">
+                <CardContent className={isMobile ? 'p-4' : 'p-4'}>
+                  <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'gap-3' : 'items-center justify-between'}`}>
+                    <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'gap-2' : 'items-center space-x-4'} flex-1 min-w-0`}>
+                      <CheckCircle className={`text-green-600 ${isMobile ? 'self-start' : ''}`} size={20} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground flex items-center gap-2 truncate">
+                          <span className="truncate">{bill.name}</span>
                           {bill.recurrence_type !== 'none' && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs flex-shrink-0">
                               <Repeat size={12} className="mr-1" />
                               Recurring
                             </Badge>
                           )}
                         </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={getCategoryColor(bill.category)} variant="secondary">
+                        <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} ${isMobile ? 'gap-1' : 'items-center gap-2'} mt-1`}>
+                          <Badge className={`${getCategoryColor(bill.category)} flex-shrink-0`} variant="secondary">
                             {bill.category}
                           </Badge>
                           {bill.assigned_to && (
-                            <span className="text-sm text-muted-foreground">✓ Paid by {bill.assigned_to}</span>
+                            <span className="text-sm text-muted-foreground truncate">✓ Paid by {bill.assigned_to}</span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">${bill.amount.toFixed(2)}</p>
+                    <div className={`${isMobile ? 'flex flex-col' : 'text-right'}`}>
+                      <p className={`${isMobile ? 'text-lg' : 'text-lg'} font-bold text-green-600`}>${bill.amount.toFixed(2)}</p>
                       <p className="text-sm text-green-600">✓ Paid</p>
-                      <div className="flex gap-2 mt-2">
+                      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-2 mt-2`}>
                         <Button
                           onClick={() => handleTogglePaid(bill.id)}
                           variant="outline"
                           size="sm"
                           className="border-green-600 text-green-600 hover:bg-green-100 dark:hover:bg-green-900"
                         >
-                          Undo Payment
+                          {isMobile ? 'Undo' : 'Undo Payment'}
                         </Button>
                         <Button
                           onClick={() => openDeleteDialog(bill.id, bill.name)}
