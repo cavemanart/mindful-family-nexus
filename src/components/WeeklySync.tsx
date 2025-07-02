@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Calendar, Loader2, Trophy, Target, User, Heart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WeeklyWinsSection from './WeeklyWinsSection';
 import WeeklyGoalsSection from './WeeklyGoalsSection';
@@ -11,6 +11,7 @@ import { usePersonalGoals } from '@/hooks/usePersonalGoals';
 import { useFamilyMemories } from '@/hooks/useFamilyMemories';
 import { useAuth } from '@/hooks/useAuth';
 import { useChildren } from '@/hooks/useChildren';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface WeeklySyncProps {
   selectedHousehold: { id: string } | null;
@@ -18,6 +19,7 @@ interface WeeklySyncProps {
 
 const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { wins, goals, loading, addWin, addGoal, toggleGoal, deleteGoal, editGoal } = useWeeklyData(selectedHousehold?.id || null);
   const { 
     personalGoals, 
@@ -63,13 +65,37 @@ const WeeklySync = ({ selectedHousehold }: WeeklySyncProps) => {
       </div>
 
       <Tabs defaultValue="wins" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="wins">Family Wins</TabsTrigger>
-          <TabsTrigger value="assigned">
-            {isParent ? "Assigned Goals" : "My Assignments"}
+        <TabsList className={`grid w-full h-auto ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
+          <TabsTrigger 
+            value="wins" 
+            className={`${isMobile ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} flex items-center gap-1`}
+          >
+            <Trophy className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className={isMobile ? 'truncate' : ''}>{isMobile ? 'Wins' : 'Family Wins'}</span>
           </TabsTrigger>
-          <TabsTrigger value="personal">Personal Goals</TabsTrigger>
-          <TabsTrigger value="memories">Family Memories</TabsTrigger>
+          <TabsTrigger 
+            value="assigned"
+            className={`${isMobile ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} flex items-center gap-1`}
+          >
+            <Target className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className={isMobile ? 'truncate' : ''}>
+              {isMobile ? 'Goals' : (isParent ? "Assigned Goals" : "My Assignments")}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="personal"
+            className={`${isMobile ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} flex items-center gap-1`}
+          >
+            <User className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className={isMobile ? 'truncate' : ''}>{isMobile ? 'Personal' : 'Personal Goals'}</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="memories"
+            className={`${isMobile ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} flex items-center gap-1`}
+          >
+            <Heart className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <span className={isMobile ? 'truncate' : ''}>{isMobile ? 'Memories' : 'Family Memories'}</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="wins" className="space-y-6">
