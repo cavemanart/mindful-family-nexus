@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,6 +20,7 @@ import About from "./pages/About";
 import Help from "./pages/Help";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
+import GoogleAnalytics from "./components/GoogleAnalytics"; // ✅ Import added
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +48,7 @@ const App = () => {
       <SimpleReactCheck>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
+            <GoogleAnalytics /> {/* ✅ Pageview tracking for route changes */}
             <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
               <AuthProvider>
                 <ChildSessionProvider>
