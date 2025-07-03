@@ -16,6 +16,9 @@ import NannyAccess from "./pages/NannyAccess";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import Success from "./pages/Success";
+import Features from "./pages/Features";
+import About from "./pages/About";
+import Help from "./pages/Help";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -58,6 +61,9 @@ const App = () => {
                     <Route path="/subscription" element={<Subscription />} />
                     <Route path="/success" element={<Success />} />
                     <Route path="/nanny" element={<NannyAccess />} />
+                    <Route path="/features" element={<Features />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/help" element={<Help />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   <PWAInstallPrompt />

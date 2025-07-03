@@ -12,15 +12,20 @@ const HomeHeader: React.FC = () => {
         <div className="text-2xl font-bold">
           <span className="text-purple-600">Hub</span>lie
         </div>
-        <nav>
-          <ul className="flex items-center space-x-6">
-            <li>
-              <Button variant="ghost" onClick={() => navigate("/auth")}>
-                Login / Sign Up
-              </Button>
-            </li>
-          </ul>
+        <nav className="hidden md:flex space-x-8 mr-8">
+          <a href="/features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Features
+          </a>
+          <a href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            About
+          </a>
+          <a href="/help" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Help
+          </a>
         </nav>
+        <Button variant="default" onClick={() => navigate("/auth")}>
+          Get Started Free
+        </Button>
       </div>
     </header>
   );

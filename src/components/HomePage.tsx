@@ -59,12 +59,18 @@ export default function HomePage() {
         <section className="text-center space-y-8">
           <div className="space-y-4">
             <h1 className="text-5xl font-bold tracking-tight text-foreground">
-              Organize Your Family Life, Effortlessly
+              The Ultimate Family Organization App for Busy Households
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Hublie is the all-in-one family management app designed to streamline your daily routines,
-              enhance communication, and bring joy back to family life.
+              Simplify your family life with Hublie's comprehensive household management platform. 
+              Track chores, manage bills, share calendars, and keep everyone connected - all in one intuitive app.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 mt-4 text-sm text-muted-foreground">
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full">Family Calendar</span>
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full">Chore Management</span>
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full">Bill Tracking</span>
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full">Family Messaging</span>
+            </div>
           </div>
         </section>
 

@@ -12,3 +12,13 @@ Allow: /
 
 User-agent: *
 Allow: /
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://www.hublie.org/sitemap.xml
+
+# Prevent crawling of admin/auth pages
+Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /subscription/
