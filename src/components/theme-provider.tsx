@@ -1,5 +1,5 @@
 
-import React from "react";
+import * as React from "react";
 
 console.log('[theme-provider] ThemeProvider module loaded. React namespace imported:', !!React);
 

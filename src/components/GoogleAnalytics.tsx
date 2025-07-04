@@ -2,14 +2,31 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
+declare global {
+  interface Window {
+    gtag: (...args: any[]) => void;
+    dataLayer: any[];
+  }
+}
+
 const GoogleAnalytics = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (typeof window.gtag !== "function") return;
-    window.gtag("config", "G-JF7HLSBP5F", {
-      page_path: location.pathname + location.search,
-    });
+    // Wait for gtag to be available
+    const checkGtag = () => {
+      if (typeof window !== "undefined" && typeof window.gtag === "function") {
+        console.log("📊 GA tracking pageview:", location.pathname + location.search);
+        window.gtag("config", "G-JF7HLSBP5F", {
+          page_path: location.pathname + location.search,
+        });
+      } else {
+        console.warn("📊 GA not ready, retrying...");
+        setTimeout(checkGtag, 100);
+      }
+    };
+    
+    checkGtag();
   }, [location]);
 
   return null;
