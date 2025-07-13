@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,36 +17,50 @@ const Auth = () => {
   const [role, setRole] = useState<'parent' | 'nanny' | 'child' | 'grandparent'>('parent');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [navigationTimer, setNavigationTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Use ref to track if navigation has been attempted
+  const navigationAttempted = useRef(false);
+  const navigationTimer = useRef<NodeJS.Timeout | null>(null);
 
   const { signUp, signIn, signOut, user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Handle navigation with delay to prevent loops
+  // Handle navigation with better loop prevention
   useEffect(() => {
-    if (user && !loading && !authLoading) {
-      console.log('🔐 Auth: User detected, preparing navigation to dashboard');
-      
-      // Clear any existing timer
-      if (navigationTimer) {
-        clearTimeout(navigationTimer);
-      }
-      
-      // Add delay to prevent navigation loops
-      const timer = setTimeout(() => {
-        console.log('🔐 Auth: Navigating to dashboard');
-        navigate('/dashboard');
-      }, 100);
-      
-      setNavigationTimer(timer);
-    }
-    
+    // Clear any existing timer on cleanup
     return () => {
-      if (navigationTimer) {
-        clearTimeout(navigationTimer);
+      if (navigationTimer.current) {
+        clearTimeout(navigationTimer.current);
+        navigationTimer.current = null;
       }
     };
+  }, []);
+
+  useEffect(() => {
+    // Only navigate if user exists, not loading, and haven't attempted navigation yet
+    if (user && !loading && !authLoading && !navigationAttempted.current) {
+      console.log('🔐 Auth: User detected, preparing navigation to dashboard');
+      
+      // Mark that we've attempted navigation
+      navigationAttempted.current = true;
+      
+      // Clear any existing timer
+      if (navigationTimer.current) {
+        clearTimeout(navigationTimer.current);
+      }
+      
+      // Add small delay to prevent race conditions
+      navigationTimer.current = setTimeout(() => {
+        console.log('🔐 Auth: Navigating to dashboard');
+        navigate('/dashboard', { replace: true }); // Use replace to prevent back navigation issues
+      }, 100);
+    }
+    
+    // Reset navigation flag if user logs out
+    if (!user && !authLoading) {
+      navigationAttempted.current = false;
+    }
   }, [user, navigate, loading, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +86,7 @@ const Auth = () => {
           title: 'Success',
           description: isSignUp ? 'Account created successfully!' : 'Signed in successfully!',
         });
+        // Don't manually navigate here - let the useEffect handle it
       }
     } catch (error) {
       toast({
@@ -88,12 +102,20 @@ const Auth = () => {
   const handleSignOut = async () => {
     try {
       console.log('🚪 Auth: Starting sign out process');
+      
+      // Clear navigation timer and reset flag
+      if (navigationTimer.current) {
+        clearTimeout(navigationTimer.current);
+        navigationTimer.current = null;
+      }
+      navigationAttempted.current = false;
+      
       await signOut();
       toast({
         title: 'Success',
         description: 'Signed out successfully!',
       });
-      navigate('/');
+      // Don't navigate here - let the auth state change handle it
     } catch (error) {
       console.error('❌ Auth: Sign out error:', error);
       toast({
@@ -113,8 +135,8 @@ const Auth = () => {
     );
   }
 
-  // If user is logged in, show logout option
-  if (user) {
+  // If user is logged in, show logout option (but don't auto-navigate if we're already here)
+  if (user && navigationAttempted.current) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -134,7 +156,7 @@ const Auth = () => {
               </p>
               <div className="space-y-2">
                 <Button 
-                  onClick={() => navigate('/dashboard')} 
+                  onClick={() => navigate('/dashboard', { replace: true })} 
                   className="w-full"
                 >
                   Go to Dashboard
