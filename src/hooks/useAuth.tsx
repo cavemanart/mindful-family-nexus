@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isSigningOut
   });
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retryCount = 0) => {
     // Prevent concurrent profile fetches
     if (profileFetchInProgress || isSigningOut) {
       console.log('📝 Profile fetch skipped - already in progress or signing out');
@@ -47,8 +47,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      console.log('📝 Fetching user profile for:', userId);
+      console.log(`📝 Fetching user profile for: ${userId} (attempt ${retryCount + 1})`);
       setProfileFetchInProgress(true);
+      setError(null); // Clear any previous errors
       
       const { data, error } = await supabase
         .from('profiles')
@@ -57,32 +58,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (!error && data && !isSigningOut) {
-        console.log('✅ User profile fetched:', data);
+        console.log('✅ User profile fetched successfully:', data);
         setUserProfile(data);
         setError(null);
 
         // Get user's household for subscription setup
-        const { data: householdData } = await supabase
-          .from('household_members')
-          .select('household_id')
-          .eq('user_id', userId)
-          .limit(1)
-          .single();
+        try {
+          const { data: householdData } = await supabase
+            .from('household_members')
+            .select('household_id')
+            .eq('user_id', userId)
+            .limit(1)
+            .single();
 
-        // Ensure subscription exists after profile is loaded
-        if (!isSigningOut) {
-          ensureUserSubscription(userId, householdData?.household_id).catch(error => {
-            console.error('❌ Error ensuring subscription:', error);
-          });
+          // Ensure subscription exists after profile is loaded
+          if (!isSigningOut) {
+            ensureUserSubscription(userId, householdData?.household_id).catch(error => {
+              console.error('❌ Error ensuring subscription:', error);
+              // Don't fail the profile fetch for subscription errors
+            });
+          }
+        } catch (householdError) {
+          console.log('⚠️ Could not fetch household data, but profile loaded:', householdError);
+          // Continue - profile is loaded even if household data fails
         }
       } else if (error && !isSigningOut) {
         console.log('❌ Error fetching user profile:', error);
-        setError('Failed to load user profile');
+        
+        // Implement retry logic for certain errors
+        if (retryCount < 2 && (error.code === 'PGRST301' || error.message?.includes('timeout'))) {
+          console.log(`🔄 Retrying profile fetch in 1 second (attempt ${retryCount + 2})`);
+          setTimeout(() => {
+            fetchUserProfile(userId, retryCount + 1);
+          }, 1000);
+          return;
+        }
+        
+        setError(`Failed to load user profile: ${error.message || 'Unknown error'}`);
+        setUserProfile(null);
       }
     } catch (error) {
       if (!isSigningOut) {
-        console.error('🚨 Error in fetchUserProfile:', error);
-        setError('Failed to load user profile');
+        console.error('🚨 Unexpected error in fetchUserProfile:', error);
+        
+        // Implement retry logic for network errors
+        if (retryCount < 2) {
+          console.log(`🔄 Retrying profile fetch due to network error in 2 seconds (attempt ${retryCount + 2})`);
+          setTimeout(() => {
+            fetchUserProfile(userId, retryCount + 1);
+          }, 2000);
+          return;
+        }
+        
+        setError('Network error while loading profile. Please check your connection.');
+        setUserProfile(null);
       }
     } finally {
       setProfileFetchInProgress(false);
@@ -135,6 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const retry = () => {
     if (!isSigningOut) {
       console.log('🔄 Retrying auth initialization');
+      setError(null);
+      setUserProfile(null);
       initializeAuth();
     }
   };

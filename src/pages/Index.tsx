@@ -72,33 +72,53 @@ const Index = () => {
     );
   }
 
-  // Handle authentication redirect with delay to prevent loops
+  // Handle authentication redirect - check for user first
   if (!user) {
-    console.log('📊 No user detected, preparing redirect to auth');
-    
-    // Add a small delay to prevent immediate redirect loops
-    if (!redirectTimer) {
-      const timer = setTimeout(() => {
-        console.log('📊 Redirecting to auth after delay');
-      }, 100);
-      setRedirectTimer(timer);
-    }
-    
+    console.log('📊 No user detected, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 
+  // Handle missing profile with proper loading check and error state
   if (!userProfile) {
-    console.log('📊 No user profile, preparing redirect to auth');
+    console.log('📊 No user profile detected');
     
-    // Add a small delay to prevent immediate redirect loops
-    if (!redirectTimer) {
-      const timer = setTimeout(() => {
-        console.log('📊 Redirecting to auth after delay (no profile)');
-      }, 100);
-      setRedirectTimer(timer);
+    // If auth is done loading but still no profile, show error with retry option
+    if (!loading) {
+      console.log('📊 Auth completed but no profile found - showing retry option');
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4 max-w-md mx-auto p-6">
+            <h2 className="text-xl font-semibold text-foreground">Profile Loading Error</h2>
+            <p className="text-muted-foreground">
+              We couldn't load your profile. This might be a temporary issue.
+            </p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Retry
+            </button>
+            <button 
+              onClick={signOut} 
+              className="ml-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      );
     }
     
-    return <Navigate to="/auth" replace />;
+    // Still loading, continue to show loading state
+    console.log('📊 Profile still loading, staying on loading screen');
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!selectedHousehold) {

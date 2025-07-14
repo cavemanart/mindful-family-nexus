@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Users, LogOut } from 'lucide-react';
+import { Eye, EyeOff, Users, LogOut, RefreshCw } from 'lucide-react';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -17,51 +17,18 @@ const Auth = () => {
   const [role, setRole] = useState<'parent' | 'nanny' | 'child' | 'grandparent'>('parent');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  // Use ref to track if navigation has been attempted
-  const navigationAttempted = useRef(false);
-  const navigationTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const { signUp, signIn, signOut, user, loading: authLoading } = useAuth();
+  const { signUp, signIn, signOut, user, userProfile, loading: authLoading, error: authError, retry } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Handle navigation with better loop prevention
+  // Simple navigation effect - redirect to dashboard if user is authenticated and has profile
   useEffect(() => {
-    // Clear any existing timer on cleanup
-    return () => {
-      if (navigationTimer.current) {
-        clearTimeout(navigationTimer.current);
-        navigationTimer.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    // Only navigate if user exists, not loading, and haven't attempted navigation yet
-    if (user && !loading && !authLoading && !navigationAttempted.current) {
-      console.log('🔐 Auth: User detected, preparing navigation to dashboard');
-      
-      // Mark that we've attempted navigation
-      navigationAttempted.current = true;
-      
-      // Clear any existing timer
-      if (navigationTimer.current) {
-        clearTimeout(navigationTimer.current);
-      }
-      
-      // Add small delay to prevent race conditions
-      navigationTimer.current = setTimeout(() => {
-        console.log('🔐 Auth: Navigating to dashboard');
-        navigate('/dashboard', { replace: true }); // Use replace to prevent back navigation issues
-      }, 100);
+    if (user && userProfile && !authLoading && !loading) {
+      console.log('🔐 Auth: User authenticated with profile, navigating to dashboard');
+      navigate('/dashboard', { replace: true });
     }
-    
-    // Reset navigation flag if user logs out
-    if (!user && !authLoading) {
-      navigationAttempted.current = false;
-    }
-  }, [user, navigate, loading, authLoading]);
+  }, [user, userProfile, authLoading, loading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,25 +69,16 @@ const Auth = () => {
   const handleSignOut = async () => {
     try {
       console.log('🚪 Auth: Starting sign out process');
-      
-      // Clear navigation timer and reset flag
-      if (navigationTimer.current) {
-        clearTimeout(navigationTimer.current);
-        navigationTimer.current = null;
-      }
-      navigationAttempted.current = false;
-      
       await signOut();
       toast({
         title: 'Success',
         description: 'Signed out successfully!',
       });
-      // Don't navigate here - let the auth state change handle it
     } catch (error) {
       console.error('❌ Auth: Sign out error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to sign out',
+        description: 'Failed to sign out. Please try again.',
         variant: 'destructive',
       });
     }
@@ -130,13 +88,58 @@ const Auth = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Authenticating...</p>
+        </div>
       </div>
     );
   }
 
-  // If user is logged in, show logout option (but don't auto-navigate if we're already here)
-  if (user && navigationAttempted.current) {
+  // Show auth error state if there's an error with profile loading
+  if (authError && user && !userProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center flex items-center justify-center gap-2">
+              <Users className="h-6 w-6" />
+              Profile Loading Error
+            </CardTitle>
+            <CardDescription className="text-center">
+              We encountered an issue loading your profile.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive">
+                {authError}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Button 
+                onClick={retry} 
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry Loading Profile
+              </Button>
+              <Button 
+                onClick={handleSignOut} 
+                variant="outline" 
+                className="w-full"
+              >
+                Sign Out & Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // If user is logged in with profile, show logout option
+  if (user && userProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
