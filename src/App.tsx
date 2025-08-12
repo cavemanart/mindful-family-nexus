@@ -19,8 +19,8 @@ import Features from "./pages/Features";
 import About from "./pages/About";
 import Help from "./pages/Help";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
-import ErrorBoundary from "./components/ErrorBoundary";
-import GoogleAnalytics from "./components/GoogleAnalytics"; // ✅ Import added
+import ErrorBoundary from "@/components/ErrorBoundary";
+import GoogleAnalytics from "@/components/GoogleAnalytics"; // ✅ Pageview tracking for route changes
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +52,7 @@ const App = () => {
       <SimpleReactCheck>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
-            <GoogleAnalytics /> {/* ✅ Pageview tracking for route changes */}
+            <GoogleAnalytics />
             <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
               <AuthProvider>
                 <ChildSessionProvider>
