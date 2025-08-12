@@ -1,9 +1,8 @@
-
 import * as React from "react";
 
 console.log('[theme-provider] ThemeProvider module loaded. React namespace imported:', !!React);
 
-type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -11,7 +10,7 @@ type ThemeProviderProps = {
   storageKey?: string;
 };
 
-type ThemeProviderState = {
+export type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
 };
@@ -35,76 +34,77 @@ function ThemeProviderFallback({ children }: { children: React.ReactNode }) {
   );
 }
 
+function getInitialTheme(storageKey: string, defaultTheme: Theme): Theme {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const stored = window.localStorage.getItem(storageKey);
+      if (stored === "dark" || stored === "light" || stored === "system") {
+        return stored as Theme;
+      }
+    }
+  } catch (error) {
+    console.warn("[theme-provider] Failed to read theme from localStorage:", error);
+  }
+  return defaultTheme;
+}
+
+function applyThemeToDOM(theme: Theme) {
+  try {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
+    }
+    console.log("🎨 Applied theme to DOM:", theme);
+  } catch (error) {
+    console.warn("[theme-provider] Failed to apply theme to DOM:", error);
+  }
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Check if React hooks are available BEFORE calling them
-  const hooksAvailable =
-    typeof React === "object" &&
-    React !== null &&
-    typeof React.useState === "function" &&
-    typeof React.useEffect === "function";
-
-  if (!hooksAvailable) {
-    console.warn("[theme-provider] Hooks or React not available during initialization");
+  // Avoid React hooks entirely to prevent "dispatcher is null" edge cases
+  if (typeof React === "undefined" || !React.createElement) {
+    console.warn("[theme-provider] React not available, rendering fallback");
     return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
   }
 
-  // Now it's safe to call hooks
-  const [theme, setTheme] = React.useState<Theme>(() => {
+  const theme = getInitialTheme(storageKey, defaultTheme);
+
+  // Apply theme immediately on render (no hooks)
+  if (typeof window !== "undefined") {
+    applyThemeToDOM(theme);
+  }
+
+  const setTheme = (next: Theme) => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
-        const stored = window.localStorage.getItem(storageKey);
-        if (stored === "dark" || stored === "light" || stored === "system") {
-          return stored as Theme;
-        }
-      }
-    } catch (error) {
-      console.warn("[theme-provider] Failed to read theme from localStorage:", error);
-    }
-    return defaultTheme;
-  });
-
-  React.useEffect(() => {
-    try {
-      const root = window.document.documentElement;
-      root.classList.remove("light", "dark");
-
-      if (theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-        root.classList.add(systemTheme);
-        return;
-      }
-
-      root.classList.add(theme);
-      console.log("🎨 Applied theme to DOM:", theme);
-    } catch (error) {
-      console.warn("[theme-provider] Failed to apply theme to DOM:", error);
-    }
-  }, [theme]);
-
-  React.useEffect(() => {
-    try {
-      if (typeof window !== "undefined" && window.localStorage) {
-        window.localStorage.setItem(storageKey, theme);
+        window.localStorage.setItem(storageKey, next);
       }
     } catch (error) {
       console.warn("[theme-provider] Failed to save theme to localStorage:", error);
     }
-  }, [theme, storageKey]);
+    if (typeof window !== "undefined") {
+      applyThemeToDOM(next);
+      // Optional: dispatch event for listeners, since we don't re-render here
+      window.dispatchEvent(new CustomEvent("themechange", { detail: next }));
+    }
+  };
 
-  const value: ThemeProviderState = React.useMemo(() => ({
-    theme,
-    setTheme,
-  }), [theme]);
+  const value: ThemeProviderState = { theme, setTheme };
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeProviderContext.Provider value={value}>
       {children}
     </ThemeProviderContext.Provider>
   );
