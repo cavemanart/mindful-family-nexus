@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
@@ -67,13 +67,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "bills_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "bills_parent_bill_id_fkey"
             columns: ["parent_bill_id"]
@@ -143,13 +136,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "calendar_events_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
         ]
       }
       child_pins: {
@@ -186,13 +172,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "child_pins_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
             referencedColumns: ["id"]
           },
           {
@@ -352,15 +331,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "chores_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       emergency_contacts: {
         Row: {
@@ -390,15 +361,7 @@ export type Database = {
           phone?: string
           relationship?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "emergency_contacts_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       event_categories: {
         Row: {
@@ -428,15 +391,7 @@ export type Database = {
           name?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "event_categories_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       event_reminders: {
         Row: {
@@ -598,15 +553,7 @@ export type Database = {
           message?: string
           to_member?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "family_messages_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       family_notes: {
         Row: {
@@ -642,15 +589,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "family_notes_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       household_info: {
         Row: {
@@ -683,15 +622,7 @@ export type Database = {
           updated_at?: string | null
           value?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "household_info_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       household_invitations: {
         Row: {
@@ -728,13 +659,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["invitation_status"] | null
         }
         Relationships: [
-          {
-            foreignKeyName: "household_invitations_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "household_invitations_invited_by_fkey"
             columns: ["invited_by"]
@@ -780,13 +704,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "household_join_codes_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
         ]
       }
       household_members: {
@@ -813,56 +730,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "household_members_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "household_members_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      households: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          id: string
-          invite_code: string | null
-          name: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          invite_code?: string | null
-          name: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          invite_code?: string | null
-          name?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "households_created_by_fkey"
-            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -906,15 +775,7 @@ export type Database = {
           prescribing_doctor?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "medications_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       mini_coach_moments: {
         Row: {
@@ -1434,15 +1295,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_subscriptions_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       users: {
         Row: {
@@ -1505,15 +1358,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_goals_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       weekly_wins: {
         Row: {
@@ -1540,15 +1385,7 @@ export type Database = {
           id?: string
           title?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_wins_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -1566,13 +1403,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "household_members_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "household_members_user_id_fkey"
             columns: ["user_id"]
