@@ -43,6 +43,10 @@ const App = () => {
     }
   }
 
+  // Defer hook-heavy components until after first client mount
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
   return (
     <ErrorBoundary>
       <SimpleReactCheck>
@@ -52,8 +56,12 @@ const App = () => {
             <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
               <AuthProvider>
                 <ChildSessionProvider>
-                  <Toaster />
-                  <Sonner />
+                  {mounted && (
+                    <>
+                      <Toaster />
+                      <Sonner />
+                    </>
+                  )}
                   <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/dashboard" element={<Index />} />
@@ -67,7 +75,7 @@ const App = () => {
                     <Route path="/help" element={<Help />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
-                  <PWAInstallPrompt />
+                  {mounted && <PWAInstallPrompt />}
                 </ChildSessionProvider>
               </AuthProvider>
             </ThemeProvider>

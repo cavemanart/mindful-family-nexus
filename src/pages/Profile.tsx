@@ -138,7 +138,7 @@ const Profile = () => {
     setIsUpdatingHousehold(true);
     try {
       console.log('🏠 Updating household:', selectedHousehold.id);
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('households')
         .update({ name: householdName })
         .eq('id', selectedHousehold.id);

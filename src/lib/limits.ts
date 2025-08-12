@@ -48,7 +48,7 @@ export async function canCreateHousehold(userId: string): Promise<boolean> {
   const plan = SUBSCRIPTION_PLANS[planType];
 
   // Check current household count
-  const { count } = await supabase
+  const { count } = await (supabase as any)
     .from('households')
     .select('id', { count: 'exact' })
     .eq('user_id', userId);

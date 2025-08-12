@@ -68,9 +68,14 @@ export const useHouseholds = () => {
         });
         setHouseholds([]);
       } else {
-        const formatted = (data ?? []).map((hm: any) => ({
-          ...hm.households,
-          role: hm.role
+        const formatted: Household[] = (data ?? []).map((hm: any) => ({
+          id: hm.households.id,
+          name: hm.households.name,
+          description: hm.households.description,
+          invite_code: hm.households.invite_code,
+          created_by: hm.households.created_by,
+          created_at: hm.households.created_at,
+          role: hm.role,
         }));
 
         // Additional client-side deduplication by household ID
@@ -117,7 +122,7 @@ export const useHouseholds = () => {
     }
 
     try {
-      const { data: householdData, error: householdError } = await supabase
+      const { data: householdData, error: householdError } = await (supabase as any)
         .from('households')
         .insert([
           {
@@ -165,7 +170,17 @@ export const useHouseholds = () => {
         description: "Household created successfully!",
       });
 
-      return { ...householdData, role: 'owner' };
+      const created: Household = {
+        id: householdData.id,
+        name: householdData.name,
+        description: householdData.description,
+        invite_code: householdData.invite_code,
+        created_by: householdData.created_by,
+        created_at: householdData.created_at,
+        role: 'owner',
+      };
+
+      return created;
     } catch (err: any) {
       toast({
         title: "Error",

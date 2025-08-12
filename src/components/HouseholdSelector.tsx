@@ -93,7 +93,7 @@ const HouseholdSelector: React.FC<HouseholdSelectorProps> = ({ onHouseholdSelect
                   </div>
                   <Button 
                     className="w-full" 
-                    onClick={() => onHouseholdSelect(household)}
+                    onClick={() => onHouseholdSelect(household as Household)}
                   >
                     Enter Household
                   </Button>
