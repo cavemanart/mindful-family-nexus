@@ -53,32 +53,32 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <GoogleAnalytics />
-            <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
-              <AuthProvider>
-                <ChildSessionProvider>
-                  {mounted && (
+            {mounted ? (
+              <ThemeProvider defaultTheme="light" storageKey="hublie-theme">
+                <AuthProvider>
+                  <ChildSessionProvider>
                     <>
                       <Toaster />
                       <Sonner />
+                      <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/dashboard" element={<Index />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/subscription" element={<Subscription />} />
+                        <Route path="/success" element={<Success />} />
+                        <Route path="/nanny" element={<NannyAccess />} />
+                        <Route path="/features" element={<Features />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/help" element={<Help />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                      <PWAInstallPrompt />
                     </>
-                  )}
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/dashboard" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/subscription" element={<Subscription />} />
-                    <Route path="/success" element={<Success />} />
-                    <Route path="/nanny" element={<NannyAccess />} />
-                    <Route path="/features" element={<Features />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/help" element={<Help />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  {mounted && <PWAInstallPrompt />}
-                </ChildSessionProvider>
-              </AuthProvider>
-            </ThemeProvider>
+                  </ChildSessionProvider>
+                </AuthProvider>
+              </ThemeProvider>
+            ) : null}
           </BrowserRouter>
         </QueryClientProvider>
       </SimpleReactCheck>
