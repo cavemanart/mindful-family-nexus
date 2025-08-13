@@ -1,11 +1,11 @@
-import * as React from "react";
+import { createContext, useContext } from "react";
+import type { ReactNode } from "react";
 
-console.log('[theme-provider] ThemeProvider module loaded. React namespace imported:', !!React);
 
 export type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
 };
@@ -20,9 +20,9 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = React.createContext<ThemeProviderState>(initialState);
+const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-function ThemeProviderFallback({ children }: { children: React.ReactNode }) {
+function ThemeProviderFallback({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md">
@@ -73,11 +73,6 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  // Avoid React hooks entirely to prevent "dispatcher is null" edge cases
-  if (typeof React === "undefined" || !React.createElement) {
-    console.warn("[theme-provider] React not available, rendering fallback");
-    return <ThemeProviderFallback>{children}</ThemeProviderFallback>;
-  }
 
   const theme = getInitialTheme(storageKey, defaultTheme);
 
@@ -111,7 +106,7 @@ export function ThemeProvider({
 }
 
 export const useTheme = () => {
-  const context = React.useContext(ThemeProviderContext);
+  const context = useContext(ThemeProviderContext);
 
   if (context === undefined) {
     console.warn("useTheme must be used within a ThemeProvider, using fallback");
