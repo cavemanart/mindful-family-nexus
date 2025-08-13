@@ -1,6 +1,5 @@
 // src/components/GoogleAnalytics.tsx
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
 
 declare global {
   interface Window {
@@ -9,25 +8,48 @@ declare global {
   }
 }
 
-const GoogleAnalytics = () => {
-  const location = useLocation();
+const sendPageview = () => {
+  if (typeof window !== "undefined" && typeof window.gtag === "function") {
+    const path = window.location.pathname + window.location.search;
+    console.log("📊 GA tracking pageview:", path);
+    window.gtag("config", "G-JF7HLSBP5F", { page_path: path });
+  } else {
+    // Silently skip if GA not ready
+  }
+};
 
+const GoogleAnalytics = () => {
   useEffect(() => {
-    // Wait for gtag to be available
-    const checkGtag = () => {
-      if (typeof window !== "undefined" && typeof window.gtag === "function") {
-        console.log("📊 GA tracking pageview:", location.pathname + location.search);
-        window.gtag("config", "G-JF7HLSBP5F", {
-          page_path: location.pathname + location.search,
-        });
-      } else {
-        console.warn("📊 GA not ready, retrying...");
-        setTimeout(checkGtag, 100);
-      }
+    // Initial pageview
+    sendPageview();
+
+    // Patch history methods to detect SPA navigation without router hooks
+    const originalPush = history.pushState;
+    const originalReplace = history.replaceState;
+
+    const notifyChange = () => {
+      // Slight delay to ensure URL settled
+      setTimeout(sendPageview, 0);
     };
-    
-    checkGtag();
-  }, [location]);
+
+    history.pushState = function (...args) {
+      originalPush.apply(this, args as any);
+      notifyChange();
+    } as typeof history.pushState;
+
+    history.replaceState = function (...args) {
+      originalReplace.apply(this, args as any);
+      notifyChange();
+    } as typeof history.replaceState;
+
+    window.addEventListener("popstate", notifyChange);
+
+    return () => {
+      history.pushState = originalPush;
+      history.replaceState = originalReplace;
+      window.removeEventListener("popstate", notifyChange);
+    };
+  }, []);
 
   return null;
 };
